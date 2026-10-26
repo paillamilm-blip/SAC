@@ -22,6 +22,97 @@ Estos fallos del plan original se corrigieron en el código; el texto de los Tas
 4. El validador va **inlineado** en `analizar-cv/index.ts` (lección 6F: `_shared/` se congela por función en el dashboard); `_shared/brechas.ts` queda canónica para funciones nuevas y `brechasValidar.ts` es su espejo testeable en vitest.
 5. Task 7 queda acotado al servicio `aprendizaje.ts` + tests: el rewire de `useGemeloActivation` ocurre en el Plan B con la UI del mapa (hoy el heurístico `analyzeCV` sigue mandando en la activación; `analizarCvConIA` es su reemplazo declarado cuando la función esté desplegada).
 
+### Addendum de cierre (ronda 2, 2026-10-26) — **el SQL del plan quedó viejo; manda el archivo**
+
+El texto de los Tasks 4, 6 y 8 de este plan se escribió antes de dos rondas de
+revisión y **contiene SQL y firmas que ya no existen** (p. ej. el
+`guardar_analisis_completo` de dos parámetros del Task 4, y el `ANALISIS_TOPE_DIARIO`
+crudo del Task 8). Para pegar en producción no se lee este plan: se lee el archivo.
+
+- Fuente de verdad del SQL: `supabase/migrations/10012_aprendizaje_continuo.sql` y
+  `supabase/migrations/10013_ventana_propia_rate_limit.sql`, y su espejo manual
+  `APLICAR_EN_SUPABASE.sql` (PASO 6). Cada uno abre con su chequeo pre-pegado y cierra
+  con las consultas de verificación post-aplicación y su salida esperada.
+- Fuente de verdad del contrato del motor: `supabase/functions/analizar-cv/index.ts`
+  (la huella vigente es la del `const BUILD` de ese archivo; se comprueba contra el header
+  `x-omicron-build`, no contra este texto) y el canónico `_shared/brechas.ts`, con
+  `src/features/gemelo/services/contratoEspejos.test.ts` afirmando que las tres copias
+  del validador siguen siendo el mismo texto.
+
+Rulings del controlador que el plan no prevedía y ya son código:
+
+1. **Identidad de skill (spec §4) restaurada en 10012.** El plan la perdió: una brecha
+   se identifica por `titulo_normalizado` dentro del usuario (columna generada +
+   `brechas_unica_skill` + upsert que refresco lo descriptivo y **nunca** el estado).
+   Un CV nuevo que re-detecta una skill ya confirmada, rechazada o dominada no crea el
+   duplicado que el usuario tendría que rechazar análisis tras análisis.
+2. **Un análisis incompleto no se guarda.** El motor exige los 4 ejes **antes** de la
+   RPC y antes de devolver `ok:true` (`ejesUsables`); sin eso, un run basura de la IA
+   dejaba fila en `analisis_cv` y contaba como análisis real en la métrica de la Fase 1.
+3. **El motor responde dentro de un presupuesto propio** (`PRESUPUESTO_IA_MS = 60 s`,
+   carrera en el entry file porque `_shared/llm.ts` está congelado y recorre 6 modelos
+   × 25 s). El cliente le creyó primero 90 s; ahora `SAFETY_TIMEOUT_MS = 150 s` cubre
+   la cuenta real: motor 60 + fallback Gemini 75 (`gemini.ts:67`) + margen.
+4. **Tope nunca silencioso (spec §8), decide el cliente.** 401/429/503 **no** caen al
+   fallback Gemini: `analizarCvConFallback` devuelve `{fuente:'bloqueado'}` y el hook
+   muestra el texto del servidor. Caerse a Gemini ante un 429 anulaba el control de
+   gasto del servidor — el usuario igual obtenía su análisis.
+5. **Sin baldío compartido de invitados.** `clientIp()` devuelve `null` si no hay
+   ninguna cabecera de origen (antes `'unknown'`, un identificador fijo que ponía a
+   todas las personas anónimas en el mismo contador). Invitado sin origen falla
+   **cerrado** con 503; usuario con sesión pierde solo el burst por IP y conserva su
+   tope diario por id.
+6. **El tope diario de invitados es un secret propio:** `ANALISIS_TOPE_DIARIO_INVITADO`
+   (default 3) además de `ANALISIS_TOPE_DIARIO` (default 10). Ambos server-side, jamás
+   `VITE_`. Es freno suave por IP (un NAT compartido los reparte), no muro.
+7. **El dedupe por skill también vive en el validador** (las tres copias), no solo en
+   SQL: si el cliente conserva las habilidades repetidas y la RPC no, los
+   `guardado.brechas` uuid quedan más cortos que la lista de brechas del cliente.
+8. **Tarea 1 (Docs honestos) se cierra acá**, no como commit aparte: los textos de
+   producción correctos son los de los archivos de migración; este addendum es el
+   señalamiento. Los dominios de visión del README que el Task 1 pedía marcar quedan
+   como deuda declarada de Plan B (no bloquean la Fase 1).
+9. **Cómo se mide el gate de la Fase 1 (Task 9), corregido.** El spec lo escribe "precisión
+   ≥ 6/10, métrica = confirmadas/revisadas, mismo cálculo que `metricaGlobal`", y esas dos
+   últimas frases no aplican a Ómicrom: `metricaGlobal` vive en la app CV (proyecto par), y
+   confirmar/rechazar una brecha es un click del mapa neuronal — que es Plan B. Hoy
+   `mezclarAnalisis` (`src/hooks/useGemeloActivation.ts:58-82`) ni siquiera consume
+   `ia.brechas`: el usuario ve los 4 ejes y el resumen, y las brechas se persisten sin
+   mostrarse. No se puede juzificar lo que todavía no se ve.
+   **Ruling:** la precisión de la Fase 1 se mide sobre lo persistido, en una sola pasada
+   humana. Tras los 10 CVs reales, el SQL Editor devuelve las listas por análisis
+   (`select a.nombre_archivo, a.created_at, b.titulo, b.categoria, b.severidad from
+   analisis_cv a join brechas_aprendizaje b on b.analisis_id = a.id order by a.created_at`)
+   y el dueño del producto decide por cada lista si la conserva o la descarta; el gate es
+   ≥ 6 de 10 conservadas. El conteo se registra en el ledger de la tarea, no en la BD:
+   `brechas_aprendizaje.state` es estado de aprendizaje del usuario (Plan B), no juicio de
+   precisión. Si el mapa ya estuviera vivo cuando se corre el gate, se usa el cálculo
+   original (confirmadas/revisadas) sin cambiar nada.
+10. **El modo invitado no llegaba al motor, y la culpa era nuestra, no del borde (medido
+    2026-10-26).** Con `apikey` y sin `Authorization`, el borde de Supabase responde
+    `401 UNAUTHORIZED_NO_AUTH_HEADER` porque `verify_jwt` está ON: el handler no corre. El
+    Step 4 del Task 6 (curl de invitado de este plan) nunca iba a dar 200, y el puente
+    `localStorage`, el bucket `analisis-dia-ip` y `ANALISIS_TOPE_DIARIO_INVITADO` eran
+    inalcanzables. **Ruling: `verify_jwt` no se apaga.** La ruta es la que ya usa
+    `supabase-js` — `session?.access_token ?? supabaseKey`
+    (`node_modules/@supabase/supabase-js/dist/index.mjs:811`) — y `analizarCvConIA` se
+    desvió de ella al omitir el header sin sesión (`src/features/gemelo/services/aprendizaje.ts:93`).
+    Medición que lo prueba: con `Authorization: Bearer <anon key>` el borde **pasa** y
+    responde el `400 "El CV es muy corto o no se pudo leer."` de la función (con
+    `x-served-by: supabase-edge-runtime`). Cierre en la tarea T10-D: el cliente manda el
+    Bearer siempre y el handler reconoce ese token como invitado en vez de rechazarlo.
+11. **Nada de esto es verificable contra la función desplegada hoy.** La `analizar-cv` de
+    producción **no manda `x-omicron-build`** en ningún response, así que corre una build
+    anterior a este plan. El deploy del Task 6 Step 3 es precondición de cualquier medida,
+    incluidas las de este addendum.
+
+
+Deuda explícita que NO cierra este plan (va al Plan B): dos prompts de CV en el repo
+(`gemini.ts` y `analizar-cv`), la promoción invitado→autenticado usando
+`puenteBrechasInvitado.limpiar()`, la cola de retry para guardados fallidos, la única
+puerta de escritura por RPC, y el `alter publication` de 10012 si el rol del Editor no
+es dueño de `supabase_realtime` (falla con NOTICE y hay que hacer el click en la UI).
+
 ## Global Constraints
 
 - Nomenclatura SQL/commits en español, estilo `10010_convalidar_sin_boveda.sql` (comentario `-- EL HECHO:` explicando el porqué).
@@ -640,6 +731,8 @@ curl -s -D - -o nul -X POST "https://cuwuyqpxaibbqjrvamjb.supabase.co/functions/
 
 Antes del grep, agregar la huella también como header en `json()`: `{ ...CORS, 'Content-Type': 'application/json', 'x-omicron-build': '7a-brechas-v1' }`.
 Expected: header con `7a-brechas-v1`; la respuesta JSON trae `analysis.brechas` como array (puede ser `[]` con un texto corto — válido) y `guardado: null` (sin JWT de usuario — válido).
+
+> **Este comando quedó viejo (addendum, ruling 10).** Tal como está, el borde responde `401 UNAUTHORIZED_NO_AUTH_HEADER` antes de correr la función: `verify_jwt` está ON y no se apaga. El probe de invitado correcto agrega `-H "Authorization: Bearer $ANON"` (la anon key, igual que hace `supabase-js`), y la huella esperada es la del `const BUILD` vigente, no `7a-brechas-v1`.
 
 - [ ] **Step 5: Commit**
 

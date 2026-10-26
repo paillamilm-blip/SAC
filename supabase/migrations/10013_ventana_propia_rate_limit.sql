@@ -140,9 +140,18 @@ grant execute on function public.check_rate_limit(text, text, integer, integer) 
 -- vive con RLS habilitado y sin políticas desde 0031 — el acceso real es
 -- solo a través de la función `security definer`, así que cualquier rol que
 -- no sea propietario o bypassrls ve cero filas. Un resultado vacío acá es
--- esperado; la prueba de que el arrego funciona es el walkthrough de
--- `analizar-cv` del reporte de tarea: con `ANALISIS_TOPE_DIARIO=2`, tres
--- requests del mismo usuario JWT donde el tercero cae mas de una hora
--- despues del primero. Los dos primeros dan 200 y el tercero tiene que dar
--- 429 — si da 200, la poda sigue borrando la fila de hoy y el tope es
--- decorativo.
+-- esperado; la prueba de que el arrego funciona es un paseo por `analizar-cv`
+-- con el header de sesion PUESTO: `Authorization: Bearer <JWT authenticated>`
+-- (se copia de devtools -> Network -> cualquier request de la app logueada, o
+-- del token de `supabase.auth.getSession()`). Si en vez del JWT de usuario va la
+-- anon key como Bearer (o el borde no recibe ningun Bearer: `verify_jwt` esta ON y
+-- responde 401 antes de correr la funcion), no se prueba este arrego: la funcion
+-- consulta el bucket `analisis-dia-ip` (tope 3 por IP), NO el `analisis-dia` que
+-- este archivo repara, y daria 429 igual midiendo otra cosa.
+--
+-- Con `ANALISIS_TOPE_DIARIO=2`, tres requests del MISMO usuario JWT, donde el
+-- tercero cae mas de una hora despues del primero. Los dos primeros dan 200 y el
+-- tercero tiene que dar 429 — si da 200, la poda sigue borrando la fila de hoy y
+-- el tope es decorativo. Verifique ademas la huella del deploy en la respuesta
+-- (`x-omicron-build`, hoy `10a-motor-guards`): un 429 de la funcion VIEJA tambien
+-- llega, y no prueba nada de este archivo.
