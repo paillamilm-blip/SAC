@@ -109,6 +109,7 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     });
     if (error || !data) {
       console.error('[analizar-cv] tope IP apagado (falla abierto):', error?.message ?? 'RPC sin datos');
+      if (userId) console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
       return null;
     }
     const r = data as { allowed?: boolean; reset_at?: string };

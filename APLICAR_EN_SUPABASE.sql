@@ -240,10 +240,15 @@ BEGIN
   SELECT pg_get_constraintdef(oid) INTO v_def
     FROM pg_constraint
    WHERE contype = 'p' AND conrelid = 'public.rate_limits'::regclass;
-  IF v_def IS NOT NULL AND v_def <> 'PRIMARY KEY (bucket, identifier, window_start)' THEN
+  IF v_def IS NULL THEN
+    RAISE NOTICE 'rate_limits: sin PK visible; no hay nada que alinear.';
+  ELSIF v_def <> 'PRIMARY KEY (bucket, identifier, window_start)' THEN
     ALTER TABLE public.rate_limits DROP CONSTRAINT rate_limits_pkey;
     ALTER TABLE public.rate_limits ADD CONSTRAINT rate_limits_pkey
       PRIMARY KEY (bucket, identifier, window_start);
+    RAISE NOTICE 'rate_limits: PK realineada a (bucket, identifier, window_start). Los contadores en curso se conservan.';
+  ELSE
+    RAISE NOTICE 'rate_limits: PK ya alineada a (bucket, identifier, window_start).';
   END IF;
 END $$;
 
