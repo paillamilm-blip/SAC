@@ -211,8 +211,13 @@ CREATE INDEX IF NOT EXISTS idx_rep_history_user ON public.reputation_history(use
 -- ESPEJO, no dueño. La fuente canónica es:
 --   supabase/migrations/0031_rate_limiting.sql      (tabla + RPC original)
 --   supabase/migrations/10013_ventana_propia_rate_limit.sql  (poda por ventana propia)
--- Este bloque produce exactamente el mismo estado de producción que 0031 +
--- 10013 aplicadas en orden. Si cambiás una de las dos, actualizá este espejo.
+-- Este bloque produce el mismo estado de producción que 0031 + 10013 aplicadas
+-- en orden, TAMBIÉN sobre una máquina donde la tabla ya existe sin la columna
+-- window_sec: el CREATE TABLE IF NOT EXISTS no repara una tabla vieja (la omite)
+-- y el cuerpo del RPC que se instala más abajo sí la inserta — sin el ALTER del
+-- final de este paso, el limitador de las 12 Edge Functions quedaba muerto
+-- (falla abierto) hasta pegar 10013. Si cambiás una de las dos migraciones,
+-- actualizás este espejo.
 -- El limitador falla abierto en las Edge Functions: si este bloque queda
 -- desalineado (ej. tabla con PK viejo), el tope se apaga sin ruido.
 
@@ -249,6 +254,29 @@ BEGIN
     RAISE NOTICE 'rate_limits: PK realineada a (bucket, identifier, window_start). Los contadores en curso se conservan.';
   ELSE
     RAISE NOTICE 'rate_limits: PK ya alineada a (bucket, identifier, window_start).';
+  END IF;
+END $$;
+
+-- El DO de arriba REALINEA la PK, pero no agrega columnas: una tabla creada
+-- por una versión vieja de este bootstrap sigue sin window_sec, y el insert del
+-- RPC (más abajo) la lista => 42703 en cada request => el limitador de las 12
+-- Edge Functions falla abierto hasta pegar 10013. Es la misma sentencia idempotente
+-- de 10013, y el default es constante: metadata-only, las filas existentes salen
+-- con 60 (la ventana con la que nacieron).
+ALTER TABLE public.rate_limits
+  ADD COLUMN IF NOT EXISTS window_sec integer NOT NULL DEFAULT 60;
+
+DO $$
+DECLARE v_sec text;
+BEGIN
+  SELECT data_type INTO v_sec
+    FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = 'rate_limits'
+     AND column_name = 'window_sec';
+  IF v_sec IS NULL THEN
+    RAISE NOTICE 'rate_limits: window_sec sigue ausente; el limitador queda fail-open hasta aplicar 10013.';
+  ELSE
+    RAISE NOTICE 'rate_limits: window_sec presente (%) — espejo de 10013 completo.', v_sec;
   END IF;
 END $$;
 

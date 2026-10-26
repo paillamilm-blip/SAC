@@ -32,3 +32,49 @@ describe('normalizarBrecha (port del validador de la app CV)', () => {
     expect(normalizarBrechas(Array(30).fill(OK))).toHaveLength(12);
   });
 });
+
+// I2: ningun campo puede traer megabytes de un CV malinterpretado. Los topes
+// viven en MAX_CAMPO (las tres copias del validador) y el SQL los documenta.
+describe('normalizarBrecha recorta cada campo a su maximo', () => {
+  const lleno = (n: number) => 'x'.repeat(n);
+  const desborda = {
+    categoria: 'dura', titulo: lleno(500), evidencia: lleno(5000), porQueImporta: lleno(5000),
+    severidad: 'alta',
+    aprender: { que: lleno(5000), como: lleno(5000), comoLoDemuestro: lleno(5000) },
+  };
+
+  it('recorta a 120 / 400 / 400 / 300 / 400 / 300', () => {
+    const r = normalizarBrecha(desborda)!;
+    expect(r.titulo).toHaveLength(120);
+    expect(r.evidencia).toHaveLength(400);
+    expect(r.porQueImporta).toHaveLength(400);
+    expect(r.aprender.que).toHaveLength(300);
+    expect(r.aprender.como).toHaveLength(400);
+    expect(r.aprender.comoLoDemuestro).toHaveLength(300);
+  });
+
+  it('un campo justo en el maximo pasa entero (el tope no muerde el borde)', () => {
+    const r = normalizarBrecha({
+      ...desborda,
+      titulo: lleno(120), evidencia: lleno(400), porQueImporta: lleno(400),
+      aprender: { que: lleno(300), como: lleno(400), comoLoDemuestro: lleno(300) },
+    })!;
+    expect(r.titulo).toHaveLength(120);
+    expect(r.evidencia).toHaveLength(400);
+    expect(r.porQueImporta).toHaveLength(400);
+    expect(r.aprender.que).toHaveLength(300);
+    expect(r.aprender.como).toHaveLength(400);
+    expect(r.aprender.comoLoDemuestro).toHaveLength(300);
+  });
+
+  it('el recorte no inventa: solo corta, el texto que queda es el principio', () => {
+    const r = normalizarBrecha({ ...desborda, titulo: 'React ' + lleno(300) })!;
+    expect(r.titulo.startsWith('React ')).toBe(true);
+    expect(r.titulo).toHaveLength(120);
+  });
+
+  it('un numero en lugar de texto sigue cayendo a vacio (el corte no lo rescata)', () => {
+    const r = normalizarBrecha({ ...desborda, titulo: 'React', evidencia: 42 })!;
+    expect(r.evidencia).toBe('');
+  });
+});

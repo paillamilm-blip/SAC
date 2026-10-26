@@ -11,34 +11,57 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '8b-tope-dia-obs';
+const BUILD = '9a-cierre-plan-a';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
+  // El spread del body va PRIMERO y `build` despues (M1): al reves, un cuerpo
+  // que trajera su propia clave "build" anulaba la huella — y la huella es
+  // justamente lo que se busca despues de un deploy.
   const payload = body && typeof body === 'object' && !Array.isArray(body)
-    ? { build: BUILD, ...(body as Record<string, unknown>) }
+    ? { ...(body as Record<string, unknown>), build: BUILD }
     : body;
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...CORS, 'Content-Type': 'application/json', 'x-omicron-build': BUILD, ...(extraHeaders ?? {}) },
+    headers: {
+      ...CORS,
+      'Content-Type': 'application/json',
+      'x-omicron-build': BUILD,
+      // M7: sin esto el navegador no puede leer la huella — un header propio no
+      // expuesto queda invisible en una respuesta cross-origin. Con Expose, el
+      // dueno del producto ve x-omicron-build en la pestaña Network de devtools
+      // y comprueba que codigo esta vivo sin abrir curl.
+      'Access-Control-Expose-Headers': 'x-omicron-build',
+      ...(extraHeaders ?? {}),
+    },
   });
 };
 
-// INLINE de _shared/brechas.ts (huella 7a) — las Edge Functions congelan _shared al crearse; editar el canónico y re-inlinear.
-// Copia del canónico menos las 3 `export` (este index.ts es entry file de Deno y
-// jamas se importa — Minor #7). El cuerpo del validador queda byte a byte igual.
-// Si cambia _shared/brechas.ts, volver a pegar aqui entero, quitar las `export` y
-// cambiar la huella.
+// INLINE INICIO de _shared/brechas.ts (huella 9a) — las Edge Functions congelan
+// _shared al crearse: editar el canonico y re-inlinear aca en el mismo commit
+// (pegar el bloque entero, quitar las `export`, no tocar nada mas).
+// Copia del canonico menos las 3 palabras `export` (este index.ts es entry file
+// de Deno y jamas se importa — Minor #7). El bloque esta delimitado en los dos
+// extremos: todo lo que va desde el header "// _shared/brechas.ts" hasta el
+// marcador INLINE FIN es byte a byte igual al canonico sin los `export`, y lo
+// afirma el test src/features/gemelo/services/contratoEspejos.test.ts (M4) — la
+// sincronia no depende de la disciplina de quien edita.
 // _shared/brechas.ts — validación defensiva del output de IA.
 // Port literal del validador de la app CV (lib/ai/validar.ts) sin zod:
 // sin dependencias, corre igual en Deno (Edge Function) y en vitest
 // (espejo en src/). Si cambia este archivo, cambia el espejo en el mismo commit.
+// Cada campo sale recortado a un máximo sano: un CV malinterpretado no puede
+// meter megabytes en las columnas TEXT ni en el localStorage del puente.
 
 type Categoria = 'dura' | 'blanda' | 'conocimiento' | 'credencial';
 type Severidad = 'alta' | 'media' | 'baja';
 const CATEGORIAS: readonly string[] = ['dura', 'blanda', 'conocimiento', 'credencial'];
 const SEVERIDADES: readonly string[] = ['alta', 'media', 'baja'];
 const MAX_BRECHAS = 12;
+const MAX_CAMPO = {
+  titulo: 120, evidencia: 400, porQueImporta: 400,
+  que: 300, como: 400, comoLoDemuestro: 300,
+} as const;
 
 interface BrechaValidada {
   categoria: Categoria; titulo: string; evidencia: string; porQueImporta: string;
@@ -46,23 +69,28 @@ interface BrechaValidada {
 }
 
 const str = (x: unknown): string => (typeof x === 'string' ? x.trim() : '');
+const campo = (x: unknown, max: number): string => str(x).slice(0, max);
 
 function normalizarBrecha(x: unknown): BrechaValidada | null {
   if (!x || typeof x !== 'object') return null;
   const b = x as Record<string, unknown>;
   const categoria = str(b.categoria).toLowerCase();
   if (!CATEGORIAS.includes(categoria)) return null;
-  const titulo = str(b.titulo);
+  const titulo = campo(b.titulo, MAX_CAMPO.titulo);
   if (!titulo) return null;
   const ap = (b.aprender && typeof b.aprender === 'object') ? b.aprender as Record<string, unknown> : {};
   const severidadRaw = str(b.severidad).toLowerCase();
   return {
     categoria: categoria as Categoria,
     titulo,
-    evidencia: str(b.evidencia),
-    porQueImporta: str(b.porQueImporta),
+    evidencia: campo(b.evidencia, MAX_CAMPO.evidencia),
+    porQueImporta: campo(b.porQueImporta, MAX_CAMPO.porQueImporta),
     severidad: SEVERIDADES.includes(severidadRaw) ? severidadRaw as Severidad : 'media',
-    aprender: { que: str(ap.que), como: str(ap.como), comoLoDemuestro: str(ap.comoLoDemuestro) },
+    aprender: {
+      que: campo(ap.que, MAX_CAMPO.que),
+      como: campo(ap.como, MAX_CAMPO.como),
+      comoLoDemuestro: campo(ap.comoLoDemuestro, MAX_CAMPO.comoLoDemuestro),
+    },
   };
 }
 
@@ -76,11 +104,18 @@ function normalizarBrechas(x: unknown): BrechaValidada[] {
   }
   return out;
 }
+// INLINE FIN de _shared/brechas.ts — arriba de esta linea queda la copia del
+// canonico (sin `export`); debajo van las funciones propias de esta funcion.
 
 function clientIp(req: Request): string {
+  // cf-connecting-ip (Cloudflare, en el borde) primero: es el unico que quien
+  // llama no puede forjar con un header propio. Recien despues el primer
+  // elemento de x-forwarded-for (falsificable) y x-real-ip.
+  const cf = req.headers.get('cf-connecting-ip');
+  if (cf) return cf.trim();
   const fwd = req.headers.get('x-forwarded-for');
   if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('cf-connecting-ip') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  return req.headers.get('x-real-ip') ?? 'unknown';
 }
 
 // Tope diario efectivo (secret ANALISIS_TOPE_DIARIO, solo server-side): si el
@@ -90,6 +125,22 @@ function clientIp(req: Request): string {
 function topeDiario(): number {
   const n = Math.floor(Number(Deno.env.get('ANALISIS_TOPE_DIARIO') ?? '10'));
   return Number.isFinite(n) && n > 0 ? n : 10;
+}
+
+// Tope diario de invitados (secret ANALISIS_TOPE_DIARIO_INVITADO, solo
+// server-side, default 3): mismo tratamiento que topeDiario() — floor y
+// fallback. Nunca VITE_: el numero que manda el servidor no le sirve al cliente.
+function topeDiarioInvitado(): number {
+  const n = Math.floor(Number(Deno.env.get('ANALISIS_TOPE_DIARIO_INVITADO') ?? '3'));
+  return Number.isFinite(n) && n > 0 ? n : 3;
+}
+
+// Segundos hasta el reset que dijo el RPC — una sola fuente de verdad para el
+// Retry-After de los dos topes de dia. Sin reset_at parseable, la ventana entera
+// (86400) es el techo honesto.
+function segundosHastaReset(resetAt?: string): number {
+  const resetSec = resetAt ? Math.floor(Date.parse(resetAt) / 1000) : NaN;
+  return Math.max(1, Number.isFinite(resetSec) ? resetSec - Math.floor(Date.now() / 1000) : 86400);
 }
 
 // Fail-open en todas las rutas de fallo: el limitador enfermo nunca rompe el
@@ -109,7 +160,7 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     });
     if (error || !data) {
       console.error('[analizar-cv] tope IP apagado (falla abierto):', error?.message ?? 'RPC sin datos');
-      if (userId) console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
+      console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
       return null;
     }
     const r = data as { allowed?: boolean; reset_at?: string };
@@ -131,7 +182,31 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     // Tope dia por usuario (servidor manda; mismo espiritu que usoDeHoy() de la
     // app CV). Ventana fija de 86400s alineada al epoch => el reset es la
     // proxima medianoche UTC; el Retry-After sale del reset_at del RPC.
-    if (!userId) return null;
+    if (!userId) {
+      // I5: sin usuario no hay contador por usuario, y un script podia vaciar la
+      // cuenta gratis de OpenRouter sin morena. Se frena por IP con la MISMA
+      // RPC y la misma forma de clave (IP:YYYY-MM-DD) que el bucket de usuario.
+      // La IP es falsificable (x-forwarded-for lo decide quien llama; por eso
+      // clientIp() prefiere cf-connecting-ip, que tampoco es identidad): esto es
+      // FRENO SUAVE, no muro. Un NAT compartido reparte los N analisis.
+      const limiteInvitado = topeDiarioInvitado();
+      const { data: diaIp, error: diaIpError } = await _admin.rpc('check_rate_limit', {
+        p_bucket: 'analisis-dia-ip',
+        p_identifier: `${clientIp(req)}:${new Date().toISOString().slice(0, 10)}`,
+        p_limit: limiteInvitado,
+        p_window_sec: 86400,
+      });
+      if (diaIpError || !diaIp) {
+        console.error('[analizar-cv] tope dia de invitados apagado (falla abierto):', diaIpError?.message ?? 'RPC sin datos');
+        return null;
+      }
+      const g = diaIp as { allowed?: boolean; reset_at?: string };
+      if (g.allowed === false) {
+        const retryInvitado = segundosHastaReset(g.reset_at);
+        return json({ ok: false, error: `Terminaste los ${limiteInvitado} análisis gratis de hoy para este dispositivo. El contador se renueva en ~${Math.ceil(retryInvitado / 3600)} h.`, retry_at: g.reset_at ?? null }, 429, { 'Retry-After': String(retryInvitado) });
+      }
+      return null;
+    }
     const limite = topeDiario();
     const { data: dia, error: diaError } = await _admin.rpc('check_rate_limit', {
       p_bucket: 'analisis-dia',
@@ -146,9 +221,7 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     const d = dia as { allowed?: boolean; reset_at?: string };
     if (d.allowed === false) {
       // Una sola fuente de verdad: los segundos salen del reset_at del RPC.
-      // Sin reset_at parseable, 86400 (la ventana entera) es el techo honesto.
-      const resetSec = d.reset_at ? Math.floor(Date.parse(d.reset_at) / 1000) : NaN;
-      const retryAfter = Math.max(1, Number.isFinite(resetSec) ? resetSec - Math.floor(Date.now() / 1000) : 86400);
+      const retryAfter = segundosHastaReset(d.reset_at);
       return json({ ok: false, error: `Llegaste a los ${limite} análisis de hoy. El contador se renueva en ~${Math.ceil(retryAfter / 3600)} h.`, retry_at: d.reset_at ?? null }, 429, { 'Retry-After': String(retryAfter) });
     }
     return null;
@@ -172,6 +245,9 @@ Deno.serve(async (req) => {
     // rechazado con header presente es un 401 (dentro de rateLimited, despues
     // del tope IP), nunca un invitado silencioso.
     const auth = req.headers.get('authorization') ?? '';
+    // traiaToken: sirvio para distinguir invitado real de "usuario al que no
+    // pudimos verificar" cuando _admin falta (I1, se usa en el guardado).
+    const traiaToken = auth !== '';
     let userId: string | null = null;
     let tokenRechazado = false;
     if (_admin && auth) {
@@ -216,9 +292,12 @@ Deno.serve(async (req) => {
     (parsed as { brechas?: unknown }).brechas = brechas;
 
     let guardado: { analisis_id: string; brechas: string[] } | null = null;
-    // guardado_error: un usuario verificado existe pero la RPC fallo o no trajo
-    // datos. Distinge ese caso del invitado real (guardado null sin usuario) para
-    // que el cliente no deposite las brechas de un usuario con sesion en el puente.
+    // guardado_error: quien llamo parecia tener sesion pero el guardado NO
+    // ocurrio (RPC fallo, no trajo datos, o _admin ausente y por lo tanto ni se
+    // intento). Distinge ese caso del invitado real (sin token, guardado null)
+    // para que el cliente no deposite las brechas de un usuario con sesion en el
+    // puente de invitados, donde nunca alcanzan la BD ni el mapa entre
+    // dispositivos.
     let guardado_error = false;
     if (_admin && userId) {
       const p = parsed as Record<string, unknown>;
@@ -250,6 +329,13 @@ Deno.serve(async (req) => {
         console.error('[analizar-cv] guardado fallo:', error?.message ?? 'sin datos');
       }
     }
+    // I1 (falla abierto disfrazado de invitado): si se presento un token y aun
+    // asi no hubo guardado, la bandera va TRUE igualmente — incluso cuando _admin
+    // falta, caso en el que el bloque de arriba ni se ejecuto: identidad no
+    // verificable, y nada que escribir (menos aun) en el puente de invitados.
+    // Un invitado de verdad no trae token y conserva
+    // guardado:null / guardado_error:false.
+    if (traiaToken && !guardado) guardado_error = true;
 
     console.log(`[analizar-cv] OK, nombre: ${(parsed as {name?:string})?.name ?? '?'}`);
     return json({ ok: true, analysis: parsed, model: 'openrouter', guardado, guardado_error });

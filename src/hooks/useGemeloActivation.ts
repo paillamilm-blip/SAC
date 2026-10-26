@@ -24,6 +24,7 @@ import { useToast } from '@/shared/components/Toast';
 import { speak } from '@/infrastructure/voice/engine';
 import { analyzeCV, type AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { extractCVText } from '@/features/gemelo/services/cvExtract';
+import type { AnalysisCrudoIA } from '@/features/gemelo/services/aprendizaje';
 import { savePendingCvAnalysis, getPendingCvAnalysis, clearPendingCvAnalysis, hasPendingCvAnalysis } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
 
@@ -47,6 +48,38 @@ const PROGRESS_MESSAGES = [
   'Calculando ejes del Gemelo Digital…',
   'Es un modelo gratuito: puede tardar hasta 70 segundos…',
 ];
+
+/**
+ * Mezcla el análisis crudo de la IA con la base heurística de `analyzeCV()`:
+ * la IA manda donde trajo dato, el heurístico cubre el resto. Está afuera del
+ * callback porque los DOS caminos del motor (Edge Function `analizar-cv` y el
+ * fallback Gemini) comparten este único mapeo.
+ */
+function mezclarAnalisis(
+  base: AnalyzedProfile,
+  ia: AnalysisCrudoIA,
+): AnalyzedProfile {
+  const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
+  const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
+  const skillsDetail = (ia.skillsDetail ?? [])
+    .filter((s: { name?: string }) => s?.name).slice(0, 12)
+    .map((s: { name?: string; pct?: number }) => ({ name: s.name!, pct: clamp(s.pct) }));
+  // `ia.axes` existe: el llamador ya verificó que el análisis trae ejes antes
+  // de llegar acá (misma guarda que tenía el bloque inline de Gemini).
+  return {
+    ...base,
+    name: ia.name || base.name,
+    seniorLabel: ia.seniorLabel || base.seniorLabel,
+    seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || base.seniorLevel,
+    years: typeof ia.years === 'number' ? ia.years : base.years,
+    skills: skills.length ? skills : base.skills,
+    labels: skills.length ? skills : base.labels,
+    skillsDetail: skillsDetail.length ? skillsDetail : base.skillsDetail,
+    summary: ia.summary || base.summary,
+    arch: (ia.arch as AnalyzedProfile['arch']) || base.arch,
+    axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
+  };
+}
 
 export function useGemeloActivation() {
   const { gemelo, refreshProfile, profile } = useApp();
@@ -312,10 +345,16 @@ export function useGemeloActivation() {
   // ANALYZE CV — NO requiere auth. Cualquier usuario puede analizar.
   // Al terminar, muestra GemeloReveal (phase = 'reveal').
   //
-  // IMPORTANTE: Esta función SOLO analiza. NO persiste. La persistencia
+  // IMPORTANTE: Esta función NO persiste el perfil. La persistencia
   // ocurre SOLO cuando el usuario toca "Activar" en GemeloReveal, que
   // llama a `persistAnalysis`. Esto rompe el loop anterior donde el
   // análisis intentaba guardar inline y fallaba silenciosamente.
+  //
+  // Qué cambió con el motor unificado: el análisis pasa por la Edge Function
+  // `analizar-cv`, y ESA función guarda el run (CV + brechas) en
+  // `analisis_cv`/`brechas_aprendizaje` cuando hay sesión verificada. No es
+  // persistencia del perfil del Gemelo — es el registro que mide la precisión
+  // de la Fase 1; el perfil sigue teniendo un solo camino: `persistAnalysis`.
   // ══════════════════════════════════════════════════════════════════
   const activateGemeloCompleto = useCallback(async () => {
     const text = cvText.trim();
@@ -358,38 +397,30 @@ export function useGemeloActivation() {
     }, 6000);
 
     try {
-      // ── 1) Analyze CV (IA o local — siempre termina) ───────────────
+      // ── 1) Analiza el CV: motor → fallback → error (nunca datos falsos) ──
       let analyzed: AnalyzedProfile | null = null;
 
       try {
-        const { analyzeCVWithGemini } = await import('@/infrastructure/ai/gemini');
-        const geminiResult = await analyzeCVWithGemini(text);
+        // El motor de aprendizaje (Edge Function `analizar-cv`) es el camino que
+        // emite brechas y guarda el run con la identidad del JWT — la unica
+        // fuente de la metrica de la Fase 1. `analyzeCVWithGemini` queda como
+        // FALLBACK DECLARADO ante cualquier error del motor (401, 429, 5xx, red,
+        // JSON roto, analisis sin ejes), asi que el flujo que el usuario ya conoce
+        // no se rompe si la funcion no esta desplegada o se pasa del tope.
+        // La eleccion motor->fallback vive en el servicio (analizarCvConFallback)
+        // para poder probarse sin montar el hook; el mapeo del resultado es el
+        // mismo de siempre, ahora compartido por los dos caminos.
+        const { analizarCvConFallback } = await import('@/features/gemelo/services/aprendizaje');
+        const r = await analizarCvConFallback(text, cvFileName || 'cv');
 
         if (cancelledRef.current || !isProcessingRef.current) return;
 
-        if (geminiResult.ok && geminiResult.analysis?.axes) {
-          const ia = geminiResult.analysis;
-          const clamp = (n?: number) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-          const skills = (ia.skills ?? []).filter(Boolean).slice(0, 12);
-          const skillsDetail = (ia.skillsDetail ?? [])
-            .filter((s: { name?: string }) => s?.name).slice(0, 12)
-            .map((s: { name?: string; pct?: number }) => ({ name: s.name!, pct: clamp(s.pct) }));
-          const base = analyzeCV(text);
-          analyzed = {
-            ...base,
-            name: ia.name || base.name,
-            seniorLabel: ia.seniorLabel || base.seniorLabel,
-            seniorLevel: (ia.seniorLevel as AnalyzedProfile['seniorLevel']) || base.seniorLevel,
-            years: typeof ia.years === 'number' ? ia.years : base.years,
-            skills: skills.length ? skills : base.skills,
-            labels: skills.length ? skills : base.labels,
-            skillsDetail: skillsDetail.length ? skillsDetail : base.skillsDetail,
-            summary: ia.summary || base.summary,
-            arch: (ia.arch as AnalyzedProfile['arch']) || base.arch,
-            axes: { exec: clamp(ia.axes!.exec), qual: clamp(ia.axes!.qual), trans: clamp(ia.axes!.trans), fund: clamp(ia.axes!.fund) },
-          };
+        if (r && r.analysis.axes) {
+          analyzed = mezclarAnalisis(analyzeCV(text), r.analysis);
+          console.info(`[Omicron] análisis servido por ${r.fuente === 'motor' ? 'el motor analizar-cv' : 'el fallback Gemini'} · guardado: ${r.guardado ? 'sí' : 'no'} · huella: ${r.build ?? 'sin'}`);
         } else {
-          // IA failed or incomplete — show error, NO local fallback con datos falsos
+          // Ningun motor trajo un analisis completo — show error, NO local
+          // fallback con datos falsos
           console.error('[Omicron] AI result incomplete. No local fallback.');
           analyzed = null;
         }
@@ -468,7 +499,7 @@ export function useGemeloActivation() {
       setPhase('upload');
       isProcessingRef.current = false;
     }
-  }, [cvText, toast, profile?.id, persistAnalysis]);
+  }, [cvText, cvFileName, toast, profile?.id, persistAnalysis]);
 
   return {
     // State

@@ -1,0 +1,115 @@
+// features/gemelo/services/contratoEspejos.test.ts
+// M4: los espejos del validador no pueden depender de la disciplina de quien
+// edita. Este test lee los TRES archivos desde el disco (canonico, espejo de
+// navegador y bloque INLINE del entry Deno) y afirma que son el mismo codigo:
+// si alguien cambia uno sin los otros, la tanda rompe aqui, no en produccion.
+// Y prueba la maquina de estados contra el SQL que manda en runtime (10012),
+// no solo contra si misma.
+//
+// Se lee con `?raw` (import crudo de Vite) porque `supabase/` esta fuera del
+// tsconfig de la app y no tiene tipos de Deno: aca no se ejecuta ese codigo, se
+// compara texto.
+import { describe, it, expect } from 'vitest';
+import canonicoRaw from '../../../../supabase/functions/_shared/brechas.ts?raw';
+import espejoRaw from './brechasValidar.ts?raw';
+import entryRaw from '../../../../supabase/functions/analizar-cv/index.ts?raw';
+import migracionRaw from '../../../../supabase/migrations/10012_aprendizaje_continuo.sql?raw';
+import { TRANSICIONES_VALIDAS } from './brechas';
+
+// El canonico empieza en esta linea; el espejo del navegador y el bloque inline
+// traen encabezados propios ANTES de la copia, y se comparan desde ahi. Es la
+// linea completa (no el mero "// _shared/brechas.ts") porque ese texto tambien
+// aparece citado dentro de los comentarios que explican el inline.
+const HEADER = '// _shared/brechas.ts — validación defensiva del output de IA.';
+
+const desdeElHeader = (src: string, donde: string): string => {
+  const i = src.indexOf(HEADER);
+  expect(i, `${donde}: no esta el header del canonico (${HEADER}) — se reescribio el encabezado`).toBeGreaterThanOrEqual(0);
+  return src.slice(i).trimEnd();
+};
+
+const sinExport = (src: string): string => src.replace(/^export /gm, '');
+
+// Los `?raw` no llegan con el mismo salto de linea: en este checkout el entry de
+// Deno conserva CRLF y los modulos TS vienen con LF (core.autocrlf del clon). La
+// terminacion de linea no es codigo — el contrato es sobre el TEXTO, asi que se
+// compara sin retornos de carro.
+const sinCR = (src: string): string => src.replace(/\r/g, '');
+
+describe('las tres copias del validador (M4)', () => {
+  it('el canonico declara exactamente 3 `export`', () => {
+    expect(canonicoRaw.match(/^export /gm)).toHaveLength(3);
+  });
+
+  it('el espejo del navegador es el canonico texto por texto', () => {
+    expect(sinCR(desdeElHeader(espejoRaw, 'brechasValidar.ts'))).toBe(sinCR(canonicoRaw).trimEnd());
+  });
+
+  it('el bloque INLINE de analizar-cv es el canonico menos las 3 `export`', () => {
+    const inicio = entryRaw.indexOf('// INLINE INICIO');
+    const fin = entryRaw.indexOf('// INLINE FIN');
+    expect(inicio, 'falta el marcador INLINE INICIO').toBeGreaterThanOrEqual(0);
+    expect(fin, 'falta el marcador INLINE FIN (el rango copiado tiene que estar delimitado en los dos extremos)').toBeGreaterThan(inicio);
+    const bloque = sinCR(desdeElHeader(entryRaw.slice(inicio, fin), 'INLINE de analizar-cv'));
+    const esperado = sinCR(sinExport(canonicoRaw)).trimEnd();
+    expect(bloque).toBe(esperado);
+    // misma cantidad de lineas: si alguien agrega una linea al canonico y re-inlinea
+    // a medias, el texto puede seguir coincidiendo por accidente; el conteo no.
+    expect(bloque.split('\n'), 'el INLINE no tiene las mismas lineas que el canonico').toHaveLength(esperado.split('\n').length);
+  });
+
+  it('el entry de Deno no exporta nada (nunca se importa)', () => {
+    expect(/^export /m.test(entryRaw), 'hay un `export` de verdad en el entry file').toBe(false);
+  });
+
+  it('el limite de tamano por campo vive en las tres copias', () => {
+    const limites = (src: string) => /titulo: 120, evidencia: 400, porQueImporta: 400,\s*que: 300, como: 400, comoLoDemuestro: 300/.test(src);
+    expect(limites(canonicoRaw)).toBe(true);
+    expect(limites(espejoRaw)).toBe(true);
+    expect(limites(entryRaw)).toBe(true);
+  });
+});
+
+describe('la maquina de estados del TS es la del SQL de 10012 (M4)', () => {
+  // Ramas del guard de marcar_brecha: `r.state = 'X' and p_state in (...)` o
+  // `r.state = 'X' and p_state = 'Y'`. Sin parser: cadenas fijas; si el SQL
+  // cambio de forma, la extraccion sale vacia y el test ruge.
+  const RAMA = /r\.state = '([a-z]+)' and p_state (?:in \(([^)]*)\)|= '([a-z]+)')/g;
+
+  const ramasDelSql = (): Record<string, string[]> => {
+    const out: Record<string, string[]> = {};
+    for (const m of migracionRaw.matchAll(RAMA)) {
+      const destinos = m[2]
+        ? m[2].split(',').map((s) => s.trim().replace(/'/g, ''))
+        : [m[3]];
+      out[m[1]] = [...(out[m[1]] ?? []), ...destinos];
+    }
+    return out;
+  };
+
+  it('el guard de marcar_brecha sigue teniendo sus ramas', () => {
+    expect(Object.keys(ramasDelSql()).length, 'el guard de marcar_brecha cambio de forma: hay que revisar este test y el SQL juntos').toBe(3);
+  });
+
+  it('toda transicion que el TS permite es una rama del SQL, y ninguna rama del SQL queda fuera del TS', () => {
+    const esperadas: Record<string, string[]> = Object.fromEntries(
+      Object.entries(TRANSICIONES_VALIDAS).filter(([, destinos]) => destinos.length > 0),
+    );
+    expect(ramasDelSql()).toEqual(esperadas);
+  });
+
+  it('dominada es terminal en los dos lados', () => {
+    expect(TRANSICIONES_VALIDAS.dominada).toEqual([]);
+    expect(migracionRaw.includes('if r.state = \'dominada\' then'), 'el SQL perdio la rama de dominada terminal').toBe(true);
+    expect(migracionRaw.includes('Ya marcaste esto como dominado')).toBe(true);
+  });
+
+  it('el indice unico de identidad de skill y su upsert estan en el SQL (spec §4)', () => {
+    expect(migracionRaw.includes('create unique index if not exists brechas_unica_skill')).toBe(true);
+    expect(migracionRaw.includes('on conflict (user_id, titulo_normalizado) do update')).toBe(true);
+    // El estado del usuario jamas lo pisa un run nuevo.
+    expect(migracionRaw.includes('state = excluded.state')).toBe(false);
+    expect(migracionRaw.includes('confirmed_at = excluded.confirmed_at')).toBe(false);
+    expect(migracionRaw.includes('mastered_at = excluded.mastered_at')).toBe(false);
+  });
+});
