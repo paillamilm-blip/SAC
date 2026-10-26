@@ -105,19 +105,30 @@ revoke all on function public.marcar_brecha(uuid, text) from public, anon;
 grant execute on function public.marcar_brecha(uuid, text) to authenticated;
 
 -- ---------- RPC: guardar_analisis_completo ----------
-create or replace function public.guardar_analisis_completo(p_cv jsonb, p_brechas jsonb)
+-- security definer a proposito: esta RPC la invoca la Edge Function analizar-cv
+-- con la service key (sin JWT de usuario en la conexion). Con security invoker,
+-- auth.uid() es NULL dentro del servicio y el guardado jamas funcionaria
+-- (hallazgo T6, 2026-10-26). La identidad llega explicita por p_user_id y la
+-- valida la funcion. OBLIGACION de quien la llame: p_user_id debe salir de un
+-- getUser() verificado con el JWT del usuario (analizar-cv lo hace) — nunca del
+-- cuerpo de la request. La funcion solo INSERTA filas propias; nunca lee ni
+-- muta ajenas.
+create or replace function public.guardar_analisis_completo(p_cv jsonb, p_brechas jsonb, p_user_id uuid)
 returns jsonb
 language plpgsql
-security invoker
+security definer
 set search_path = public
 as $$
 declare
-  v_uid uuid := auth.uid();
+  v_uid uuid := coalesce(p_user_id, auth.uid());
   v_analisis_id uuid;
   v_brechas_ids jsonb;
 begin
   if v_uid is null then
     raise exception 'BRECHA_REQUIERE_SESION';
+  end if;
+  if not exists (select 1 from auth.users where id = v_uid) then
+    raise exception 'USUARIO_INEXISTENTE';
   end if;
 
   insert into public.analisis_cv
@@ -151,8 +162,8 @@ begin
 
   return jsonb_build_object('analisis_id', v_analisis_id, 'brechas', v_brechas_ids);
 end $$;
-revoke all on function public.guardar_analisis_completo(jsonb, jsonb) from public, anon;
-grant execute on function public.guardar_analisis_completo(jsonb, jsonb) to authenticated;
+revoke all on function public.guardar_analisis_completo(jsonb, jsonb, uuid) from public, anon;
+grant execute on function public.guardar_analisis_completo(jsonb, jsonb, uuid) to authenticated, service_role;
 
 -- Verificacion post-aplicacion (ejecutar en la misma ventana):
 -- select count(*) from information_schema.tables where table_name in ('analisis_cv','brechas_aprendizaje');

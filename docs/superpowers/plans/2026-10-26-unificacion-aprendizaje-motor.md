@@ -12,6 +12,16 @@
 
 **Trabajo en:** `C:\Users\paill\Documents\Qoder\2026-10-23\ea694392\Sistema-omicrom`, rama `fase-6-recorte-datos`. (El Plan B — mapa intacto + realtime <3 s + racha — se escribe al aprobarse el cierre de este plan.)
 
+## Addendum del controlador (rulings post-dispatch, 2026-10-26)
+
+Estos fallos del plan original se corrigieron en el código; el texto de los Tasks 4/6 queda como fue escrito y **mandan las firmas corregidas**:
+
+1. `marcar_brecha(p_brecha uuid, p_state text) → **jsonb**` (no `jsonb·text`; la prosa del Task 4 contradecía su propio SQL verbatim — mandó el SQL).
+2. `guardar_analisis_completo(p_cv jsonb, p_brechas jsonb, **p_user_id uuid**) → jsonb {analisis_id, brechas: uuid[]}` — **security definer**, granted a `authenticated, service_role`. Motivo (hallazgo T6): invocada desde la Edge Function con service key, `auth.uid()` es NULL y una RPC `security invoker` nunca habría guardado nada. La identidad la pasa la función analizando el JWT verificado via `getUser()` — nunca el cuerpo de la request; la RPC además valida que el usuario exista en `auth.users`.
+3. `10012` incluye `drop policy if exists` (re-aplicación segura) y `notify pgrst, 'reload schema'` (las RPCs nuevas quedan visibles en la API sin reinicio).
+4. El validador va **inlineado** en `analizar-cv/index.ts` (lección 6F: `_shared/` se congela por función en el dashboard); `_shared/brechas.ts` queda canónica para funciones nuevas y `brechasValidar.ts` es su espejo testeable en vitest.
+5. Task 7 queda acotado al servicio `aprendizaje.ts` + tests: el rewire de `useGemeloActivation` ocurre en el Plan B con la UI del mapa (hoy el heurístico `analyzeCV` sigue mandando en la activación; `analizarCvConIA` es su reemplazo declarado cuando la función esté desplegada).
+
 ## Global Constraints
 
 - Nomenclatura SQL/commits en español, estilo `10010_convalidar_sin_boveda.sql` (comentario `-- EL HECHO:` explicando el porqué).

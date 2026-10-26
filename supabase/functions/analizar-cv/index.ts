@@ -149,13 +149,10 @@ Deno.serve(async (req) => {
         : { data: { user: null } };
       if (userData?.user?.id) {
         const p = parsed as Record<string, unknown>;
-        // OJO (reporte T6, rulings pendientes): _admin habla con la service key, y
-        // dentro de PostgREST auth.uid() es NULL con ese JWT. Como la RPC es
-        // `security invoker` y su guard es auth.uid(), este call puede devolver
-        // BRECHA_REQUIERE_SESION y guardado seguiria null (el cliente hace fallback).
-        // Arreglo propuesto si el controlador lo manda: client de usuario con
-        // ANON_KEY + { global: { headers: { Authorization: auth } } } (house style
-        // de carta-ia / verificar-pago / crear-checkout).
+        // Ruling controlador 2026-10-26 (T6): la RPC es security definer con
+        // p_user_id (10012). La identidad SOLO sale de getUser() verificado con
+        // el JWT adjunto arriba — nunca del cuerpo de la request. getUser ya
+        // falla con token invalido, asi que este id es confianza de servidor.
         const { data, error } = await _admin.rpc('guardar_analisis_completo', {
           p_cv: {
             nombre_archivo: (body?.nombre_archivo ?? 'cv').toString().slice(0, 200),
@@ -166,6 +163,7 @@ Deno.serve(async (req) => {
             simulado: false,
           },
           p_brechas: brechas,
+          p_user_id: userData.user.id,
         });
         if (!error && data) {
           guardado = data as { analisis_id: string; brechas: string[] };
