@@ -158,11 +158,11 @@ describe('analizarCvConIA', () => {
 
   it('M7: la huella build viaja en la respuesta parseada', async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
-    mockFetch({ ok: true, analysis: ANALYSIS, guardado: { analisis_id: 'an-1', brechas: [] }, build: '9a-cierre-plan-a' });
+    mockFetch({ ok: true, analysis: ANALYSIS, guardado: { analisis_id: 'an-1', brechas: [] }, build: '10a-motor-guards' });
 
     const r = await analizarCvConIA('texto', 'cv.pdf');
 
-    expect(r.build).toBe('9a-cierre-plan-a');
+    expect(r.build).toBe('10a-motor-guards');
     expect(r.guardado).toEqual({ analisis_id: 'an-1', brechas: [] });
   });
 
@@ -237,7 +237,7 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
   it('motor OK: usa analizarCvConIA y jamas toca el fallback', async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
     const guardado = { analisis_id: 'an-1', brechas: ['uuid-brecha-1'] };
-    mockFetch({ ok: true, analysis: ANALYSIS, guardado, build: '9a-cierre-plan-a' });
+    mockFetch({ ok: true, analysis: ANALYSIS, guardado, build: '10a-motor-guards' });
 
     const r = await analizarCvConFallback('texto', 'cv.pdf');
 
@@ -246,7 +246,7 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     expect(r!.analysis.axes).toEqual({ exec: 1, qual: 1, trans: 1, fund: 1 });
     expect(r!.brechas).toEqual([BRECHA]);
     expect(r!.guardado).toEqual(guardado);
-    expect(r!.build).toBe('9a-cierre-plan-a');
+    expect(r!.build).toBe('10a-motor-guards');
     expect(gemini.analyzeCVWithGemini).not.toHaveBeenCalled();
     // autenticado: el puente sigue vacio
     expect(localStorage.getItem(PUENTE_KEY)).toBeNull();

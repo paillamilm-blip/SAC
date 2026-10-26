@@ -70,6 +70,49 @@ describe('las tres copias del validador (M4)', () => {
   });
 });
 
+describe('el gate de ejes y el presupuesto de IA viven en el entry de Deno', () => {
+  // El entry file importa `jsr:` y usa `Deno.serve`: vitest no puede importarlo,
+  // asi que la conducta se afirma sobre el TEXTO del archivo, en el ORDEN del
+  // archivo — que es lo que hace a un guard ser guard. Si alguien mueve el
+  // guardado por encima del guard, o le quita el .catch() a la carrera, ruge aca.
+  const i = (s: string): number => {
+    const n = entryRaw.indexOf(s);
+    expect(n, `no existe \`${s}\` en el entry: se borro el mecanismo que afirma este test`).toBeGreaterThanOrEqual(0);
+    return n;
+  };
+
+  it('el analisis incompleto no se guarda y no se devuelve ok', () => {
+    const guard = i('if (!ejesUsables(parsed))');
+    expect(guard, 'el guard de ejes tiene que estar antes del guardado').toBeLessThan(i("'guardar_analisis_completo'"));
+    expect(guard).toBeLessThan(i('return json({ ok: true'));
+    // 502 (falla del motor), no 200: el cliente no puede pintarlo como exito.
+    expect(entryRaw.slice(guard, guard + 600)).toContain('502');
+  });
+
+  it('el request tiene presupuesto propio y distingue saturado de sin respuesta', () => {
+    const carrera = i('await Promise.race([');
+    expect(carrera).toBeLessThan(i("'guardar_analisis_completo'"));
+    expect(entryRaw).toContain('PRESUPUESTO_IA_MS');
+    // El .catch() es lo que evita que el rechazo de callLLM caiga en el catch
+    // general (500 con `detail`): sin el, la carrera no sirve de nada.
+    expect(entryRaw.slice(carrera, carrera + 800)).toContain('.catch(');
+    expect(entryRaw).toContain('}, 504)');
+  });
+
+  it('nadie comparte el baldio de los anonimos: clientIp devuelve null y el bucket de invitados exige ip', () => {
+    expect(entryRaw).toContain('function clientIp(req: Request): string | null');
+    expect(/'unknown'/.test(entryRaw), 'volvio un identificador fijo para el origen desconocido').toBe(false);
+    // El bucket diario de invitados se arma con la ip ya resuelta (el 503 de
+    // arriba corta al invitado sin ip antes de llegar aca).
+    expect(entryRaw).toContain('p_identifier: `${ip}:${new Date().toISOString().slice(0, 10)}`');
+    expect(entryRaw).toContain('503');
+  });
+
+  it('la huella nueva esta puesta (el curl de deploy verifica contra esto)', () => {
+    expect(entryRaw).toContain("const BUILD = '10a-motor-guards'");
+  });
+});
+
 describe('la maquina de estados del TS es la del SQL de 10012 (M4)', () => {
   // Ramas del guard de marcar_brecha: `r.state = 'X' and p_state in (...)` o
   // `r.state = 'X' and p_state = 'Y'`. Sin parser: cadenas fijas; si el SQL

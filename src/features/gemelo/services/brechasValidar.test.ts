@@ -8,6 +8,8 @@ const OK = {
   aprender: { que: 'tablas dinámicas', como: 'curso 4h + práctica', comoLoDemuestro: 'archivo de ejemplo' },
 };
 
+const conTitulo = (t: string) => ({ ...OK, titulo: t });
+
 describe('normalizarBrecha (port del validador de la app CV)', () => {
   it('brecha válida pasa con defaults', () => {
     const r = normalizarBrecha(OK);
@@ -28,8 +30,43 @@ describe('normalizarBrecha (port del validador de la app CV)', () => {
   it('normalizarBrechas filtra, limita a 12 y no lanza con basura', () => {
     expect(normalizarBrechas(null)).toEqual([]);
     expect(normalizarBrechas('no soy array')).toEqual([]);
-    expect(normalizarBrechas([OK, { basura: true }, OK])).toHaveLength(2);
-    expect(normalizarBrechas(Array(30).fill(OK))).toHaveLength(12);
+    // Titulos distintos: con el dedupe por identidad de skill, un array de `OK`
+    // repetidos ya no sirve para medir el corte de 12 (ver describe de abajo).
+    expect(normalizarBrechas([conTitulo('A'), { basura: true }, conTitulo('B')])).toHaveLength(2);
+    expect(normalizarBrechas(Array.from({ length: 30 }, (_, i) => conTitulo(`skill ${i}`)))).toHaveLength(12);
+  });
+});
+
+// Dedupe por titulo normalizado: la RPC de 10012 ya dedupa (row_number() ... rn = 1)
+// y su `returning id` cubre las dos ramas del upsert, o sea que devuelve UN id por
+// cada skill unica. Si el validador conserva los repetidos, `guardado.brechas` trae
+// menos ids que brechas tiene el cliente y la lista de suscripciones de Plan B
+// queda corta sin que nadie lo vea. El espejo del navegador es la misma identidad
+// de skill del spec §4, asi que el Gemelo y la BD ven la misma lista.
+describe('normalizarBrechas dedupe por titulo normalizado', () => {
+  it('la misma skill escrita dos formas distintas queda una sola vez (y gana la primera)', () => {
+    const r = normalizarBrechas([conTitulo('Excel avanzado'), conTitulo('  excel   AVANZADO ')]);
+    expect(r).toHaveLength(1);
+    // `order by ord` del SQL: se conserva la primera aparicion, con su titulo tal
+    // como lo trajo ese run (normalizarBrecha ya recorto por los lados).
+    expect(r[0].titulo).toBe('Excel avanzado');
+  });
+
+  it('13 titulos unicos cortan en 12 (el dedupe no mueve el MAX_BRECHAS)', () => {
+    expect(normalizarBrechas(Array.from({ length: 13 }, (_, i) => conTitulo(`skill ${i}`)))).toHaveLength(12);
+  });
+
+  it('un repetido no consume cupo: 13 entradas con 12 titulos unicos dan las 12', () => {
+    const unicos = Array.from({ length: 12 }, (_, i) => conTitulo(`skill ${i}`));
+    // El duplicado va en el MEDIO y repite una skill ya vista: sin dedupe ocupa un
+    // lugar y el corte de 12 se come la ultima skill; con dedupe pasa por arriba y
+    // las 12 unicas sobreviven con el titulo de la primera aparicion.
+    const con_repetido = [...unicos.slice(0, 5), conTitulo('  SKILL   2 '), ...unicos.slice(5)];
+    expect(con_repetido).toHaveLength(13);
+    const r = normalizarBrechas(con_repetido);
+    expect(r).toHaveLength(12);
+    expect(r.map((b) => b.titulo)).toEqual(unicos.map((b) => b.titulo));
+    expect(r.map((b) => b.titulo)).toContain('skill 11');
   });
 });
 

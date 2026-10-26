@@ -11,7 +11,7 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '9a-cierre-plan-a';
+const BUILD = '10a-motor-guards';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
@@ -37,7 +37,7 @@ const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>
   });
 };
 
-// INLINE INICIO de _shared/brechas.ts (huella 9a) — las Edge Functions congelan
+// INLINE INICIO de _shared/brechas.ts (huella 10a) — las Edge Functions congelan
 // _shared al crearse: editar el canonico y re-inlinear aca en el mismo commit
 // (pegar el bloque entero, quitar las `export`, no tocar nada mas).
 // Copia del canonico menos las 3 palabras `export` (este index.ts es entry file
@@ -94,12 +94,26 @@ function normalizarBrecha(x: unknown): BrechaValidada | null {
   };
 }
 
+// La misma identidad de skill que aplica la RPC de 10012 (titulo normalizado): la IA
+// repite habilidades dentro de UN run y el cliente tiene que ver la misma lista que
+// la BD, o los ids de `guardado.brechas` quedan mas cortos que las brechas.
+// Equivalencia con la SQL: la columna generada usa
+// lower(trim(regexp_replace(titulo, '\s+', ' ', 'g'))) — aca `str()` ya recorta por
+// los lados, `toLowerCase()` es el lower() y `\s+ -> ' '` es el regexp_replace con 'g'.
+// La primera aparicion gana, igual que `order by ord` en el row_number() de la RPC.
+const claveSkill = (t: string): string => t.toLowerCase().replace(/\s+/g, ' ').trim();
+
 function normalizarBrechas(x: unknown): BrechaValidada[] {
   if (!Array.isArray(x)) return [];
   const out: BrechaValidada[] = [];
+  const vistas = new Set<string>();
   for (const item of x) {
     const n = normalizarBrecha(item);
-    if (n) out.push(n);
+    if (!n) continue;
+    const clave = claveSkill(n.titulo);
+    if (vistas.has(clave)) continue;
+    vistas.add(clave);
+    out.push(n);
     if (out.length >= MAX_BRECHAS) break;
   }
   return out;
@@ -107,15 +121,44 @@ function normalizarBrechas(x: unknown): BrechaValidada[] {
 // INLINE FIN de _shared/brechas.ts — arriba de esta linea queda la copia del
 // canonico (sin `export`); debajo van las funciones propias de esta funcion.
 
-function clientIp(req: Request): string {
+// Un analisis sin los 4 ejes no es un analisis: es lo que dibuja el Gemelo y lo que
+// cuenta en la metrica de la Fase 1. Se exige ANTES de guardar y ANTES de devolver
+// ok, para que un run incompleto no deje fila ni se venda como exito.
+function ejesUsables(p: unknown): boolean {
+  const a = (p as { axes?: unknown } | null)?.axes;
+  if (!a || typeof a !== 'object') return false;
+  const ejes = a as Record<string, unknown>;
+  return ['exec', 'qual', 'trans', 'fund'].every((k) => {
+    const n = Number(ejes[k]);
+    return Number.isFinite(n) && n >= 0 && n <= 100;
+  });
+}
+
+// Presupuesto de IA del request: _shared/llm.ts recorre 6 modelos gratuitos con 25 s
+// de abort cada uno (~150 s en el peor caso) y NO se puede editar (las Edge Functions
+// del dashboard congelan _shared al crearse, leccion 6F del ledger), asi que el corte
+// se pone aca. 60 s deja margen para el guardado dentro del mismo request y queda por
+// debajo del timer del cliente (que hoy es 90 s y lo arregla la tarea 10-B).
+// HONESTO: la carrera libera la RESPUESTA al cliente, no cancela el fetch de
+// _shared/llm.ts — esa promesa se resuelve en el vacio. No deja fila huerfana porque
+// el handler ya retorno antes del guardado.
+const PRESUPUESTO_IA_MS = 60_000;
+
+function clientIp(req: Request): string | null {
   // cf-connecting-ip (Cloudflare, en el borde) primero: es el unico que quien
   // llama no puede forjar con un header propio. Recien despues el primer
   // elemento de x-forwarded-for (falsificable) y x-real-ip.
+  // Sale null (y no una etiqueta fija tipo "no se de donde venis") cuando no hay
+  // ninguna de las tres o vienen vacias: un identificador fijo para el origen
+  // desconocido compartira baldio entre TODAS las personas anonimas, y la primera
+  // agotaria el cupo de todas las demas. Quien llama decide el header, asi que la
+  // ausencia es el caso normal en dev y en un path raro del borde, no un error.
   const cf = req.headers.get('cf-connecting-ip');
-  if (cf) return cf.trim();
+  if (cf) return cf.trim() || null;
   const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
+  if (fwd) return fwd.split(',')[0].trim() || null;
+  const real = req.headers.get('x-real-ip');
+  return real?.trim() || null;
 }
 
 // Tope diario efectivo (secret ANALISIS_TOPE_DIARIO, solo server-side): si el
@@ -143,6 +186,14 @@ function segundosHastaReset(resetAt?: string): number {
   return Math.max(1, Number.isFinite(resetSec) ? resetSec - Math.floor(Date.now() / 1000) : 86400);
 }
 
+// Invitado sin origen: una sola fuente del mensaje, porque lo devuelve el corte de
+// arriba y la defensa del bucket diario de invitados (que nunca se ve, pero evita
+// que un refactor vuelva a usar un identificador fijo para 'no se de donde venis').
+const analisis_sin_origen = () => json({
+  ok: false,
+  error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Recargá la página o iniciá sesión.',
+}, 503, { 'Retry-After': '30' });
+
 // Fail-open en todas las rutas de fallo: el limitador enfermo nunca rompe el
 // producto, pero cada ceguera se loguea con cual tope quedo apagado.
 async function rateLimited(req: Request, userId: string | null, tokenRechazado: boolean): Promise<Response | null> {
@@ -151,21 +202,45 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     return null;
   }
   try {
-    // Tope IP anti-abuso (6/60s): no cambia, aplica a invitados y a usuarios.
-    const { data, error } = await _admin.rpc('check_rate_limit', {
-      p_bucket: 'analizar-cv',
-      p_identifier: clientIp(req),
-      p_limit: 6,
-      p_window_sec: 60,
-    });
-    if (error || !data) {
-      console.error('[analizar-cv] tope IP apagado (falla abierto):', error?.message ?? 'RPC sin datos');
-      console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
-      return null;
+    const ip = clientIp(req);
+
+    // SIN ORIGEN y SIN SESION -> falla CERRADO. Sin origen no hay a quien
+    // asignarle el cupo diario de invitados, y el identificador fijo de antes
+    // ponia a todas las personas anonimas en el MISMO baldio: la primera agotaba
+    // los 3 analisis del dia para todo el mundo. Negar le sale mas barato a la
+    // cuenta de OpenRouter que adivinar de donde vino el call.
+    if (!ip && !userId && !tokenRechazado) {
+      console.error('[analizar-cv] invitado sin cabecera de origen: analisis denegado (falla CERRADO, sin baldio compartido)');
+      return analisis_sin_origen();
     }
-    const r = data as { allowed?: boolean; reset_at?: string };
-    if (r.allowed === false) {
-      return json({ ok: false, error: 'Demasiados intentos. Espera unos segundos.', retry_at: r.reset_at ?? null }, 429, { 'Retry-After': '30' });
+
+    if (ip) {
+      // Tope IP anti-abuso (6/60s): no cambia, aplica a invitados y a usuarios.
+      const { data, error } = await _admin.rpc('check_rate_limit', {
+        p_bucket: 'analizar-cv',
+        p_identifier: ip,
+        p_limit: 6,
+        p_window_sec: 60,
+      });
+      if (error || !data) {
+        console.error('[analizar-cv] tope IP apagado (falla abierto):', error?.message ?? 'RPC sin datos');
+        console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
+        return null;
+      }
+      const r = data as { allowed?: boolean; reset_at?: string };
+      if (r.allowed === false) {
+        return json({ ok: false, error: 'Demasiados intentos. Espera unos segundos.', retry_at: r.reset_at ?? null }, 429, { 'Retry-After': '30' });
+      }
+    } else if (userId) {
+      // Sesion verificada sin cabecera de origen: se apaga SOLO el burst por IP
+      // (no hay identificador) y se continua al tope diario por userId, que no
+      // depende de la IP. Se loguea igual: un tope apagado en silencio es invisible.
+      console.error('[analizar-cv] tope IP apagado: sin cabecera de origen; el tope día sí corre por id de usuario');
+    } else {
+      // Token rechazado sin cabecera de origen: el 401 de abajo responde sin
+      // necesitar IP y no gasta IA ni cupo, asi que no se lo confunde con el
+      // anonimo que si se disputaria el baldio.
+      console.error('[analizar-cv] tope IP apagado: sin cabecera de origen y sin sesion verificada');
     }
 
     // Token presente pero rechazado: no es invitado, es una llamada que cree
@@ -189,10 +264,17 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
       // La IP es falsificable (x-forwarded-for lo decide quien llama; por eso
       // clientIp() prefiere cf-connecting-ip, que tampoco es identidad): esto es
       // FRENO SUAVE, no muro. Un NAT compartido reparte los N analisis.
+      // El corte de arriba ya nego al invitado sin origen; se vuelve a exigir aca
+      // para que el bucket diario JAMAS se consulte con un identificador nulo o
+      // fijo (el dia por usuario no depende de la IP, este si).
+      if (!ip) {
+        console.error('[analizar-cv] invitado sin cabecera de origen: no se consulto el tope dia por IP (falla CERRADO)');
+        return analisis_sin_origen();
+      }
       const limiteInvitado = topeDiarioInvitado();
       const { data: diaIp, error: diaIpError } = await _admin.rpc('check_rate_limit', {
         p_bucket: 'analisis-dia-ip',
-        p_identifier: `${clientIp(req)}:${new Date().toISOString().slice(0, 10)}`,
+        p_identifier: `${ip}:${new Date().toISOString().slice(0, 10)}`,
         p_limit: limiteInvitado,
         p_window_sec: 86400,
       });
@@ -266,14 +348,22 @@ Deno.serve(async (req) => {
     const cv = (body?.text ?? '').toString().slice(0, 16000).trim();
     if (cv.length < 20) return json({ ok: false, error: 'El CV es muy corto o no se pudo leer.' }, 400);
 
-    const raw = await callLLM([
-      { role: 'system', content: SYS },
-      { role: 'user', content: 'CV COMPLETO:\n\n' + cv },
-    ], true, 2000);
-
-    if (!raw) {
-      return json({ ok: false, error: 'La IA no genero respuesta.' }, 502);
+    // Carrera contra el presupuesto (PRESUPUESTO_IA_MS arriba), no contra la
+    // funcion compartida: sin esto, 6 modelos x 25 s de abort llegan a ~150 s y el
+    // cliente ya abandono mucho antes. El .catch() es parte del contrato: el
+    // rechazo de callLLM ('todos los modelos fallaron') NUNCA tiene que escapar al
+    // catch general de abajo, que contesta 500 con `detail` — aca se distingue
+    // "saturado" (presupuesto agotado) de "sin respuesta" (exploto antes).
+    const crudo = await Promise.race([
+      callLLM([{ role: 'system', content: SYS }, { role: 'user', content: 'CV COMPLETO:\n\n' + cv }], true, 2000)
+        .catch((e) => { console.error('[analizar-cv] callLLM exploto:', String(e)); return null; }),
+      new Promise<'saturado'>((resolve) => { setTimeout(() => resolve('saturado'), PRESUPUESTO_IA_MS); }),
+    ]);
+    if (crudo === 'saturado') {
+      return json({ ok: false, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' }, 504);
     }
+    if (!crudo) return json({ ok: false, error: 'La IA no genero respuesta.' }, 502);
+    const raw = crudo as string;
 
     let parsed: unknown;
     try { parsed = JSON.parse(raw); } catch {
@@ -286,6 +376,16 @@ Deno.serve(async (req) => {
       } else {
         return json({ ok: false, error: 'No pude interpretar el analisis.' }, 502);
       }
+    }
+
+    // El guard de ejes va DESPUES de interpretar el JSON y ANTES de cualquier
+    // efecto (normalizar, guardar, devolver ok): un run sin los 4 ejes no deja
+    // fila en analisis_cv ni se vende como exito, asi no contamina la metrica de
+    // la Fase 1 ni obliga al cliente a descartar el analisis (502 = del motor, no
+    // del usuario).
+    if (!ejesUsables(parsed)) {
+      console.error('[analizar-cv] la IA devolvio un analisis sin los 4 ejes: no se guarda, no se devuelve ok.');
+      return json({ ok: false, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Volvé a intentar.' }, 502);
     }
 
     const brechas = normalizarBrechas((parsed as { brechas?: unknown }).brechas);

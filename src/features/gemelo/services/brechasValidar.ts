@@ -49,12 +49,26 @@ export function normalizarBrecha(x: unknown): BrechaValidada | null {
   };
 }
 
+// La misma identidad de skill que aplica la RPC de 10012 (titulo normalizado): la IA
+// repite habilidades dentro de UN run y el cliente tiene que ver la misma lista que
+// la BD, o los ids de `guardado.brechas` quedan mas cortos que las brechas.
+// Equivalencia con la SQL: la columna generada usa
+// lower(trim(regexp_replace(titulo, '\s+', ' ', 'g'))) — aca `str()` ya recorta por
+// los lados, `toLowerCase()` es el lower() y `\s+ -> ' '` es el regexp_replace con 'g'.
+// La primera aparicion gana, igual que `order by ord` en el row_number() de la RPC.
+const claveSkill = (t: string): string => t.toLowerCase().replace(/\s+/g, ' ').trim();
+
 export function normalizarBrechas(x: unknown): BrechaValidada[] {
   if (!Array.isArray(x)) return [];
   const out: BrechaValidada[] = [];
+  const vistas = new Set<string>();
   for (const item of x) {
     const n = normalizarBrecha(item);
-    if (n) out.push(n);
+    if (!n) continue;
+    const clave = claveSkill(n.titulo);
+    if (vistas.has(clave)) continue;
+    vistas.add(clave);
+    out.push(n);
     if (out.length >= MAX_BRECHAS) break;
   }
   return out;
