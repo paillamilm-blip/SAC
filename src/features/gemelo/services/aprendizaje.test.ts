@@ -2,6 +2,8 @@
 // Cubre los dos caminos del cliente del motor: invitado (puente localStorage)
 // y autenticado (guardado server-side, sin escribir el puente), la huella que
 // sube del servidor, y el orden motor -> fallback Gemini de analizarCvConFallback.
+// Y la frontera que el fallback NUNCA puede cruzar: un corte del servidor sobre
+// este usuario (401/429/503) se muestra, no se tapa buscando otra puerta.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -23,7 +25,9 @@ import {
   analizarCvConFallback,
   analizarCvConIA,
   puenteBrechasInvitado,
+  ErrorAnalisisMotor,
 } from './aprendizaje';
+import type { ResultadoAnalisisCv } from './aprendizaje';
 import type { BrechaValidada } from './brechasValidar';
 
 const PUENTE_KEY = 'omicron.brechas.puente';
@@ -64,6 +68,14 @@ function motorFallando(causa: { status?: number; error?: unknown }) {
   } else {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(causa.error));
   }
+}
+
+// `analizarCvConFallback` devolvio una union discriminada: los casos que esperan
+// analisis necesitan el estrecho, y `if (!r)` dentro del test diria menos que este
+// error cuando llega null o bloqueado (justo las dos fallas que este helper vigila).
+function conAnalisis(r: ResultadoAnalisisCv | null, esperaba: string): Exclude<ResultadoAnalisisCv, { fuente: 'bloqueado' }> {
+  if (!r || r.fuente === 'bloqueado') throw new Error(`esperaba ${esperaba}, llego ${JSON.stringify(r)}`);
+  return r;
 }
 
 describe('analizarCvConIA', () => {
@@ -156,6 +168,32 @@ describe('analizarCvConIA', () => {
     expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
   });
 
+  it('el status HTTP viaja en el error: sin el numero el llamador no decide', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    mockFetch({ error: 'Llegaste a los 10 análisis de hoy.' }, false, 429);
+
+    const e = await analizarCvConIA('texto', 'cv.pdf').catch((err: unknown) => err);
+
+    // Un Error pelado borra el 429: el fallback tendria que adivinar por el texto
+    // (fragil, y el server puede reescribirlo). La clase es el contrato.
+    expect(e).toBeInstanceOf(ErrorAnalisisMotor);
+    expect((e as ErrorAnalisisMotor).status).toBe(429);
+    expect((e as ErrorAnalisisMotor).message).toBe('Llegaste a los 10 análisis de hoy.');
+  });
+
+  it('cuerpo ok:false con status del response: el status no se inventa, sale de res.status', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    // El motor actual nunca responde 200 con ok:false (los rechazos salen con su
+    // HTTP propio); se prueba igual que `!res.ok` porque la guarda es la misma
+    // lectura: status real del response, no un numero de reserva.
+    mockFetch({ ok: false, error: 'La IA devolvió un análisis incompleto.' }, true, 200);
+
+    const e = await analizarCvConIA('texto', 'cv.pdf').catch((err: unknown) => err);
+
+    expect(e).toBeInstanceOf(ErrorAnalisisMotor);
+    expect((e as ErrorAnalisisMotor).status).toBe(200);
+  });
+
   it('M7: la huella build viaja en la respuesta parseada', async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
     mockFetch({ ok: true, analysis: ANALYSIS, guardado: { analisis_id: 'an-1', brechas: [] }, build: '10a-motor-guards' });
@@ -239,14 +277,13 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     const guardado = { analisis_id: 'an-1', brechas: ['uuid-brecha-1'] };
     mockFetch({ ok: true, analysis: ANALYSIS, guardado, build: '10a-motor-guards' });
 
-    const r = await analizarCvConFallback('texto', 'cv.pdf');
+    const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'analisis del motor');
 
-    expect(r).not.toBeNull();
-    expect(r!.fuente).toBe('motor');
-    expect(r!.analysis.axes).toEqual({ exec: 1, qual: 1, trans: 1, fund: 1 });
-    expect(r!.brechas).toEqual([BRECHA]);
-    expect(r!.guardado).toEqual(guardado);
-    expect(r!.build).toBe('10a-motor-guards');
+    expect(r.fuente).toBe('motor');
+    expect(r.analysis.axes).toEqual({ exec: 1, qual: 1, trans: 1, fund: 1 });
+    expect(r.brechas).toEqual([BRECHA]);
+    expect(r.guardado).toEqual(guardado);
+    expect(r.build).toBe('10a-motor-guards');
     expect(gemini.analyzeCVWithGemini).not.toHaveBeenCalled();
     // autenticado: el puente sigue vacio
     expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
@@ -256,20 +293,22 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     getSession.mockResolvedValue({ data: { session: null } });
     mockFetch({ ok: true, analysis: ANALYSIS, guardado: null });
 
-    const r = await analizarCvConFallback('texto', 'cv.pdf');
+    const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'analisis del motor (invitado)');
 
-    expect(r!.fuente).toBe('motor');
-    expect(r!.guardado).toBeNull();
+    expect(r.fuente).toBe('motor');
+    expect(r.guardado).toBeNull();
     expect(puenteBrechasInvitado.leer()).toEqual([BRECHA]);
     expect(gemini.analyzeCVWithGemini).not.toHaveBeenCalled();
   });
 
-  // (i) del item 5.c: el 401 no revienta la UI — el flujo sigue con un analisis valido
+  // El motor caido (5xx, red, analisis sin ejes) es un problema DE LA IA: ahi el
+  // respaldo esta bien. Los tres statuses de abajo son lo contrario: un mensaje
+  // para ESTE usuario, y taparlo con Gemini lo convierte en un tope silencioso.
   const CAIDAS_MOTOR: { nombre: string; causa: { status?: number; error?: unknown } }[] = [
-    { nombre: '401', causa: { status: 401, error: 'Para guardar tu análisis necesitás iniciar sesión. Volvé a intentarlo.' } },
-    { nombre: '429', causa: { status: 429, error: 'Terminaste los 3 análisis gratis de hoy para este dispositivo.' } },
     { nombre: '500', causa: { status: 500, error: 'Boom interno del servidor.' } },
     { nombre: '502 con cuerpo no JSON', causa: { status: 502, error: undefined } },
+    { nombre: '502 sin los 4 ejes', causa: { status: 502, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Volvé a intentar.' } },
+    { nombre: '504 saturado', causa: { status: 504, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' } },
   ];
   for (const { nombre, causa } of CAIDAS_MOTOR) {
     it(`motor cae con ${nombre}: el fallback Gemini devuelve analisis valido`, async () => {
@@ -277,25 +316,65 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
       motorFallando(causa);
       gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
 
-      const r = await analizarCvConFallback('texto', 'cv.pdf');
+      const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), `fallback por ${nombre}`);
 
-      expect(r).not.toBeNull();
-      expect(r!.fuente).toBe('gemini');
-      expect(r!.analysis.axes).toBeDefined();
-      expect(r!.brechas).toEqual([]);   // el prompt viejo no emite brechas: no se inventan
-      expect(r!.guardado).toBeNull();   // ni una ni la otra: nada persistido
+      expect(r.fuente).toBe('gemini');
+      expect(r.analysis.axes).toBeDefined();
+      expect(r.brechas).toEqual([]);   // el prompt viejo no emite brechas: no se inventan
+      expect(r.guardado).toBeNull();   // ni una ni la otra: nada persistido
       expect(gemini.analyzeCVWithGemini).toHaveBeenCalledWith('texto');
     });
   }
+
+  // I-B: 401/429/503 son el server cortando a este usuario, no el motor roto.
+  // El spy de Gemini se afirma NO llamado: el resultado 'bloqueado' podria salir
+  // por accidente y el test seguiria verde sin probar el tope.
+  const BLOQUEOS_SERVIDOR: { nombre: string; status: number; error: string }[] = [
+    { nombre: '429 (cupo del dia)', status: 429, error: 'Llegaste a los 10 análisis de hoy. El contador se renueva en ~6 h.' },
+    { nombre: '401 (sesion expirada)', status: 401, error: 'Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.' },
+    { nombre: '503 (sin origen)', status: 503, error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Recargá la página o iniciá sesión.' },
+  ];
+  for (const { nombre, status, error } of BLOQUEOS_SERVIDOR) {
+    it(`el servidor corta con ${nombre}: se devuelve el motivo y NO se gasta el fallback`, async () => {
+      getSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
+      mockFetch({ ok: false, error }, false, status);
+      // Gemini esta sano y daria un analisis perfecto: justamente, no tiene que
+      // ser llamado. Se deja resuelto a proposito — con el mock vacio el test
+      // tambien daria null, y null no demuestra que el tope se respeto.
+      gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+      const r = await analizarCvConFallback('texto', 'cv.pdf');
+
+      expect(r).toEqual({ fuente: 'bloqueado', status, error });
+      // el texto del server llega LITERAL (ni reescrito ni traducido): la UI lo
+      // muestra tal cual, que es lo que el spec §8 pide.
+      expect(gemini.analyzeCVWithGemini).not.toHaveBeenCalled();
+    });
+  }
+
+  it('429 de invitado: el puente queda intacto (no escribe ni borra)', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    puenteBrechasInvitado.escribir([BRECHA]);
+    mockFetch({ ok: false, error: 'Terminaste los 3 análisis gratis de hoy para este dispositivo.' }, false, 429);
+    gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+    const r = await analizarCvConFallback('texto', 'cv.pdf');
+
+    expect(r?.fuente).toBe('bloqueado');
+    // el throw del 429 ocurre antes del bloque del puente: las brechas previas del
+    // invitado siguen ahi. Si alguien mueve el puente arriba del catch, esto se cae.
+    expect(puenteBrechasInvitado.leer()).toEqual([BRECHA]);
+    expect(gemini.analyzeCVWithGemini).not.toHaveBeenCalled();
+  });
 
   it('motor lanza sin status (red cortada): igual cae al fallback', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
     motorFallando({ error: new TypeError('Failed to fetch') });
     gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
 
-    const r = await analizarCvConFallback('texto', 'cv.pdf');
+    const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'fallback por red cortada');
 
-    expect(r!.fuente).toBe('gemini');
+    expect(r.fuente).toBe('gemini');
     expect(warn).toHaveBeenCalled();
   });
 
@@ -307,9 +386,9 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     mockFetch({ ok: true, analysis: sinEjes, guardado: null });
     gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
 
-    const r = await analizarCvConFallback('texto', 'cv.pdf');
+    const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'fallback por analisis sin ejes');
 
-    expect(r!.fuente).toBe('gemini');
+    expect(r.fuente).toBe('gemini');
   });
 
   it('fallback sin ejes o roto: devuelve null, nunca un analisis inventado', async () => {

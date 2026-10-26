@@ -49,17 +49,33 @@ export interface AnalysisCrudoIA {
   summary?: string;
 }
 
-export type FuenteAnalisis = 'motor' | 'gemini';
+export type FuenteAnalisis = 'motor' | 'gemini' | 'bloqueado';
 
-export interface ResultadoAnalisisCv {
-  fuente: FuenteAnalisis;
-  analysis: AnalysisCrudoIA;
-  brechas: BrechaValidada[];
-  guardado: { analisis_id: string; brechas: string[] } | null;
-  // Huella x-omicron-build leida del cuerpo: que codigo esta vivo del lado del
-  // servidor se ve sin abrir curl (M7 tiene su par en el navegador aqui).
-  build?: string;
+// El status importa: 401/429/503 son decisiones del servidor sobre ESTE usuario
+// (sesion, cupo del dia, origen no identificable), no una falla del motor. Sin el
+// numero, el llamador no puede distinguir "el motor esta caido" (cae a Gemini) de
+// "acá te cortaste" (hay que decirtelo).
+export class ErrorAnalisisMotor extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'ErrorAnalisisMotor';
+  }
 }
+
+// Union discriminada por `fuente`: con `analysis: null` el consumidor podria leer
+// `.analysis.axes` de un caso bloqueado y el compilador no lo frenaria. La tercera
+// cara no lleva analisis a proposito — quien lo quiera tiene que preguntar primero.
+export type ResultadoAnalisisCv =
+  | {
+      fuente: 'motor' | 'gemini';
+      analysis: AnalysisCrudoIA;
+      brechas: BrechaValidada[];
+      guardado: { analisis_id: string; brechas: string[] } | null;
+      // Huella x-omicron-build leida del cuerpo: que codigo esta vivo del lado del
+      // servidor se ve sin abrir curl (M7 tiene su par en el navegador aqui).
+      build?: string;
+    }
+  | { fuente: 'bloqueado'; error: string; status: number };
 
 export async function analizarCvConIA(
   texto: string,
@@ -83,14 +99,19 @@ export async function analizarCvConIA(
     // Un error HTTP no es un resultado: se lee legible, no se parsea como analysis.
     let msg: string | undefined;
     try { msg = (await res.json() as { error?: string })?.error; } catch { /* cuerpo no JSON: sin mensaje */ }
-    throw new Error(msg ?? `El analisis fallo (HTTP ${res.status}).`);
+    throw new ErrorAnalisisMotor(msg ?? `El analisis fallo (HTTP ${res.status}).`, res.status);
   }
   const json = await res.json();
-  if (!json.ok) throw new Error(json.error ?? 'El analisis fallo.');
+  // El motor actual responde el rechazo CON su HTTP propio (401/429/502/503/504),
+  // asi que 200 con ok:false no ocurre hoy; si ocurriera, el status real del
+  // response es lo unico que el llamador puede usar para decidir — no se inventa.
+  if (!json.ok) throw new ErrorAnalisisMotor(json.error ?? 'El analisis fallo.', res.status);
   const analysis = json.analysis as AnalyzedProfileConBrechas;
   // El puente es SOLO para quien no tiene usuario. Si hay sesion y el guardado
   // fallo (guardado_error), las brechas no caen al puente: nunca alcanzarian la
   // BD ni el mapa entre dispositivos. El analisis igual se devuelve, la UI no se rompe.
+  // Un corte 401/429/503 nunca llega hasta aqui: el throw es anterior, asi que el
+  // bloqueo NO escribe ni borra el puente del invitado — lo que ya estaba sigue estando.
   if (json.guardado == null && json.guardado_error !== true) {
     // M6: contra una funcion desplegada VIEJA `brechas` llega undefined. Escribir
     // `[]` en ese caso BORRABA el puente del invitado; sin array se conserva lo
@@ -106,17 +127,23 @@ export async function analizarCvConIA(
 
 // El motor de aprendizaje con su fallback DECLARADO (ruling C1 del controlador,
 // 2026-10-26): la app pasa por analizar-cv — que emite brechas y persiste el run
-// con la identidad del JWT, la unica fuente de la metrica de la Fase 1 — y
-// cualquier falla del motor (401, 429, 5xx, red, JSON roto, analisis sin ejes)
-// cae al camino que ya estaba, analyzeCVWithGemini, para que el golden path del
-// usuario no dependa de que la funcion este desplegada. Null = los dos motores
-// fallaron: el hook muestra el error, nunca inventa datos (spec §8).
+// con la identidad del JWT, la unica fuente de la metrica de la Fase 1 — y una
+// falla del motor (5xx, red, JSON roto, analisis sin ejes) cae al camino que ya
+// estaba, analyzeCVWithGemini, para que el golden path del usuario no dependa de
+// que la funcion este desplegada. Null = los dos motores fallaron: el hook muestra
+// el error, nunca inventa datos (spec §8).
+// El fallback NO cubre los cortes del servidor sobre este usuario (401/429/503):
+// ahi el resultado es la informacion, no un analisis (ver BLOQUEO en el catch).
 // Deuda declarada, no resuelta aca: quedan DOS prompts de CV en el repo
 // (gemini.ts y analizar-cv). Se cierra en Plan B, cuando el mapa se porte.
 export async function analizarCvConFallback(
   texto: string,
   nombreArchivo: string,
 ): Promise<ResultadoAnalisisCv | null> {
+  // Los statuses que el server usa para decirle algo a ESTA persona, no al motor.
+  // Si Gemini cubre un 429, el tope diario deja de existir: el usuario obtiene su
+  // analisis igual y el control de gasto del servidor se vuelve decoracion.
+  const BLOQUEO = new Set([401, 429, 503]);
   try {
     const r = await analizarCvConIA(texto, nombreArchivo);
     if (r.analysis && r.analysis.axes) {
@@ -130,8 +157,18 @@ export async function analizarCvConFallback(
     }
     console.warn('[Omicron] el motor devolvio un analisis sin ejes; cae al fallback Gemini.');
   } catch (e) {
-    // El servicio lanza con el mensaje en espanol del servidor (401/429/5xx).
-    // Cualquier error del motor es motivo de fallback, no de pantalla rota.
+    const status = e instanceof ErrorAnalisisMotor ? e.status : 0;
+    if (BLOQUEO.has(status)) {
+      // Spec §8, "nunca tope silencioso": caerse a Gemini ante un 429 anula el tope
+      // (el usuario igual obtiene su analisis y el control de gasto del servidor
+      // deja de ser control). Ante un 401, el analisis que ve ni siquiera es suyo
+      // guardado. Estos tres statuses son informacion, no fallo: se rebotan tal cual.
+      console.warn(`[Omicron] el motor corto la request con ${status}: se muestra el motivo, no se busca una puerta alternativa.`);
+      return { fuente: 'bloqueado', error: (e as Error).message, status };
+    }
+    // El servicio lanza con el mensaje en espanol del servidor (5xx) o con status 0
+    // (red cortada, JSON roto, TypeError del fetch): eso SI es el motor caido, y el
+    // respaldo esta declarado para que el golden path no dependa del despliegue.
     console.warn('[Omicron] motor analizar-cv no disponible; cae al fallback Gemini:', e);
   }
   try {

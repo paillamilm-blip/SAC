@@ -34,19 +34,22 @@ export interface Push { id: number; label: string; delta: number; color: string 
 
 /**
  * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
- * Debe ser MAYOR que el presupuesto de callAI (75s en gemini.ts, que cubre
- * los 70s del server): si este timer vencía antes, el análisis que llegaba a
- * los 47s igual terminaba en "La IA tardó demasiado". 90s = 75s de IA +
- * guardado + cadena de convalidación.
+ * Cubre el PEOR CAMINO REAL, no la suerte del primer motor: el motor propio
+ * (Edge Function `analizar-cv`) se corta solo a los 60 s (PRESUPUESTO_IA_MS en
+ * supabase/functions/analizar-cv/index.ts) y despues de ese corte el fallback
+ * Gemini pide 75 s (gemini.ts:67, sobre el default de 30 s de client.ts:45).
+ * 60 + 75 = 135 s encadenados, y encima queda el guardado + la cadena de
+ * convalidacion. Con el viejo 90 s la UI se reiniciaba en el minuto 1,5 mientras
+ * el analisis todavia podia terminar: el resultado tardio se descartaba.
  */
-const SAFETY_TIMEOUT_MS = 90_000;
+const SAFETY_TIMEOUT_MS = 150_000;
 
 /** Progress messages shown during AI wait to keep the user informed. */
 const PROGRESS_MESSAGES = [
   'Conectando con la IA…',
   'Analizando habilidades y experiencia…',
   'Calculando ejes del Gemelo Digital…',
-  'Es un modelo gratuito: puede tardar hasta 70 segundos…',
+  'Puede tardar: primero el motor propio y, si no responde, el respaldo.',
 ];
 
 /**
@@ -399,14 +402,20 @@ export function useGemeloActivation() {
     try {
       // ── 1) Analiza el CV: motor → fallback → error (nunca datos falsos) ──
       let analyzed: AnalyzedProfile | null = null;
+      // El texto LITERAL con el que el servidor cortó a este usuario (401/429/503).
+      // Viaja aparte del "no hay análisis" genérico: mezclarlos es el tope
+      // silencioso que el spec §8 prohibe.
+      let bloqueo: string | null = null;
 
       try {
         // El motor de aprendizaje (Edge Function `analizar-cv`) es el camino que
         // emite brechas y guarda el run con la identidad del JWT — la unica
         // fuente de la metrica de la Fase 1. `analyzeCVWithGemini` queda como
-        // FALLBACK DECLARADO ante cualquier error del motor (401, 429, 5xx, red,
-        // JSON roto, analisis sin ejes), asi que el flujo que el usuario ya conoce
-        // no se rompe si la funcion no esta desplegada o se pasa del tope.
+        // FALLBACK DECLARADO ante una falla del motor (5xx, red, JSON roto,
+        // analisis sin ejes), asi que el flujo que el usuario ya conoce no se
+        // rompe si la funcion no esta desplegada. Los cortes del servidor sobre
+        // ESTE usuario (401/429/503) no caen al fallback: vuelven como
+        // `fuente: 'bloqueado'` y se muestran.
         // La eleccion motor->fallback vive en el servicio (analizarCvConFallback)
         // para poder probarse sin montar el hook; el mapeo del resultado es el
         // mismo de siempre, ahora compartido por los dos caminos.
@@ -415,7 +424,10 @@ export function useGemeloActivation() {
 
         if (cancelledRef.current || !isProcessingRef.current) return;
 
-        if (r && r.analysis.axes) {
+        if (r?.fuente === 'bloqueado') {
+          bloqueo = r.error;            // el texto del servidor, literal
+          analyzed = null;
+        } else if (r && r.analysis && r.analysis.axes) {
           analyzed = mezclarAnalisis(analyzeCV(text), r.analysis);
           console.info(`[Omicron] análisis servido por ${r.fuente === 'motor' ? 'el motor analizar-cv' : 'el fallback Gemini'} · guardado: ${r.guardado ? 'sí' : 'no'} · huella: ${r.build ?? 'sin'}`);
         } else {
@@ -437,9 +449,18 @@ export function useGemeloActivation() {
       if (cancelledRef.current) return;
 
       if (!analyzed) {
-        setMsg('La IA no pudo analizar tu CV. Verifica tu conexión e intenta de nuevo.');
-        setLastError('no_analysis');
-        toast('Error: la IA no respondió. Reintenta en unos segundos.', 'error');
+        if (bloqueo) {
+          // El motivo ya lo redacta el servidor para una persona: la UI lo muestra tal
+          // cual. Enmascararlo con "verifica tu conexion" es exactamente el tope
+          // silencioso que el spec §8 prohibe.
+          setMsg(bloqueo);
+          setLastError('cuota');
+          toast(bloqueo, 'error');
+        } else {
+          setMsg('La IA no pudo analizar tu CV. Verifica tu conexión e intenta de nuevo.');
+          setLastError('no_analysis');
+          toast('Error: la IA no respondió. Reintenta en unos segundos.', 'error');
+        }
         setPhase('upload');
         isProcessingRef.current = false;
         return;
