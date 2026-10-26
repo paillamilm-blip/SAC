@@ -14,7 +14,7 @@ Tests con Vitest + Testing Library (`npm run test`), typecheck con `tsc --noEmit
 
 Deploy del frontend en Vercel (`https://sistema-omicrom.vercel.app`). La IA va por la Edge Function `proxy-ai` (OpenRouter primario, Gemini `gemini-2.0-flash` de respaldo); TTS por `proxy-tts`.
 
-Dominios funcionales en `src/features/`: `academia`, `auth`, `chat`, `contratos`, `empleos`, `gemelo`, `gobernanza`, `market`, `omicron`, `wallet`.
+Dominios en el código (`src/features/`): `academia`, `auth`, `gemelo`, `omicron`, `redviva`. Los dominios `chat`, `contratos`, `empleos`, `gobernanza`, `market`, `wallet` existen solo en documentación/migraciones: son **visión**, no capacidad, y ninguna pantalla debe asumir que funcionan.
 
 ## Users
 

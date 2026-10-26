@@ -220,15 +220,17 @@ El Gemelo PRODUCE datos. Ómicron los LEE y decide qué decirte.
 
 ### Mapa de módulos post-refactor (9 módulos)
 
-| Módulo | Concepto | Frase |
-|--------|----------|-------|
-| `omicron/` | 🔮 El Coach | Te observa y te empuja |
-| `gemelo/` | 🧬 El Gemelo | Todo lo que eres y podrías ser |
-| `academia/` | 🎓 Aprendizaje | Cursos, exámenes, skills |
-| `empleos/` | 💼 Oportunidades | Trabajo te encuentra |
-| `market/` | 🏪 Mercado | Compra/vende servicios |
-| `wallet/` | 💰 Economía | Tokens PE, pagos, nodos |
-| `chat/` | 💬 Comunicación | Mensajería segura |
-| `gobernanza/` | 🏛️ Justicia | Arbitraje, disputas |
-| `auth/` | 🔐 Acceso | Login, registro |
+| Módulo | Concepto | Frase | ¿En el código? |
+|--------|----------|-------|----------------|
+| `omicron/` | 🔮 El Coach | Te observa y te empuja | sí |
+| `gemelo/` | 🧬 El Gemelo | Todo lo que eres y podrías ser | sí |
+| `academia/` | 🎓 Aprendizaje | Cursos, exámenes, skills | sí |
+| `empleos/` | 💼 Oportunidades | Trabajo te encuentra | no — visión |
+| `market/` | 🏪 Mercado | Compra/vende servicios | no — visión |
+| `wallet/` | 💰 Economía | Tokens PE, pagos, nodos | no — visión |
+| `chat/` | 💬 Comunicación | Mensajería segura | no — visión |
+| `gobernanza/` | 🏛️ Justicia | Arbitraje, disputas | no — visión |
+| `auth/` | 🔐 Acceso | Login, registro | sí |
+
+> Actualizado 2026-10-26: verificado contra `src/features/` en la rama fase-6-recorte-datos. Los módulos "no — visión" no tienen carpeta ni pantallas; están en esta tabla como norte, no como inventario.
 
