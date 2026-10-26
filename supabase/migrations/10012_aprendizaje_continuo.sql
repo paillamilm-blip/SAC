@@ -22,6 +22,32 @@
 -- Fuera de orden: RAISE EXCEPTION con texto legible, no silencio.
 -- =====================================================================
 
+-- ---------- Chequeo ANTES de pegar ----------
+-- Este archivo asume una base limpia: 10012 jamas se aplico en produccion.
+-- Conviene comprobarlo antes de pegar, porque ni `create table if not exists`
+-- ni `create or replace function` reparan una version vieja: la primera deja la
+-- tabla SIN la columna generada de la identidad de skill, y la segunda no
+-- puede cambiar el tipo de retorno.
+--
+-- select column_name from information_schema.columns
+--  where table_name = 'brechas_aprendizaje';
+--   expected: 0 filas.
+-- select proname, pg_get_function_arguments(oid), pg_get_function_result(oid)
+--   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--  where proname in ('marcar_brecha','guardar_analisis_completo');
+--   expected: 0 filas.
+--
+-- Si algo aparece, fue un pegado incompleto de ESTA misma migracion. Hay que
+-- tirar esas versiones viejas antes de re-pegar el archivo entero; borra filas
+-- de prueba, no trabajo real (10012 nunca se aplico):
+--
+-- drop function if exists public.marcar_brecha(uuid, text);
+-- drop function if exists public.guardar_analisis_completo(jsonb, jsonb, uuid);
+-- drop table if exists public.brechas_aprendizaje;
+-- drop table if exists public.analisis_cv;
+--
+-- ---------- Tablas ----------
+
 create table if not exists public.analisis_cv (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -87,6 +113,15 @@ create policy brechas_sueno on public.brechas_aprendizaje
 -- porque es el mismo paste y porque sin esto la ley queda en cero. PG no tiene
 -- `if not exists` para publications, asi que se consulta el catalogo: pegar dos
 -- veces no puede fallar.
+--
+-- REPLICA IDENTITY FULL: con el default, un UPDATE o DELETE publicado no trae
+-- `old_record`; el suscriptor de Plan B ve la fila nueva pero no puede saber
+-- CUALES eran las brechas que esa mutacion reemplazo (el upsert por skill
+-- cambia analisis_id sin cambiar el id, y el mapa necesita ambos lados). FULL
+-- manda la fila entera en los dos sentidos. Cuesta poco: la tabla es chica y
+-- toda escritura pasa por una RPC.
+alter table public.brechas_aprendizaje replica identity full;
+
 do $$
 begin
   if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
@@ -97,36 +132,22 @@ begin
        and schemaname = 'public'
        and tablename = 'brechas_aprendizaje'
   ) then
-    alter publication supabase_realtime add table public.brechas_aprendizaje;
-    raise notice 'brechas_aprendizaje: agregada a la publicacion supabase_realtime.';
+    begin
+      alter publication supabase_realtime add table public.brechas_aprendizaje;
+      raise notice 'brechas_aprendizaje: agregada a la publicacion supabase_realtime.';
+    exception when insufficient_privilege then
+      -- El SQL Editor corre como `postgres`, que no siempre es dueno de la
+      -- publicacion supabase_realtime: este alter puede fallar con 42501. Se
+      -- captura a proposito para que el fallo NO se lleve puesto el pegado
+      -- entero (tablas, RLS y RPCs ya quedaron arriba) y para que el humano sepa
+      -- exactamente donde hacer el click que falta.
+      raise notice 'Sin permiso para agregar a supabase_realtime (42501). Hacelo a mano: Database -> Replication -> Publications -> supabase_realtime -> agregar public.brechas_aprendizaje, o Table Editor -> brechas_aprendizaje -> Enable realtime.';
+    end;
   else
     raise notice 'brechas_aprendizaje: ya estaba en supabase_realtime, no se duplica.';
   end if;
 end $$;
 
--- ---------- Chequeo pre-pegado (M9) ----------
--- Antes de pegar este archivo, mirar que definiciones estan VIVAS en
--- produccion. Las dos RPCs se instalan con `create or replace`, y ese comando
--- NO puede cambiar el tipo de retorno: si ya existe una version vieja con otra
--- firma o otro retorno, este archivo no la reemplaza y el guardado habla con la
--- funcion equivocada sin ruido.
---
--- select proname, pg_get_function_arguments(oid), pg_get_function_result(oid)
---   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
---  where proname in ('marcar_brecha','guardar_analisis_completo');
---   expected: 0 filas. Si algo aparece, es un pegado viejo con firma o retorno
---   distinto: este archivo hace CREATE OR REPLACE y NO puede cambiar el tipo de
---   retorno. Hay que dropear la funcion vieja primero (decirlo explicitamente).
---
--- Lo mismo con la tabla: `create table if not exists` tampoco repara una tabla
--- ya creada sin la columna generada de la identidad de skill.
---
--- select column_name from information_schema.columns
---  where table_name = 'brechas_aprendizaje' and column_name = 'titulo_normalizado';
---   expected: 1 fila despues de pegar; 0 filas = existia una version vieja de la
---   tabla (las brechas de ese pegado son de prueba: 10012 aun no se aplico en
---   produccion) y hay que dropear public.brechas_aprendizaje antes de re-pegar.
---
 -- ---------- RPC: marcar_brecha ----------
 create or replace function public.marcar_brecha(p_brecha uuid, p_state text)
 returns jsonb
@@ -212,7 +233,17 @@ begin
   -- Tope por request (I3): el validador del Edge Function ya corta en 12, pero
   -- la RPC se puede invocar directo. Sin este candado, un solo llamado puede
   -- insertar miles de filas propias.
-  if jsonb_array_length(coalesce(p_brechas, '[]'::jsonb)) > 12 then
+  --
+  -- Primero el TIPO, despues el largo: `jsonb_array_length` sobre un objeto o
+  -- un escalar no devuelve 0, peta con el texto crudo de Postgres
+  -- ("cannot get array length of a scalar", P0001) y ese mensaje en ingles sin
+  -- contexto es lo que llegaria al usuario. Aca `p_brechas` nulo o missing
+  -- significa "analisis sin brechas" (ramas validas para el motor), asi que se
+  -- acepta null y solo se rechaza lo que es jsonb de otra forma.
+  if p_brechas is not null and jsonb_typeof(p_brechas) <> 'array' then
+    raise exception 'La lista de brechas del analisis llego mal formada: se esperaba una lista.';
+  end if;
+  if coalesce(jsonb_array_length(p_brechas), 0) > 12 then
     raise exception 'Un análisis trae a lo sumo 12 brechas.';
   end if;
 
@@ -305,25 +336,61 @@ grant execute on function public.guardar_analisis_completo(jsonb, jsonb, uuid) t
 --   0 filas = la publicacion existe pero el DO no la agrego (o el rol del Editor
 --   no tiene permiso): el Plan B no va a recibir postgres_changes.
 --
--- Prueba del bloqueo anti-suplantacion (la corre el humano con un JWT authenticated
--- propio, no con service key): llamar la RPC con p_user_id de OTRO usuario,
---   select guardar_analisis_completo('{"nombre_archivo":"t"}'::jsonb, '[]'::jsonb, '<uuid-ajeno>')
---   expected: ERROR 400 "Solo podés guardar tus propios análisis." (auth.uid() <> p_user_id).
--- Con service_role (auth.uid() nulo, como la Edge Function analizar-cv) la misma
+-- Pruebas de comportamiento: NO van en el SQL Editor.
+-- Las dos RPCs deciden con auth.uid(), y en el Editor ese valor es SIEMPRE null
+-- (no hay JWT en la conexion). Cualquier llamada desde aca termina en
+-- "Para guardar tu análisis necesitás iniciar sesión", que NO es un bug de esta
+-- migracion: es la prueba de que la puerta funciona. Se corren contra REST con
+-- un JWT authenticated real, o desde la app logueada.
+--
+--   POST https://<ref>.supabase.co/rest/v1/rpc/guardar_analisis_completo
+--   apikey: <anon key>   Authorization: Bearer <JWT del usuario>
+--   Content-Type: application/json
+--   { "p_cv": {...}, "p_brechas": [...], "p_user_id": null }
+--
+-- (a) Bloqueo anti-suplantacion. Con el JWT del usuario A, p_user_id del
+-- usuario B:
+--   { "p_cv": {"nombre_archivo":"t"}, "p_brechas": [], "p_user_id": "<uuid-de-B>" }
+--   expected: HTTP 400 con "Solo podés guardar tus propios análisis."
+-- Con service_role (auth.uid() null, como la Edge Function analizar-cv) la misma
 --   llamada con p_user_id valido SI pasa — el guardado server-side no se rompe.
 --
--- Prueba de la identidad de skill (con service_role, o con el propio JWT): el
--- MISMO titulo dos veces en dos runs debe dejar UNA sola fila y conservar el
--- estado que el usuario ya le puso.
---   select guardar_analisis_completo('{"nombre_archivo":"a"}'::jsonb,
---          '[{"categoria":"conocimiento","titulo":"Excel avanzado"}]'::jsonb, null);
---   select marcar_brecha('<id devuelto>', 'rechazada');
---   select guardar_analisis_completo('{"nombre_archivo":"b"}'::jsonb,
---          '[{"categoria":"conocimiento","titulo":"  excel   AVANZADO "}]'::jsonb, null);
---   select count(*), min(state), min(analisis_id::text) from brechas_aprendizaje
---    where user_id = auth.uid() and titulo_normalizado = 'excel avanzado';
---     expected: count = 1, state = 'rechazada' (no se reabrio), y analisis_id del
---     run "b" (el descriptivo si se refresco). count = 2 = el indice unico no esta.
+-- (b) Identidad de skill (spec §4). El MISMO titulo, dos runs, con p_user_id
+--   null y el propio JWT (asi la funcion usa auth.uid()): debe quedar UNA sola
+--   fila y conservar el estado que el usuario ya le puso.
+--   run 1: { "p_cv":{"nombre_archivo":"a"},
+--            "p_brechas":[{"categoria":"conocimiento","titulo":"Excel avanzado"}],
+--            "p_user_id":null }
+--     -> guarda el brechas[0] que devuelve (un uuid).
+--   marcar: { "p_brecha":"<ese uuid>", "p_state":"rechazada" }
+--   run 2: { "p_cv":{"nombre_archivo":"b"},
+--            "p_brechas":[{"categoria":"conocimiento","titulo":"  excel   AVANZADO "}],
+--            "p_user_id":null }
+--     -> mismo titulo con espacios y mayusculas distintos; la normalizacion lo
+--        tiene que reconocer como la misma skill.
+--   Y en el Editor (aca auth.uid() no hace falta, es lectura directa con rol
+--   propietario, o desde la app):
+--   select count(*) as filas, min(state) as estado, min(analisis_id::text) as analisis
+--     from public.brechas_aprendizaje
+--    where titulo_normalizado = 'excel avanzado';
+--     expected: filas = 1, estado = 'rechazada' (no se reabrio), analisis = id del
+--     run "b" (lo descriptivo SI se refresco). filas = 2 = el indice unico no esta.
+--
+-- (c) La lista mal formada (el guard nuevo de arriba). Va por REST o con un
+-- p_user_id existente: los tres guardas de identidad corren ANTES que el de
+-- forma, asi que con p_user_id null en el Editor se obtendria el error de sesion,
+-- no este. Usar el uuid del usuario logueado (auth.uid() es null en el Editor,
+-- entonces el bloqueo anti-suplantacion no molesta):
+--   select guardar_analisis_completo('{"nombre_archivo":"x"}'::jsonb,
+--          '{"titulo":"no es lista"}'::jsonb, '<uuid-de-un-usuario-existente>');
+--     expected: ERROR con "La lista de brechas del analisis llego mal formada:
+--     se esperaba una lista." — NO el texto crudo en ingles de Postgres.
+--     Ninguna fila se crea: el corte esta antes del insert en analisis_cv.
+--
+-- Replica identity (la prueba va en el Editor, lectura de catalogo):
+-- select relreplident from pg_class where relname = 'brechas_aprendizaje';
+--   expected: 'f' (full). 'd' = el alter no corrio y los UPDATE publicados no
+--   traeran old_record para el mapa de Plan B.
 
 -- Para que la API nueva (RPCs/tablas) quede visible sin reinicio:
 notify pgrst, 'reload schema';
