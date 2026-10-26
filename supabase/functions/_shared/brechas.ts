@@ -70,3 +70,32 @@ export function normalizarBrechas(x: unknown): BrechaValidada[] {
   }
   return out;
 }
+
+// El numero tiene que llegar como numero, o como string que se lee como numero.
+// Number(null), Number(''), Number('   '), Number(false) y Number([]) devuelven 0:
+// un analisis con los 4 ejes en 0 pasa cualquier guard de "estan los 4" y se guarda
+// como si fuera un perfil real. El prompt exige enteros 0-100; lo que no se pueda
+// leer como numero no es un eje.
+const numEje = (v: unknown): number | null => {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+};
+
+// Un analisis sin los 4 ejes no es un analisis: es lo que dibuja el Gemelo y lo que
+// cuenta en la metrica de la Fase 1. Se exige ANTES de guardar y ANTES de devolver
+// ok, para que un run incompleto no deje fila ni se venda como exito. Vive en el
+// validador y no en el handler para que su tabla de verdad se pueda ejecutar en
+// vitest (el entry de Deno no se puede importar).
+export function ejesUsables(p: unknown): boolean {
+  const a = (p as { axes?: unknown } | null)?.axes;
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return false;
+  const ejes = a as Record<string, unknown>;
+  return ['exec', 'qual', 'trans', 'fund'].every((k) => {
+    const n = numEje(ejes[k]);
+    return n !== null && n >= 0 && n <= 100;
+  });
+}

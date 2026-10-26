@@ -11,7 +11,7 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '10a-motor-guards';
+const BUILD = '10c-ejes-estrictos';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
@@ -37,10 +37,10 @@ const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>
   });
 };
 
-// INLINE INICIO de _shared/brechas.ts (huella 10a) — las Edge Functions congelan
+// INLINE INICIO de _shared/brechas.ts (huella 10c) — las Edge Functions congelan
 // _shared al crearse: editar el canonico y re-inlinear aca en el mismo commit
 // (pegar el bloque entero, quitar las `export`, no tocar nada mas).
-// Copia del canonico menos las 3 palabras `export` (este index.ts es entry file
+// Copia del canonico menos las 4 palabras `export` (este index.ts es entry file
 // de Deno y jamas se importa — Minor #7). El bloque esta delimitado en los dos
 // extremos: todo lo que va desde el header "// _shared/brechas.ts" hasta el
 // marcador INLINE FIN es byte a byte igual al canonico sin los `export`, y lo
@@ -118,31 +118,56 @@ function normalizarBrechas(x: unknown): BrechaValidada[] {
   }
   return out;
 }
-// INLINE FIN de _shared/brechas.ts — arriba de esta linea queda la copia del
-// canonico (sin `export`); debajo van las funciones propias de esta funcion.
+
+// El numero tiene que llegar como numero, o como string que se lee como numero.
+// Number(null), Number(''), Number('   '), Number(false) y Number([]) devuelven 0:
+// un analisis con los 4 ejes en 0 pasa cualquier guard de "estan los 4" y se guarda
+// como si fuera un perfil real. El prompt exige enteros 0-100; lo que no se pueda
+// leer como numero no es un eje.
+const numEje = (v: unknown): number | null => {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+};
 
 // Un analisis sin los 4 ejes no es un analisis: es lo que dibuja el Gemelo y lo que
 // cuenta en la metrica de la Fase 1. Se exige ANTES de guardar y ANTES de devolver
-// ok, para que un run incompleto no deje fila ni se venda como exito.
+// ok, para que un run incompleto no deje fila ni se venda como exito. Vive en el
+// validador y no en el handler para que su tabla de verdad se pueda ejecutar en
+// vitest (el entry de Deno no se puede importar).
 function ejesUsables(p: unknown): boolean {
   const a = (p as { axes?: unknown } | null)?.axes;
-  if (!a || typeof a !== 'object') return false;
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return false;
   const ejes = a as Record<string, unknown>;
   return ['exec', 'qual', 'trans', 'fund'].every((k) => {
-    const n = Number(ejes[k]);
-    return Number.isFinite(n) && n >= 0 && n <= 100;
+    const n = numEje(ejes[k]);
+    return n !== null && n >= 0 && n <= 100;
   });
 }
+// INLINE FIN de _shared/brechas.ts — arriba de esta linea queda la copia del
+// canonico (sin `export`); debajo van las funciones propias de esta funcion.
 
-// Presupuesto de IA del request: _shared/llm.ts recorre 6 modelos gratuitos con 25 s
-// de abort cada uno (~150 s en el peor caso) y NO se puede editar (las Edge Functions
-// del dashboard congelan _shared al crearse, leccion 6F del ledger), asi que el corte
-// se pone aca. 60 s deja margen para el guardado dentro del mismo request y queda por
-// debajo del timer del cliente (que hoy es 90 s y lo arregla la tarea 10-B).
+// Presupuesto de IA del request. La cuenta HONESTA del peor caso en _shared/llm.ts
+// (que NO se puede editar: las Edge Functions del dashboard congelan _shared al
+// crearse, leccion 6F del ledger): con GEMINI_API_KEY puesta prueba GEMINI PRIMERO,
+// con abort de 40 s —su propio comentario dice 25 s y esta mal, queda congelado—,
+// y recien despues recorre los 6 modelos gratuitos de OpenRouter a 25 s cada uno.
+// Peor caso real: 40 + 6 x 25 = ~190 s, no los ~150 s que decia esta linea antes.
+// Con que cerrar: el timer del cliente es 150 s (SAFETY_TIMEOUT_MS en
+// src/hooks/useGemeloActivation.ts, desde 10-B). 60 s queda comodamente por debajo
+// de ese numero y deja margen para el guardado dentro del mismo request.
 // HONESTO: la carrera libera la RESPUESTA al cliente, no cancela el fetch de
 // _shared/llm.ts — esa promesa se resuelve en el vacio. No deja fila huerfana porque
 // el handler ya retorno antes del guardado.
 const PRESUPUESTO_IA_MS = 60_000;
+
+// Centinela del corte: un simbolo unico, no la cadena 'saturado'. Con cadena, un
+// modelo que devuelva exactamente ese texto se confunde con el presupuesto agotado
+// y el 504 miente; comparando por identidad ninguna respuesta lo puede simular.
+const CORTE_PRESUPUESTO = Symbol('corte por presupuesto de IA');
 
 function clientIp(req: Request): string | null {
   // cf-connecting-ip (Cloudflare, en el borde) primero: es el unico que quien
@@ -186,19 +211,28 @@ function segundosHastaReset(resetAt?: string): number {
   return Math.max(1, Number.isFinite(resetSec) ? resetSec - Math.floor(Date.now() / 1000) : 86400);
 }
 
-// Invitado sin origen: una sola fuente del mensaje, porque lo devuelve el corte de
-// arriba y la defensa del bucket diario de invitados (que nunca se ve, pero evita
+// Invitado sin origen: una sola fuente del mensaje, porque lo devuelve la puerta de
+// acceso y la defensa del bucket diario de invitados (que nunca se ve, pero evita
 // que un refactor vuelva a usar un identificador fijo para 'no se de donde venis').
+// SIN Retry-After: esto no es "volvé en 30 s", es "falta identidad" — el reintento
+// llega con las mismas cabeceras y falla igual, y un numero de segundos invited a
+// gastar requests que no pueden funcionar. Tampoco "recargá la página": recargar
+// no hace que aparezca cf-connecting-ip.
 const analisis_sin_origen = () => json({
   ok: false,
-  error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Recargá la página o iniciá sesión.',
-}, 503, { 'Retry-After': '30' });
+  error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Iniciá sesión y te devolvemos el análisis.',
+}, 503);
 
-// Fail-open en todas las rutas de fallo: el limitador enfermo nunca rompe el
-// producto, pero cada ceguera se loguea con cual tope quedo apagado.
-async function rateLimited(req: Request, userId: string | null, tokenRechazado: boolean): Promise<Response | null> {
+// Puerta de acceso: lo que protege el endpoint del abuso (burst por IP, token
+// rechazado, invitado sin origen). NO consulta los buckets diarios: esos viven en
+// topeDelDia(), que corre despues de validar el CV para que un request rechazado
+// por el servidor no cobre cupo. El orden anti-abuso no cambia — el burst por IP
+// sigue siendo lo primero que corre, antes de leer el cuerpo.
+// Fail-open en las rutas de fallo: el limitador enfermo nunca rompe el producto,
+// pero cada ceguera se loguea con cual tope quedo apagado.
+async function puertaDeAcceso(req: Request, userId: string | null, tokenRechazado: boolean): Promise<Response | null> {
   if (!_admin) {
-    console.error('[analizar-cv] tope IP y tope dia apagados: falta _admin (SUPABASE_URL/SERVICE_KEY)');
+    console.error('[analizar-cv] tope IP (burst) apagado: falta _admin (SUPABASE_URL/SERVICE_KEY)');
     return null;
   }
   try {
@@ -209,8 +243,13 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     // ponia a todas las personas anonimas en el MISMO baldio: la primera agotaba
     // los 3 analisis del dia para todo el mundo. Negar le sale mas barato a la
     // cuenta de OpenRouter que adivinar de donde vino el call.
+    // PREMISA DE INFRAESTRUCTURA TODAVIA SIN MEDIR: el "falla cerrado" asume que
+    // el borde manda cf-connecting-ip; si no la manda, NINGUN invitado pasa y el
+    // producto queda solo para quien tenga sesion. Se verifica en produccion con el
+    // curl de invitado del handoff: un 200 prueba que la cabecera llega, un 503 con
+    // el texto de analisis_sin_origen() prueba que no.
     if (!ip && !userId && !tokenRechazado) {
-      console.error('[analizar-cv] invitado sin cabecera de origen: analisis denegado (falla CERRADO, sin baldio compartido)');
+      console.error('[analizar-cv] invitado sin cabecera de origen (se busco cf-connecting-ip, x-forwarded-for, x-real-ip): analisis denegado (falla CERRADO, sin baldio compartido)');
       return analisis_sin_origen();
     }
 
@@ -223,8 +262,10 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
         p_window_sec: 60,
       });
       if (error || !data) {
+        // Se loguea SOLO el burst: el tope dia se consulta despues, en su propia
+        // funcion, y si ese tambien falla lo dice ahi. Anunciarlo apagado desde
+        // aca seria mentir (y taparia el log verdadero).
         console.error('[analizar-cv] tope IP apagado (falla abierto):', error?.message ?? 'RPC sin datos');
-        console.error('[analizar-cv] tope dia apagado (falla abierto): el limitador corto antes de consultarlo');
         return null;
       }
       const r = data as { allowed?: boolean; reset_at?: string };
@@ -244,16 +285,41 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     }
 
     // Token presente pero rechazado: no es invitado, es una llamada que cree
-    // tener sesion. El 401 va AQUI, despues del tope IP y antes del tope dia
-    // y de la IA: el parentesis `JWT → IP → dia` del plan dejaria correr spam
-    // de tokens sin throttle, asi que la identidad se resuelve primero pero
-    // el rechazo espera a que el anti-abuso diga lo suyo. Sin gasto de IA,
-    // sin guardado, y sin payload 200 con guardado_error:false (eso es lo
-    // que volcaba las brechas del usuario al puente de invitados).
+    // tener sesion. El 401 va AQUI, despues del tope IP y antes de la IA: el
+    // parentesis `JWT → IP → dia` del plan dejaria correr spam de tokens sin
+    // throttle, asi que la identidad se resuelve primero pero el rechazo espera
+    // a que el anti-abuso diga lo suyo. Sin gasto de IA, sin guardado, y sin
+    // payload 200 con guardado_error:false (eso es lo que volcaba las brechas
+    // del usuario al puente de invitados).
+    // CORNER CONOCIDO Y ACEPTADO: sin cabecera de origen este 401 sale SIN ningun
+    // throttle (el burst se apago por no tener ip), o sea que se pueden quemar
+    // tokens verificados sin limite por IP. Se acepta porque priorizar el 401 es
+    // lo correcto — el spammer no recibe cuerpo ni IA — y en produccion
+    // cf-connecting-ip cierra el corner: solo se abre en dev y en un path raro
+    // del borde.
     if (tokenRechazado) {
       return json({ ok: false, error: 'Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.' }, 401);
     }
+    return null;
+  } catch (e) {
+    console.error('[analizar-cv] tope IP (burst) apagado (falla abierto, limitador exploto):', String(e));
+    return null;
+  }
+}
 
+// Cupo del dia: los dos buckets diarios (por userId y, para invitados, por IP).
+// Mismos limites, mismos Retry-After derivados del reset_at, mismos logs que antes
+// de la division; lo unico que cambio es CUANDO corre (ver el llamado en el handler).
+async function topeDelDia(req: Request, userId: string | null): Promise<Response | null> {
+  if (!_admin) {
+    console.error('[analizar-cv] tope dia apagado: falta _admin (SUPABASE_URL/SERVICE_KEY)');
+    return null;
+  }
+  try {
+    // Se vuelve a leer la cabecera aca (en vez de pasarla desde la puerta) porque
+    // el bucket de invitados depende SOLO de ella: asi topeDelDia() no puede ser
+    // llamado con un identificador prestado por otro paso.
+    const ip = clientIp(req);
     // Tope dia por usuario (servidor manda; mismo espiritu que usoDeHoy() de la
     // app CV). Ventana fija de 86400s alineada al epoch => el reset es la
     // proxima medianoche UTC; el Retry-After sale del reset_at del RPC.
@@ -264,7 +330,7 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
       // La IP es falsificable (x-forwarded-for lo decide quien llama; por eso
       // clientIp() prefiere cf-connecting-ip, que tampoco es identidad): esto es
       // FRENO SUAVE, no muro. Un NAT compartido reparte los N analisis.
-      // El corte de arriba ya nego al invitado sin origen; se vuelve a exigir aca
+      // La puerta de acceso ya nego al invitado sin origen; se vuelve a exigir aca
       // para que el bucket diario JAMAS se consulte con un identificador nulo o
       // fijo (el dia por usuario no depende de la IP, este si).
       if (!ip) {
@@ -308,7 +374,7 @@ async function rateLimited(req: Request, userId: string | null, tokenRechazado: 
     }
     return null;
   } catch (e) {
-    console.error('[analizar-cv] tope IP y tope dia apagados (falla abierto, limitador exploto):', String(e));
+    console.error('[analizar-cv] tope dia apagado (falla abierto, limitador exploto):', String(e));
     return null;
   }
 }
@@ -324,8 +390,8 @@ Deno.serve(async (req) => {
     // getUser(), y el guardado de abajo reusa este mismo resultado. OJO: en
     // supabase-js v2 getUser NO lanza con token invalido — devuelve
     // {data:{user:null}, error} —, por eso se mira el error aca: un token
-    // rechazado con header presente es un 401 (dentro de rateLimited, despues
-    // del tope IP), nunca un invitado silencioso.
+    // rechazado con header presente es un 401 (dentro de puertaDeAcceso, despues
+    // del burst por IP), nunca un invitado silencioso.
     const auth = req.headers.get('authorization') ?? '';
     // traiaToken: sirvio para distinguir invitado real de "usuario al que no
     // pudimos verificar" cuando _admin falta (I1, se usa en el guardado).
@@ -341,25 +407,47 @@ Deno.serve(async (req) => {
       }
     }
 
-    const limited = await rateLimited(req, userId, tokenRechazado);
-    if (limited) return limited;
+    // Puerta de acceso (burst por IP + 401 + 503) antes de tocar el cuerpo: es lo
+    // que frena el flood de bodies grandes y el spam de tokens.
+    const accesoNegado = await puertaDeAcceso(req, userId, tokenRechazado);
+    if (accesoNegado) return accesoNegado;
 
     const body = await req.json().catch(() => ({}));
     const cv = (body?.text ?? '').toString().slice(0, 16000).trim();
     if (cv.length < 20) return json({ ok: false, error: 'El CV es muy corto o no se pudo leer.' }, 400);
 
+    // EL CUPO DIARIO VA ACA, DESPUES DEL 400, Y ESE ES EL PUNTO: check_rate_limit
+    // incrementa al CONSULTAR, asi que un request que el servidor rechazo por CV
+    // ilegible o vacio jamas llamo a la IA y no tiene que cobrar uno de los N
+    // analisis del dia (con ANALISIS_TOPE_DIARIO_INVITADO=3, pegar una foto sin
+    // texto se llevaba 1/3 del cupo). Lo que SI sigue cobrando slot: los 504/502
+    // de abajo (saturado, sin respuesta, JSON no interpretable, analisis sin los 4
+    // ejes) — ahi el modelo ya respondio o ya intento responder, y eso es
+    // justamente lo que el tope limita. No se mueve esta llamada por encima del
+    // 400 ni por debajo de la carrera sin releer este parrafo.
+    const sinCupo = await topeDelDia(req, userId);
+    if (sinCupo) return sinCupo;
+
     // Carrera contra el presupuesto (PRESUPUESTO_IA_MS arriba), no contra la
-    // funcion compartida: sin esto, 6 modelos x 25 s de abort llegan a ~150 s y el
-    // cliente ya abandono mucho antes. El .catch() es parte del contrato: el
-    // rechazo de callLLM ('todos los modelos fallaron') NUNCA tiene que escapar al
-    // catch general de abajo, que contesta 500 con `detail` — aca se distingue
-    // "saturado" (presupuesto agotado) de "sin respuesta" (exploto antes).
+    // funcion compartida: sin esto, Gemini (abort 40 s) + 6 modelos x 25 s de abort
+    // llegan a ~190 s y el cliente ya abandono mucho antes. El .catch() es parte
+    // del contrato: el rechazo de callLLM ('todos los modelos fallaron') NUNCA
+    // tiene que escapar al catch general de abajo, que contesta 500 con `detail` —
+    // aca se distingue el corte por presupuesto (CORTE_PRESUPUESTO, comparado por
+    // identidad) de "sin respuesta" (exploto antes).
+    let cronometro: ReturnType<typeof setTimeout> | undefined;
     const crudo = await Promise.race([
       callLLM([{ role: 'system', content: SYS }, { role: 'user', content: 'CV COMPLETO:\n\n' + cv }], true, 2000)
         .catch((e) => { console.error('[analizar-cv] callLLM exploto:', String(e)); return null; }),
-      new Promise<'saturado'>((resolve) => { setTimeout(() => resolve('saturado'), PRESUPUESTO_IA_MS); }),
+      new Promise<typeof CORTE_PRESUPUESTO>((resolve) => {
+        cronometro = setTimeout(() => resolve(CORTE_PRESUPUESTO), PRESUPUESTO_IA_MS);
+      }),
     ]);
-    if (crudo === 'saturado') {
+    // El cronometro se cancela en el camino normal: un timeout de 60 s colgado
+    // mantiene el isolate vivo (y cobrandose) incluso cuando la respuesta ya
+    // salio. Si el que gano fue el propio timer, clearTimeout es un no-op inocuo.
+    clearTimeout(cronometro);
+    if (crudo === CORTE_PRESUPUESTO) {
       return json({ ok: false, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' }, 504);
     }
     if (!crudo) return json({ ok: false, error: 'La IA no genero respuesta.' }, 502);
@@ -405,7 +493,7 @@ Deno.serve(async (req) => {
       // p_user_id (10012). La identidad SOLO sale de getUser() verificado con
       // el JWT adjunto (resuelto arriba, antes de los topes) — nunca del cuerpo
       // de la request. Un token rechazado ya no llega hasta aqui (sale 401 en
-      // rateLimited), asi que este id es confianza de servidor.
+      // puertaDeAcceso), asi que este id es confianza de servidor.
       const { data, error } = await _admin.rpc('guardar_analisis_completo', {
         p_cv: {
           nombre_archivo: (body?.nombre_archivo ?? 'cv').toString().slice(0, 200),

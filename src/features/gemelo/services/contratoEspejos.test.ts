@@ -37,15 +37,19 @@ const sinExport = (src: string): string => src.replace(/^export /gm, '');
 const sinCR = (src: string): string => src.replace(/\r/g, '');
 
 describe('las tres copias del validador (M4)', () => {
-  it('el canonico declara exactamente 3 `export`', () => {
-    expect(canonicoRaw.match(/^export /gm)).toHaveLength(3);
+  // 4 y no 3: el guard de ejes (`ejesUsables`) se mudo del entry de Deno al
+  // canonico para que su tabla de verdad corra en vitest. Es el MISMO guard, no
+  // una laxitud del contrato — si esta cuenta sube sola, alguien exporto algo
+  // nuevo del validador sin re-inlinear.
+  it('el canonico declara exactamente 4 `export`', () => {
+    expect(canonicoRaw.match(/^export /gm)).toHaveLength(4);
   });
 
   it('el espejo del navegador es el canonico texto por texto', () => {
     expect(sinCR(desdeElHeader(espejoRaw, 'brechasValidar.ts'))).toBe(sinCR(canonicoRaw).trimEnd());
   });
 
-  it('el bloque INLINE de analizar-cv es el canonico menos las 3 `export`', () => {
+  it('el bloque INLINE de analizar-cv es el canonico menos las 4 `export`', () => {
     const inicio = entryRaw.indexOf('// INLINE INICIO');
     const fin = entryRaw.indexOf('// INLINE FIN');
     expect(inicio, 'falta el marcador INLINE INICIO').toBeGreaterThanOrEqual(0);
@@ -56,6 +60,13 @@ describe('las tres copias del validador (M4)', () => {
     // misma cantidad de lineas: si alguien agrega una linea al canonico y re-inlinea
     // a medias, el texto puede seguir coincidiendo por accidente; el conteo no.
     expect(bloque.split('\n'), 'el INLINE no tiene las mismas lineas que el canonico').toHaveLength(esperado.split('\n').length);
+    // EL guard de ejes tiene que viajar DENTRO del rango comparado. Si queda abajo
+    // de INLINE FIN (o alguien deja una segunda copia local en el entry), el texto
+    // ya no es espejo del canonico: la copia que corre en Deno y la que prueban
+    // los tests de brechasValidar.test.ts serian funciones distintas.
+    const definiciones = [...entryRaw.matchAll(/^function ejesUsables/gm)].map((m) => m.index);
+    expect(definiciones, 'ejesUsables tiene una definicion en el entry').toHaveLength(1);
+    expect(fin, 'la definicion de ejesUsables esta abajo de INLINE FIN: no es espejo del canonico').toBeGreaterThan(definiciones[0]);
   });
 
   it('el entry de Deno no exporta nada (nunca se importa)', () => {
@@ -70,11 +81,13 @@ describe('las tres copias del validador (M4)', () => {
   });
 });
 
-describe('el gate de ejes y el presupuesto de IA viven en el entry de Deno', () => {
+describe('el gate de ejes (copia INLINE) y el presupuesto de IA viven en el entry de Deno', () => {
   // El entry file importa `jsr:` y usa `Deno.serve`: vitest no puede importarlo,
   // asi que la conducta se afirma sobre el TEXTO del archivo, en el ORDEN del
   // archivo — que es lo que hace a un guard ser guard. Si alguien mueve el
   // guardado por encima del guard, o le quita el .catch() a la carrera, ruge aca.
+  // Desde 10-C la DEFINICION de ejesUsables viene en el rango INLINE (arriba); aca
+  // se afirma que el handler la LLAMA en el lugar correcto.
   const i = (s: string): number => {
     const n = entryRaw.indexOf(s);
     expect(n, `no existe \`${s}\` en el entry: se borro el mecanismo que afirma este test`).toBeGreaterThanOrEqual(0);
@@ -109,7 +122,7 @@ describe('el gate de ejes y el presupuesto de IA viven en el entry de Deno', () 
   });
 
   it('la huella nueva esta puesta (el curl de deploy verifica contra esto)', () => {
-    expect(entryRaw).toContain("const BUILD = '10a-motor-guards'");
+    expect(entryRaw).toContain("const BUILD = '10c-ejes-estrictos'");
   });
 });
 
