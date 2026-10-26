@@ -119,6 +119,8 @@ grant execute on function public.check_rate_limit(text, text, integer, integer) 
 -- solo a través de la función `security definer`, así que cualquier rol que
 -- no sea propietario o bypassrls ve cero filas. Un resultado vacío acá es
 -- esperado; la prueba de que el arrego funciona es el walkthrough de
--- `analizar-cv` del reporte de tarea (dos requests del mismo usuario
--- espaciados >1 h con `ANALISIS_TOPE_DIARIO=2`: el segundo tiene que dar
--- 429, no 200).
+-- `analizar-cv` del reporte de tarea: con `ANALISIS_TOPE_DIARIO=2`, tres
+-- requests del mismo usuario JWT donde el tercero cae mas de una hora
+-- despues del primero. Los dos primeros dan 200 y el tercero tiene que dar
+-- 429 — si da 200, la poda sigue borrando la fila de hoy y el tope es
+-- decorativo.
