@@ -389,21 +389,39 @@ Deno.serve(async (req) => {
     // Identidad antes que los topes: el tope dia necesita el id verificado por
     // getUser(), y el guardado de abajo reusa este mismo resultado. OJO: en
     // supabase-js v2 getUser NO lanza con token invalido — devuelve
-    // {data:{user:null}, error} —, por eso se mira el error aca: un token
-    // rechazado con header presente es un 401 (dentro de puertaDeAcceso, despues
-    // del burst por IP), nunca un invitado silencioso.
+    // {data:{user:null}, error} —, por eso se mira el error aca: un token DE
+    // USUARIO rechazado es un 401 (dentro de puertaDeAcceso, despues del burst por
+    // IP), nunca un invitado silencioso; la clave publica es la otra rama.
     const auth = req.headers.get('authorization') ?? '';
+    const token = auth.replace(/^Bearer\s+/i, '');
+    // El INVITADO llega con la clave publica del proyecto como Bearer: es justo lo
+    // que hace supabase-js (session?.access_token ?? supabaseKey) y lo unico que
+    // deja pasar al borde con verify_jwt ON (sin Authorization el request muere
+    // ahi y la funcion nunca corre). getUser() la rechaza porque no es un token de
+    // usuario: eso es invitado, no el 401 de abajo. Forjar este empate no gana
+    // nada que la ruta anonima no de ya — su tope cuelga de cf-connecting-ip, no
+    // del token.
+    const clavePublica = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? '';
+    const esInvitado = token === '' || (clavePublica !== '' && token === clavePublica);
     // traiaToken: sirvio para distinguir invitado real de "usuario al que no
     // pudimos verificar" cuando _admin falta (I1, se usa en el guardado).
-    const traiaToken = auth !== '';
+    const traiaToken = !esInvitado;
     let userId: string | null = null;
     let tokenRechazado = false;
-    if (_admin && auth) {
-      const { data, error } = await _admin.auth.getUser(auth.replace(/^Bearer\s+/i, ''));
-      userId = data.user?.id ?? null;
-      if (!userId) {
-        tokenRechazado = true;
-        console.error('[analizar-cv] token presente pero rechazado (401 tras el tope IP):', error?.message ?? 'getUser sin usuario ni error');
+    if (esInvitado) {
+      console.log(`[analizar-cv] rama invitado (bearer ${token === '' ? 'ausente' : 'igual a la clave publica'}): sin guardado, tope dia por IP.`);
+    } else {
+      // Token distinto de la clave publica: se lee como sesion de usuario.
+      if (clavePublica === '') {
+        console.error('[analizar-cv] falta SUPABASE_ANON_KEY/SUPABASE_PUBLISHABLE_KEY en el runtime: un bearer de invitado no se puede reconocer y cae como token rechazado (401)');
+      }
+      if (_admin) {
+        const { data, error } = await _admin.auth.getUser(token);
+        userId = data.user?.id ?? null;
+        if (!userId) {
+          tokenRechazado = true;
+          console.error('[analizar-cv] token presente pero rechazado (401 tras el tope IP):', error?.message ?? 'getUser sin usuario ni error');
+        }
       }
     }
 

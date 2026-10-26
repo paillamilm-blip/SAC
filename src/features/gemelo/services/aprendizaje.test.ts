@@ -3,7 +3,10 @@
 // y autenticado (guardado server-side, sin escribir el puente), la huella que
 // sube del servidor, y el orden motor -> fallback Gemini de analizarCvConFallback.
 // Y la frontera que el fallback NUNCA puede cruzar: un corte del servidor sobre
-// este usuario (401/429/503) se muestra, no se tapa buscando otra puerta.
+// este usuario (401/429/503) se muestra, no se tapa buscando otra puerta. Con el
+// matiz de T10-D: solo cuando lo redacto el motor (cuerpo con `error`). Un 401/503
+// del borde de Supabase —cuerpo {code, message}, funcion nunca ejecutada— es el
+// motor afuera y si cae al respaldo.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -28,6 +31,7 @@ import {
   ErrorAnalisisMotor,
 } from './aprendizaje';
 import type { ResultadoAnalisisCv } from './aprendizaje';
+import { supabaseAnonKey } from '@/infrastructure/supabase/client';
 import type { BrechaValidada } from './brechasValidar';
 
 const PUENTE_KEY = 'omicron.brechas.puente';
@@ -97,10 +101,13 @@ describe('analizarCvConIA', () => {
     expect(r.analysis.brechas).toEqual([BRECHA]);
     expect(JSON.parse(localStorage.getItem(PUENTE_KEY) ?? '[]')).toEqual([BRECHA]);
 
-    // headers: apikey publica siempre; sin sesion no va Authorization
+    // headers: apikey publica siempre; SIN sesion el Bearer va igual, con la
+    // anon key del cliente (la resolucion de supabase-js: access_token ?? key).
+    // Omitir Authorization no es "modo invitado": el borde de Supabase lo corta
+    // con 401 antes de que la funcion corra, y el diseño de invitado es inalcanzable.
     const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers.apikey).toBe('anon-test-key');
-    expect(headers.Authorization).toBeUndefined();
+    expect(headers.Authorization).toBe(`Bearer ${supabaseAnonKey}`);
   });
 
   it('autenticado: devuelve guardado, reenvía el token y NO toca el puente', async () => {
@@ -115,6 +122,9 @@ describe('analizarCvConIA', () => {
 
     const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers.Authorization).toBe('Bearer tok-123');
+    // el respaldo de invitado jamas pisa a un token de usuario: un Bearer con la
+    // anon key haria que el motor lea la llamada como anonima y se pierda el guardado.
+    expect(headers.Authorization).not.toContain(supabaseAnonKey);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body).toEqual({ text: 'texto del cv', nombre_archivo: 'cv.pdf' });
   });
@@ -147,14 +157,37 @@ describe('analizarCvConIA', () => {
     expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
   });
 
-  it('HTTP != ok y cuerpo no JSON: usa el mensaje con el status', async () => {
+  it('HTTP != ok y cuerpo no JSON: el motor no habló, mensaje humano sin HTTP ni números', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: false, status: 502,
       json: async () => { throw new Error('cuerpo no JSON'); },
     } as unknown as Response));
 
-    await expect(analizarCvConIA('texto', 'cv.pdf')).rejects.toThrow('El analisis fallo (HTTP 502).');
+    const e = await analizarCvConIA('texto', 'cv.pdf').catch((err: unknown) => err);
+
+    // Un cuerpo que el motor no escribió no puede mostrarse como si lo fuera: la
+    // jerga `El analisis fallo (HTTP 502).` era exactamente el hallazgo I-#1.
+    expect(e).toBeInstanceOf(ErrorAnalisisMotor);
+    expect((e as ErrorAnalisisMotor).status).toBe(502);
+    expect((e as ErrorAnalisisMotor).delServidor).toBe(false);
+    expect((e as ErrorAnalisisMotor).message).not.toMatch(/HTTP/);
+    expect((e as ErrorAnalisisMotor).message).not.toMatch(/\d/);
+  });
+
+  it('401 del borde (cuerpo {code, message}): no es un mensaje del motor y se dice humano', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    // Lo que emite Supabase con verify_jwt ON cuando el header falta: el handler
+    // nunca corrio, o sea que NO hay un motivo para ESTA persona.
+    mockFetch({ code: 'UNAUTHORIZED_NO_AUTH_HEADER', message: 'Missing authorization header' }, false, 401);
+
+    const e = await analizarCvConIA('texto', 'cv.pdf').catch((err: unknown) => err);
+
+    expect(e).toBeInstanceOf(ErrorAnalisisMotor);
+    expect((e as ErrorAnalisisMotor).status).toBe(401);
+    expect((e as ErrorAnalisisMotor).delServidor).toBe(false);
+    expect((e as ErrorAnalisisMotor).message).not.toMatch(/HTTP/);
+    expect((e as ErrorAnalisisMotor).message).not.toMatch(/\d/);
   });
 
   it('401 del servidor: el mensaje en español llega tal cual y el puente no se escribe', async () => {
@@ -179,6 +212,8 @@ describe('analizarCvConIA', () => {
     expect(e).toBeInstanceOf(ErrorAnalisisMotor);
     expect((e as ErrorAnalisisMotor).status).toBe(429);
     expect((e as ErrorAnalisisMotor).message).toBe('Llegaste a los 10 análisis de hoy.');
+    // El cuerpo trajo el `error` del motor: hablo de ESTE usuario, es un corte.
+    expect((e as ErrorAnalisisMotor).delServidor).toBe(true);
   });
 
   it('cuerpo ok:false con status del response: el status no se inventa, sale de res.status', async () => {
@@ -192,6 +227,8 @@ describe('analizarCvConIA', () => {
 
     expect(e).toBeInstanceOf(ErrorAnalisisMotor);
     expect((e as ErrorAnalisisMotor).status).toBe(200);
+    // ok:false sale del cuerpo del motor: el texto es del servidor por definicion.
+    expect((e as ErrorAnalisisMotor).delServidor).toBe(true);
   });
 
   it('M7: la huella build viaja en la respuesta parseada', async () => {
@@ -332,7 +369,7 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
   const BLOQUEOS_SERVIDOR: { nombre: string; status: number; error: string }[] = [
     { nombre: '429 (cupo del dia)', status: 429, error: 'Llegaste a los 10 análisis de hoy. El contador se renueva en ~6 h.' },
     { nombre: '401 (sesion expirada)', status: 401, error: 'Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.' },
-    { nombre: '503 (sin origen)', status: 503, error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Recargá la página o iniciá sesión.' },
+    { nombre: '503 (sin origen)', status: 503, error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Iniciá sesión y te devolvemos el análisis.' },
   ];
   for (const { nombre, status, error } of BLOQUEOS_SERVIDOR) {
     it(`el servidor corta con ${nombre}: se devuelve el motivo y NO se gasta el fallback`, async () => {
@@ -352,15 +389,42 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     });
   }
 
+  // I-#1 de la revision de 10-B, MEDIDO en produccion: un 401/503 del BORDE de
+  // Supabase (verify_jwt, cold start, gateway) trae cuerpo {code, message} y el
+  // handler nunca corrio. No hay mensaje para ESTA persona: es el motor afuera, y
+  // ahi el fallback declarado si corre. El status solo no alcanza para decidir.
+  const CORTES_DE_PLATAFORMA: { nombre: string; status: number; body: Record<string, string> }[] = [
+    { nombre: '401 sin Authorization', status: 401, body: { code: 'UNAUTHORIZED_NO_AUTH_HEADER', message: 'Missing authorization header' } },
+    { nombre: '503 en cold start', status: 503, body: { code: 'SERVICE_UNAVAILABLE', message: 'The function was not available' } },
+  ];
+  for (const { nombre, status, body } of CORTES_DE_PLATAFORMA) {
+    it(`corte de plataforma (${nombre}): cae al fallback Gemini y jamas muestra la jerga`, async () => {
+      getSession.mockResolvedValue({ data: { session: null } });
+      mockFetch(body, false, status);
+      gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+      const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), `fallback por ${nombre}`);
+
+      expect(r.fuente).toBe('gemini');
+      expect(gemini.analyzeCVWithGemini).toHaveBeenCalledWith('texto');
+      // Lo que la UI llegaria a mostrar: ni "HTTP" ni el numero de status.
+      expect(JSON.stringify(r)).not.toMatch(/HTTP/);
+    });
+  }
+
   it('429 de invitado: el puente queda intacto (no escribe ni borra)', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
     puenteBrechasInvitado.escribir([BRECHA]);
-    mockFetch({ ok: false, error: 'Terminaste los 3 análisis gratis de hoy para este dispositivo.' }, false, 429);
+    const CUPO_INVITADO = 'Terminaste los 3 análisis gratis de hoy para este dispositivo.';
+    mockFetch({ ok: false, error: CUPO_INVITADO }, false, 429);
     gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
 
     const r = await analizarCvConFallback('texto', 'cv.pdf');
 
     expect(r?.fuente).toBe('bloqueado');
+    // el texto del cupo de invitados llega LITERAL y con su status: es un corte
+    // del motor sobre ESTA persona (trajo su `error`), no una plataforma muda.
+    expect(r).toEqual({ fuente: 'bloqueado', status: 429, error: CUPO_INVITADO });
     // el throw del 429 ocurre antes del bloque del puente: las brechas previas del
     // invitado siguen ahi. Si alguien mueve el puente arriba del catch, esto se cae.
     expect(puenteBrechasInvitado.leer()).toEqual([BRECHA]);
