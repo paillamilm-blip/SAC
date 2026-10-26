@@ -7,9 +7,11 @@
 -- `window_start < now() - interval '1 hour'`, pero con ventana diaria la
 -- fila de *hoy* (`window_start` = medianoche UTC) envejece más de una hora
 -- durante el propio día: la poda la elimina mientras sigue en curso y el
--- contador del día arranca de cero en cada pasada (una cada ~50 requests,
--- o sea cada hora más o menos). El límite infraccuenta y el usuario pasa de
--- N análisis en un día sin que el servidor se entere.
+-- contador del día arranca de cero en cada pasada. Ojo con la matemática del
+-- gatillo: `v_epoch % 50 = 0` no cuenta requests, muestrea el segundo del
+-- epoch — dispara en ~2% de los calls, o sea cada ~50 s con tráfico
+-- sostenido, no "una vez cada 50 requests". El límite infraccuenta y el
+-- usuario pasa de N análisis en un día sin que el servidor se entere.
 --
 -- QUÉ HACE: cada fila recuerda la ventana con la que nació.
 --   1. `rate_limits` gana la columna `window_sec` (`integer not null
@@ -91,6 +93,26 @@ $fn$;
 revoke all on function public.check_rate_limit(text, text, integer, integer) from public, anon, authenticated;
 grant execute on function public.check_rate_limit(text, text, integer, integer) to service_role;
 
+-- ── Chequeo pre-pegado ──────────────────────────────────────────────
+-- Antes de pegar este archivo, mirar qué definición está VIVA en producción.
+-- Este `create or replace` reescribe la función pero NO toca el PK de la
+-- tabla, y su `on conflict (bucket, identifier, window_start)` exige el PK
+-- de 0031:
+--
+-- select indexdef from pg_indexes where tablename = 'rate_limits';
+--   esperado: PRIMARY KEY (bucket, identifier, window_start). Si dice (bucket, identifier),
+--   production viene del bootstrap viejo: este archivo NO alcanza, hay que alinear la tabla primero.
+-- select prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--   where proname = 'check_rate_limit';
+--   (si la consulta de arriba no devuelve filas, 0031 nunca se aplicó:
+--    aplicar 0031 antes que este archivo).
+--
+-- Si el índice sale (bucket, identifier): aplicar primero el PASO 6 de
+-- APLICAR_EN_SUPABASE.sql — hoy es espejo de 0031+10013 y trae el DO que
+-- alinea el PK (drop constraint + add; la tabla es efímera, solo
+-- contadores) — y recién después pegar este archivo. Pegar 10013 a secas
+-- dejaría el tope diario fallando abierto en cada request, sin ruido.
+--
 -- ── Verificacion post-aplicacion ──────────────────────────────────────
 -- Dos consultas, en este orden, pegadas en el SQL Editor recién aplicado
 -- este archivo.

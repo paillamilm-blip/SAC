@@ -208,55 +208,99 @@ CREATE INDEX IF NOT EXISTS idx_rep_history_user ON public.reputation_history(use
 -- ═══════════════════════════════════════════════════════════════════════
 -- PASO 6: Rate limiting (necesario para proxy-ai)
 -- ═══════════════════════════════════════════════════════════════════════
+-- ESPEJO, no dueño. La fuente canónica es:
+--   supabase/migrations/0031_rate_limiting.sql      (tabla + RPC original)
+--   supabase/migrations/10013_ventana_propia_rate_limit.sql  (poda por ventana propia)
+-- Este bloque produce exactamente el mismo estado de producción que 0031 +
+-- 10013 aplicadas en orden. Si cambiás una de las dos, actualizá este espejo.
+-- El limitador falla abierto en las Edge Functions: si este bloque queda
+-- desalineado (ej. tabla con PK viejo), el tope se apaga sin ruido.
+
 CREATE TABLE IF NOT EXISTS public.rate_limits (
-  bucket     text NOT NULL,
-  identifier text NOT NULL,
-  count      integer NOT NULL DEFAULT 1,
-  window_start timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (bucket, identifier)
+  bucket        text        NOT NULL,   -- nombre del endpoint (ej. 'run-code')
+  identifier    text        NOT NULL,   -- user_id o IP
+  window_start  timestamptz NOT NULL,   -- inicio de la ventana fija
+  count         integer     NOT NULL DEFAULT 0,
+  window_sec    integer     NOT NULL DEFAULT 60,  -- ventana con la que nació la fila (10013)
+  PRIMARY KEY (bucket, identifier, window_start)
 );
 
+-- La tabla es interna (solo la usa el limitador vía SECURITY DEFINER).
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+-- Sin políticas => nadie puede leerla/escribirla directamente (ni anon ni authenticated).
+
+-- Si una versión VIEJA de este bootstrap creó la tabla con PK
+-- (bucket, identifier), el ON CONFLICT del RPC peta 42P10 y el limitador
+-- muere en silencio (falla abierto). Alinear sin destruir: la tabla es
+-- efímera (solo contadores), y (bucket, identifier) único implica
+-- (bucket, identifier, window_start) único, así que el cambio es seguro.
+DO $$
+DECLARE v_def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO v_def
+    FROM pg_constraint
+   WHERE contype = 'p' AND conrelid = 'public.rate_limits'::regclass;
+  IF v_def IS NOT NULL AND v_def <> 'PRIMARY KEY (bucket, identifier, window_start)' THEN
+    ALTER TABLE public.rate_limits DROP CONSTRAINT rate_limits_pkey;
+    ALTER TABLE public.rate_limits ADD CONSTRAINT rate_limits_pkey
+      PRIMARY KEY (bucket, identifier, window_start);
+  END IF;
+END $$;
+
+-- Se CONSERVA el DROP (aunque 10013 no lo necesite): el bootstrap tiene que
+-- ser autocontenido y poder reparar su propio pegado anterior, que declaraba
+-- la función RETURNS json. CREATE OR REPLACE no cambia el tipo de retorno,
+-- así que sin el DROP el pegado petaría contra la versión vieja.
 DROP FUNCTION IF EXISTS public.check_rate_limit(text, text, integer, integer);
 
-CREATE OR REPLACE FUNCTION public.check_rate_limit(
-  p_bucket text,
+-- ── Cuerpo byte a byte igual a 10013 (espejo; editar 10013 y re-pegar acá) ──
+create or replace function public.check_rate_limit(
+  p_bucket     text,
   p_identifier text,
-  p_limit integer,
+  p_limit      integer,
   p_window_sec integer
-)
-RETURNS json
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_count integer;
-  v_window_start timestamptz;
-  v_reset_at timestamptz;
-BEGIN
-  SELECT count, window_start INTO v_count, v_window_start
-  FROM public.rate_limits WHERE bucket = p_bucket AND identifier = p_identifier;
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_epoch  bigint      := floor(extract(epoch from now()))::bigint;
+  v_window timestamptz := to_timestamp((v_epoch / p_window_sec) * p_window_sec);
+  v_count  integer;
+begin
+  insert into public.rate_limits (bucket, identifier, window_start, count, window_sec)
+  values (p_bucket, p_identifier, v_window, 1, p_window_sec)
+  on conflict (bucket, identifier, window_start)
+  do update set count = public.rate_limits.count + 1,
+                window_sec = p_window_sec
+  returning count into v_count;
 
-  IF v_window_start IS NULL OR (now() - v_window_start) > (p_window_sec || ' seconds')::interval THEN
-    INSERT INTO public.rate_limits (bucket, identifier, count, window_start)
-    VALUES (p_bucket, p_identifier, 1, now())
-    ON CONFLICT (bucket, identifier) DO UPDATE SET count = 1, window_start = now();
-    RETURN json_build_object('allowed', true, 'count', 1, 'limit', p_limit);
-  END IF;
+  -- Limpieza oportunista (mantiene la tabla pequeña), ahora por ventana
+  -- propia: cada fila sobrevive 2 x su ventana, no una hora fija. Una fila
+  -- de 60 s se poda a los 120 s; una de 86400 s (el tope diario) aguanta
+  -- 48 h, así que la fila de hoy deja de borrarse a mitad de la propia
+  -- ventana.
+  if (v_epoch % 50) = 0 then
+    delete from public.rate_limits
+    where window_start < now() - make_interval(secs => window_sec * 2);
+  end if;
 
-  IF v_count >= p_limit THEN
-    v_reset_at := v_window_start + (p_window_sec || ' seconds')::interval;
-    RETURN json_build_object('allowed', false, 'count', v_count, 'limit', p_limit, 'reset_at', v_reset_at);
-  END IF;
+  return jsonb_build_object(
+    'allowed',  v_count <= p_limit,
+    'count',    v_count,
+    'limit',    p_limit,
+    'reset_at', v_window + make_interval(secs => p_window_sec)
+  );
+end;
+$fn$;
 
-  UPDATE public.rate_limits SET count = count + 1
-  WHERE bucket = p_bucket AND identifier = p_identifier;
-
-  RETURN json_build_object('allowed', true, 'count', v_count + 1, 'limit', p_limit);
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.check_rate_limit(text, text, integer, integer) TO authenticated, anon, service_role;
+-- Solo el service_role (Edge Functions) ejecuta el limitador. ANTES este
+-- bloque le daba EXECUTE a anon: un security definer accesible desde el
+-- anon se puede invocar por REST y escribir en rate_limits salteando RLS.
+-- Esto alinea con 0031/10013.
+REVOKE ALL ON FUNCTION public.check_rate_limit(text, text, integer, integer) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_rate_limit(text, text, integer, integer) TO service_role;
 
 
 -- ═══════════════════════════════════════════════════════════════════════
