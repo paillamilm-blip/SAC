@@ -11,8 +11,8 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '7b-guardado-error';
-const json = (body: unknown, status = 200) => {
+const BUILD = '8a-tope-dia';
+const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
   const payload = body && typeof body === 'object' && !Array.isArray(body)
@@ -20,7 +20,7 @@ const json = (body: unknown, status = 200) => {
     : body;
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...CORS, 'Content-Type': 'application/json', 'x-omicron-build': BUILD },
+    headers: { ...CORS, 'Content-Type': 'application/json', 'x-omicron-build': BUILD, ...(extraHeaders ?? {}) },
   });
 };
 
@@ -83,9 +83,17 @@ function clientIp(req: Request): string {
   return req.headers.get('cf-connecting-ip') ?? req.headers.get('x-real-ip') ?? 'unknown';
 }
 
-async function rateLimited(req: Request): Promise<Response | null> {
+// Tope diario efectivo (secret ANALISIS_TOPE_DIARIO, solo server-side): si el
+// env no es un numero positivo finito, 10 — un NaN jamas debe llegar al RPC.
+function topeDiario(): number {
+  const n = Number(Deno.env.get('ANALISIS_TOPE_DIARIO') ?? '10');
+  return Number.isFinite(n) && n > 0 ? n : 10;
+}
+
+async function rateLimited(req: Request, userId: string | null): Promise<Response | null> {
   if (!_admin) return null;
   try {
+    // Tope IP anti-abuso (6/60s): no cambia, aplica a invitados y a usuarios.
     const { data, error } = await _admin.rpc('check_rate_limit', {
       p_bucket: 'analizar-cv',
       p_identifier: clientIp(req),
@@ -95,10 +103,26 @@ async function rateLimited(req: Request): Promise<Response | null> {
     if (error || !data) return null;
     const r = data as { allowed?: boolean; reset_at?: string };
     if (r.allowed === false) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Demasiados intentos. Espera unos segundos.', retry_at: r.reset_at ?? null }),
-        { status: 429, headers: { ...CORS, 'Content-Type': 'application/json', 'Retry-After': '30' } },
-      );
+      return json({ ok: false, error: 'Demasiados intentos. Espera unos segundos.', retry_at: r.reset_at ?? null }, 429, { 'Retry-After': '30' });
+    }
+
+    // Tope dia por usuario (servidor manda; mismo espiritu que usoDeHoy() de la
+    // app CV). Ventana fija de 86400s alineada al epoch => el reset es la
+    // proxima medianoche UTC; el Retry-After se calcula hacia ella.
+    if (!userId) return null;
+    const limite = topeDiario();
+    const { data: dia, error: diaError } = await _admin.rpc('check_rate_limit', {
+      p_bucket: 'analisis-dia',
+      p_identifier: `${userId}:${new Date().toISOString().slice(0, 10)}`,
+      p_limit: limite,
+      p_window_sec: 86400,
+    });
+    if (diaError || !dia) return null;
+    const d = dia as { allowed?: boolean; reset_at?: string };
+    if (d.allowed === false) {
+      const ahora = Math.floor(Date.now() / 1000);
+      const retryAfter = Math.max(1, (Math.floor(ahora / 86400) + 1) * 86400 - ahora);
+      return json({ ok: false, error: `Llegaste a los ${limite} análisis de hoy. Vuelve mañana a las 00:00 UTC.`, retry_at: d.reset_at ?? null }, 429, { 'Retry-After': String(retryAfter) });
     }
     return null;
   } catch { return null; }
@@ -111,7 +135,14 @@ Deno.serve(async (req) => {
   try {
     if (!hasKey()) return json({ ok: false, error: 'Falta OPENROUTER_KEY en secrets.' }, 500);
 
-    const limited = await rateLimited(req);
+    // Identidad antes que los topes: el tope dia necesita el id verificado por
+    // getUser(), y el guardado de abajo reusa este mismo resultado.
+    const auth = req.headers.get('authorization') ?? '';
+    const { data: userData } = _admin && auth
+      ? await _admin.auth.getUser(auth.replace(/^Bearer\s+/i, ''))
+      : { data: { user: null } };
+
+    const limited = await rateLimited(req, userData?.user?.id ?? null);
     if (limited) return limited;
 
     const body = await req.json().catch(() => ({}));
@@ -148,44 +179,39 @@ Deno.serve(async (req) => {
     // datos. Distinge ese caso del invitado real (guardado null sin usuario) para
     // que el cliente no deposite las brechas de un usuario con sesion en el puente.
     let guardado_error = false;
-    if (_admin) {
-      const auth = req.headers.get('authorization') ?? '';
-      const { data: userData } = auth
-        ? await _admin.auth.getUser(auth.replace(/^Bearer\s+/i, ''))
-        : { data: { user: null } };
-      if (userData?.user?.id) {
-        const p = parsed as Record<string, unknown>;
-        // Ruling controlador 2026-10-26 (T6): la RPC es security definer con
-        // p_user_id (10012). La identidad SOLO sale de getUser() verificado con
-        // el JWT adjunto arriba — nunca del cuerpo de la request. getUser ya
-        // falla con token invalido, asi que este id es confianza de servidor.
-        const { data, error } = await _admin.rpc('guardar_analisis_completo', {
-          p_cv: {
-            nombre_archivo: (body?.nombre_archivo ?? 'cv').toString().slice(0, 200),
-            ocupacion: p.seniorLabel ?? null,
-            nivel: p.arch ?? null,
-            resumen: p.summary ?? null,
-            proveedor: 'openrouter',
-            simulado: false,
-          },
-          p_brechas: brechas,
-          p_user_id: userData.user.id,
-        });
-        if (!error && data) {
-          guardado = data as { analisis_id: string; brechas: string[] };
-          // La brecha ya existe; se marca como detectada de nacimiento. El
-          // guard lo devuelve con ids reales para que el cliente suscriba.
-        } else {
-          // Fallo o respuesta vacia: el guardado NO ocurrio para un usuario con
-          // sesion. Se marca para que el cliente no lo confunda con un invitado.
-          guardado_error = true;
-          console.error('[analizar-cv] guardado fallo:', error?.message ?? 'sin datos');
-        }
+    if (_admin && userData?.user?.id) {
+      const p = parsed as Record<string, unknown>;
+      // Ruling controlador 2026-10-26 (T6): la RPC es security definer con
+      // p_user_id (10012). La identidad SOLO sale de getUser() verificado con
+      // el JWT adjunto (resuelto arriba, antes de los topes) — nunca del cuerpo
+      // de la request. getUser ya falla con token invalido, asi que este id es
+      // confianza de servidor.
+      const { data, error } = await _admin.rpc('guardar_analisis_completo', {
+        p_cv: {
+          nombre_archivo: (body?.nombre_archivo ?? 'cv').toString().slice(0, 200),
+          ocupacion: p.seniorLabel ?? null,
+          nivel: p.arch ?? null,
+          resumen: p.summary ?? null,
+          proveedor: 'openrouter',
+          simulado: false,
+        },
+        p_brechas: brechas,
+        p_user_id: userData.user.id,
+      });
+      if (!error && data) {
+        guardado = data as { analisis_id: string; brechas: string[] };
+        // La brecha ya existe; se marca como detectada de nacimiento. El
+        // guard lo devuelve con ids reales para que el cliente suscriba.
+      } else {
+        // Fallo o respuesta vacia: el guardado NO ocurrio para un usuario con
+        // sesion. Se marca para que el cliente no lo confunda con un invitado.
+        guardado_error = true;
+        console.error('[analizar-cv] guardado fallo:', error?.message ?? 'sin datos');
       }
     }
 
     console.log(`[analizar-cv] OK, nombre: ${(parsed as {name?:string})?.name ?? '?'}`);
-    return json({ ok: true, analysis: parsed, model: 'openrouter', guardado, guardado_error, build: '7b-guardado-error' });
+    return json({ ok: true, analysis: parsed, model: 'openrouter', guardado, guardado_error });
   } catch (e) {
     console.error('[analizar-cv] Error fatal:', String(e));
     return json({ ok: false, error: 'Error inesperado.', detail: String(e) }, 500);
