@@ -11,7 +11,7 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '7a-brechas-v1';
+const BUILD = '7b-guardado-error';
 const json = (body: unknown, status = 200) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
@@ -25,8 +25,10 @@ const json = (body: unknown, status = 200) => {
 };
 
 // INLINE de _shared/brechas.ts (huella 7a) — las Edge Functions congelan _shared al crearse; editar el canónico y re-inlinear.
-// Copia literal (incluidos los `export`) del archivo canónico: si cambia
-// _shared/brechas.ts, volver a pegar aqui entero y cambiar la huella.
+// Copia del canónico menos las 3 `export` (este index.ts es entry file de Deno y
+// jamas se importa — Minor #7). El cuerpo del validador queda byte a byte igual.
+// Si cambia _shared/brechas.ts, volver a pegar aqui entero, quitar las `export` y
+// cambiar la huella.
 // _shared/brechas.ts — validación defensiva del output de IA.
 // Port literal del validador de la app CV (lib/ai/validar.ts) sin zod:
 // sin dependencias, corre igual en Deno (Edge Function) y en vitest
@@ -38,14 +40,14 @@ const CATEGORIAS: readonly string[] = ['dura', 'blanda', 'conocimiento', 'creden
 const SEVERIDADES: readonly string[] = ['alta', 'media', 'baja'];
 const MAX_BRECHAS = 12;
 
-export interface BrechaValidada {
+interface BrechaValidada {
   categoria: Categoria; titulo: string; evidencia: string; porQueImporta: string;
   severidad: Severidad; aprender: { que: string; como: string; comoLoDemuestro: string };
 }
 
 const str = (x: unknown): string => (typeof x === 'string' ? x.trim() : '');
 
-export function normalizarBrecha(x: unknown): BrechaValidada | null {
+function normalizarBrecha(x: unknown): BrechaValidada | null {
   if (!x || typeof x !== 'object') return null;
   const b = x as Record<string, unknown>;
   const categoria = str(b.categoria).toLowerCase();
@@ -64,7 +66,7 @@ export function normalizarBrecha(x: unknown): BrechaValidada | null {
   };
 }
 
-export function normalizarBrechas(x: unknown): BrechaValidada[] {
+function normalizarBrechas(x: unknown): BrechaValidada[] {
   if (!Array.isArray(x)) return [];
   const out: BrechaValidada[] = [];
   for (const item of x) {
@@ -142,6 +144,10 @@ Deno.serve(async (req) => {
     (parsed as { brechas?: unknown }).brechas = brechas;
 
     let guardado: { analisis_id: string; brechas: string[] } | null = null;
+    // guardado_error: un usuario verificado existe pero la RPC fallo o no trajo
+    // datos. Distinge ese caso del invitado real (guardado null sin usuario) para
+    // que el cliente no deposite las brechas de un usuario con sesion en el puente.
+    let guardado_error = false;
     if (_admin) {
       const auth = req.headers.get('authorization') ?? '';
       const { data: userData } = auth
@@ -169,14 +175,17 @@ Deno.serve(async (req) => {
           guardado = data as { analisis_id: string; brechas: string[] };
           // La brecha ya existe; se marca como detectada de nacimiento. El
           // guard lo devuelve con ids reales para que el cliente suscriba.
-        } else if (error) {
-          console.error('[analizar-cv] guardado fallo:', error.message);
+        } else {
+          // Fallo o respuesta vacia: el guardado NO ocurrio para un usuario con
+          // sesion. Se marca para que el cliente no lo confunda con un invitado.
+          guardado_error = true;
+          console.error('[analizar-cv] guardado fallo:', error?.message ?? 'sin datos');
         }
       }
     }
 
     console.log(`[analizar-cv] OK, nombre: ${(parsed as {name?:string})?.name ?? '?'}`);
-    return json({ ok: true, analysis: parsed, model: 'openrouter', guardado, build: '7a-brechas-v1' });
+    return json({ ok: true, analysis: parsed, model: 'openrouter', guardado, guardado_error, build: '7b-guardado-error' });
   } catch (e) {
     console.error('[analizar-cv] Error fatal:', String(e));
     return json({ ok: false, error: 'Error inesperado.', detail: String(e) }, 500);

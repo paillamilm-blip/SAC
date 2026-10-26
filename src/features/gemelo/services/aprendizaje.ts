@@ -45,9 +45,20 @@ export async function analizarCvConIA(
     },
     body: JSON.stringify({ text: texto, nombre_archivo: nombreArchivo }),
   });
+  if (!res.ok) {
+    // Un error HTTP no es un resultado: se lee legible, no se parsea como analysis.
+    let msg: string | undefined;
+    try { msg = (await res.json() as { error?: string })?.error; } catch { /* cuerpo no JSON: sin mensaje */ }
+    throw new Error(msg ?? `El analisis fallo (HTTP ${res.status}).`);
+  }
   const json = await res.json();
   if (!json.ok) throw new Error(json.error ?? 'El analisis fallo.');
   const analysis = json.analysis as AnalyzedProfileConBrechas;
-  if (json.guardado == null) puenteBrechasInvitado.escribir(analysis.brechas ?? []);
+  // El puente es SOLO para quien no tiene usuario. Si hay sesion y el guardado
+  // fallo (guardado_error), las brechas no caen al puente: nunca alcanzarian la
+  // BD ni el mapa entre dispositivos. El analisis igual se devuelve, la UI no se rompe.
+  if (json.guardado == null && json.guardado_error !== true) {
+    puenteBrechasInvitado.escribir(analysis.brechas ?? []);
+  }
   return { analysis, guardado: (json.guardado ?? null) as { analisis_id: string; brechas: string[] } | null };
 }

@@ -59,7 +59,9 @@ drop policy if exists brechas_sueno on public.brechas_aprendizaje;
 create policy brechas_sueno on public.brechas_aprendizaje
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 -- No hay policy de INSERT para anon: el guardado pasa por la RPC
--- (guardar_analisis_completo), que usa auth.uid() real.
+-- (guardar_analisis_completo), security definer que recibe la identidad ya
+-- verificada por p_user_id; si hay sesion (auth.uid() no nulo) la bloquea
+-- contra auth.uid(), y con service_role (auth.uid() nulo) confia en p_user_id.
 
 -- ---------- RPC: marcar_brecha ----------
 create or replace function public.marcar_brecha(p_brecha uuid, p_state text)
@@ -130,6 +132,13 @@ begin
   if not exists (select 1 from auth.users where id = v_uid) then
     raise exception 'USUARIO_INEXISTENTE';
   end if;
+  -- Bloqueo de suplantacion (hallazgo T6 review): un usuario autenticado solo
+  -- puede guardar para si mismo. Con sesion activa, auth.uid() manda y p_user_id
+  -- ajeno se rechaza. Con service_role auth.uid() es nulo (la Edge Function
+  -- analizar-cv trae la identidad desde un getUser() verificado), asi que pasa.
+  if auth.uid() is not null and auth.uid() <> v_uid then
+    raise exception 'NO_PUEDES_GUARDAR_PARA_OTRO_USUARIO';
+  end if;
 
   insert into public.analisis_cv
     (user_id, nombre_archivo, ocupacion, nivel, resumen, proveedor, simulado)
@@ -170,6 +179,12 @@ grant execute on function public.guardar_analisis_completo(jsonb, jsonb, uuid) t
 --   expected: 2
 -- select count(*) from pg_policies where tablename in ('analisis_cv','brechas_aprendizaje');
 --   expected: 2
+-- Prueba del bloqueo anti-suplantacion (la corre el humano con un JWT authenticated
+-- propio, no con service key): llamar la RPC con p_user_id de OTRO usuario,
+--   select guardar_analisis_completo('{"nombre_archivo":"t"}'::jsonb, '[]'::jsonb, '<uuid-ajeno>')
+--   expected: ERROR  NO_PUEDES_GUARDAR_PARA_OTRO_USUARIO  (auth.uid() <> p_user_id).
+-- Con service_role (auth.uid() nulo, como la Edge Function analizar-cv) la misma
+--   llamada con p_user_id valido SI pasa — el guardado server-side no se rompe.
 
 -- Para que la API nueva (RPCs/tablas) quede visible sin reinicio:
 notify pgrst, 'reload schema';

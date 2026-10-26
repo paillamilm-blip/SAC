@@ -31,8 +31,8 @@ const ANALYSIS = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mockFetch(json: any) {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => json } as Response);
+function mockFetch(json: any, resOk = true, status = 200) {
+  const fetchMock = vi.fn().mockResolvedValue({ ok: resOk, status, json: async () => json } as Response);
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }
@@ -84,6 +84,46 @@ describe('analizarCvConIA', () => {
 
     await expect(analizarCvConIA('texto', 'cv.pdf')).rejects.toThrow('El modelo esta caido.');
     expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
+  });
+
+  it('guardado null SIN guardado_error (invitado real): SI escribe el puente', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    mockFetch({ ok: true, analysis: ANALYSIS, guardado: null });
+
+    const r = await analizarCvConIA('texto', 'cv.pdf');
+
+    expect(r.guardado).toBeNull();
+    expect(JSON.parse(localStorage.getItem(PUENTE_KEY) ?? '[]')).toEqual([BRECHA]);
+  });
+
+  it('guardado null CON guardado_error (sesion y guardado fallo): NO escribe el puente', async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: 'tok-err' } } });
+    mockFetch({ ok: true, analysis: ANALYSIS, guardado: null, guardado_error: true });
+
+    const r = await analizarCvConIA('texto', 'cv.pdf');
+
+    // el analisis sigue llegando (la UI no se rompe) pero sus brechas no caen al puente
+    expect(r.guardado).toBeNull();
+    expect(r.analysis.brechas).toEqual([BRECHA]);
+    expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
+  });
+
+  it('HTTP != ok con cuerpo de error: lanza legible, no parsea como analysis, sin puente', async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: 'tok-500' } } });
+    mockFetch({ error: 'Boom interno del servidor.' }, false, 500);
+
+    await expect(analizarCvConIA('texto', 'cv.pdf')).rejects.toThrow('Boom interno del servidor.');
+    expect(localStorage.getItem(PUENTE_KEY)).toBeNull();
+  });
+
+  it('HTTP != ok y cuerpo no JSON: usa el mensaje con el status', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false, status: 502,
+      json: async () => { throw new Error('cuerpo no JSON'); },
+    } as unknown as Response));
+
+    await expect(analizarCvConIA('texto', 'cv.pdf')).rejects.toThrow('El analisis fallo (HTTP 502).');
   });
 });
 
