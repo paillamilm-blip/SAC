@@ -52,8 +52,10 @@ create index if not exists brechas_user_state_idx
 alter table public.analisis_cv enable row level security;
 alter table public.brechas_aprendizaje enable row level security;
 
+drop policy if exists analisis_sueno on public.analisis_cv;
 create policy analisis_sueno on public.analisis_cv
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists brechas_sueno on public.brechas_aprendizaje;
 create policy brechas_sueno on public.brechas_aprendizaje
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 -- No hay policy de INSERT para anon: el guardado pasa por la RPC
@@ -157,3 +159,6 @@ grant execute on function public.guardar_analisis_completo(jsonb, jsonb) to auth
 --   expected: 2
 -- select count(*) from pg_policies where tablename in ('analisis_cv','brechas_aprendizaje');
 --   expected: 2
+
+-- Para que la API nueva (RPCs/tablas) quede visible sin reinicio:
+notify pgrst, 'reload schema';
