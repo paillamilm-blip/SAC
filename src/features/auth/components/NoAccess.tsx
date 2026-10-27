@@ -4,7 +4,7 @@ import { ShieldOff, Shield } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
 
 // ═══════════════════════════════════════════════════════════════════════
 // CSS inyectado: estados interactivos para el boton ghost (signOut).
@@ -116,7 +116,7 @@ const S: Record<string, CSSProperties> = {
     position: 'fixed', inset: 0, zIndex: 95,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '32px 24px', overflow: 'auto',
-    background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)',
+    background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
   },
   halo: {
     position: 'absolute', top: '4%', left: '50%',
@@ -148,10 +148,10 @@ const S: Record<string, CSSProperties> = {
   card: {
     position: 'relative', width: '100%',
     borderRadius: RADIUS.xl, padding: 24, overflow: 'hidden',
-    background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+    background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
     backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+    boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
   },
   cardAccent: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 1,
@@ -177,7 +177,7 @@ const S: Record<string, CSSProperties> = {
   },
   statusCard: {
     width: '100%', padding: '14px 16px', borderRadius: RADIUS.md,
-    background: 'rgba(255,255,255,0.04)',
+    background: C.glass,
     border: `1px solid ${C.line}`, textAlign: 'left',
   },
   statusLabel: {
@@ -198,7 +198,7 @@ const S: Record<string, CSSProperties> = {
     width: '100%', marginTop: 4, padding: '13px 0',
     borderRadius: RADIUS.md, background: 'transparent',
     fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5,
-    color: 'rgba(234,240,251,0.7)', cursor: 'pointer',
+    color: tint(C.ink, 70), cursor: 'pointer',
   },
   secure: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

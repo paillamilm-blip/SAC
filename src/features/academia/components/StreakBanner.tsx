@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint, SIZE } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
 
@@ -91,7 +91,7 @@ export function StreakBanner() {
             <span style={{ color: streak >= 3 ? C.green : C.mut }}>3d x1.25</span>
             <span style={{ color: streak >= 7 ? C.cyan : C.mut }}>7d x1.5</span>
             <span style={{ color: streak >= 14 ? C.gold : C.mut }}>14d x1.75</span>
-            <span style={{ color: streak >= 30 ? '#ff5c7a' : C.mut }}>30d x2.0</span>
+            <span style={{ color: streak >= 30 ? C.red : C.mut }}>30d x2.0</span>
           </div>
         </div>
       )}
@@ -110,8 +110,8 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 12px',
     padding: '10px 14px',
     borderRadius: 12,
-    background: 'linear-gradient(135deg, rgba(255,100,50,0.08), rgba(255,176,46,0.06))',
-    border: '1px solid rgba(255,176,46,0.25)',
+    background: `linear-gradient(135deg, rgba(255,100,50,0.08), ${tint(C.gold, 6)})`,
+    border: `1px solid ${tint(C.gold, 25)}`,
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
@@ -119,8 +119,8 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 12px',
     padding: '8px 14px',
     borderRadius: 12,
-    background: 'rgba(107,117,144,0.06)',
-    border: '1px solid rgba(107,117,144,0.15)',
+    background: tint(C.mut, 6),
+    border: `1px solid ${tint(C.mut, 15)}`,
     display: 'flex',
     alignItems: 'center',
     gap: 8,
@@ -137,7 +137,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 20,
     fontWeight: 700,
     color: C.gold,
-    textShadow: '0 0 10px rgba(255,176,46,0.4)',
+    textShadow: `0 0 10px ${tint(C.gold, 40)}`,
     fontVariantNumeric: 'tabular-nums',
   },
   days: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, letterSpacing: 1 },
@@ -145,9 +145,9 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.mono,
     fontSize: 11,
     color: C.green,
-    background: 'rgba(63,208,201,0.1)',
-    border: '1px solid rgba(63,208,201,0.3)',
-    padding: '2px 7px',
+    background: tint(C.green, 10),
+    border: `1px solid ${tint(C.green, 30)}`,
+    padding: '2px 8px',
     borderRadius: 4,
     marginLeft: 6,
   },
@@ -155,9 +155,9 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.mono,
     fontSize: 9,
     color: C.gold,
-    background: 'rgba(255,176,46,0.1)',
-    border: '1px solid rgba(255,176,46,0.3)',
-    padding: '2px 7px',
+    background: tint(C.gold, 10),
+    border: `1px solid ${tint(C.gold, 30)}`,
+    padding: '2px 8px',
     borderRadius: 4,
     marginLeft: 'auto',
     letterSpacing: 1,
@@ -167,7 +167,7 @@ const S: Record<string, React.CSSProperties> = {
   detail: {
     marginTop: 10,
     paddingTop: 10,
-    borderTop: '1px solid rgba(255,176,46,0.15)',
+    borderTop: `1px solid ${tint(C.gold, 15)}`,
   },
   detailRow: {
     display: 'flex',
@@ -179,21 +179,21 @@ const S: Record<string, React.CSSProperties> = {
   progress: {
     height: 4,
     borderRadius: 2,
-    background: 'rgba(255,255,255,0.06)',
+    background: C.glass2,
     margin: '8px 0 6px',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 2,
-    background: 'linear-gradient(90deg, #ff6432, #ffb02e, #3fd0c9)',
+    background: `linear-gradient(90deg, #ff6432, ${C.gold}, ${C.green})`,
     transition: 'width 0.5s',
   },
   tiers: {
     display: 'flex',
     justifyContent: 'space-between',
     fontFamily: FONT.mono,
-    fontSize: 8,
+    fontSize: SIZE.xxs,
     letterSpacing: 0.5,
   },
 };

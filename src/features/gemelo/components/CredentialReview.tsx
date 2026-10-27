@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, tint } from '@/theme';
 
 interface Pending {
   id: string; user_id: string; username: string; cred_type: string; title: string;
@@ -68,7 +68,7 @@ export function CredentialReview() {
   return (
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl, padding: '16px', marginBottom: 14,
-      background: 'rgba(16,23,34,0.97)', border: `1px solid ${C.gold}44`, overflow: 'hidden',
+      background: C.surface, border: `1px solid ${C.gold}44`, overflow: 'hidden',
     }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)` }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -93,14 +93,14 @@ export function CredentialReview() {
           return (
             <div key={c.id} style={{
               padding: '10px 12px', borderRadius: RADIUS.md,
-              background: 'rgba(160,174,192,0.04)', border: `1px solid ${C.cyanFaint}`,
+              background: tint(C.cyan, 4), border: `1px solid ${C.cyanFaint}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}10`, border: `1px solid ${C.cyanFaint}` }}>
                   <Icon size={14} style={{ color: C.cyan }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: FONT.body, fontSize: 13, color: '#e2f3ff' }}>{c.title}</div>
+                  <div style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink }}>{c.title}</div>
                   <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>
                     @{c.username}{c.issuer ? ` · ${c.issuer}` : ''}{c.experience_years ? ` · ${c.experience_years} años` : ''}
                   </div>

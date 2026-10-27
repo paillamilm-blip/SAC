@@ -19,7 +19,7 @@ import { RealtimeProvider } from './store/RealtimeContext';
 import { LiveNetworkFeed } from '@/features/gemelo/components/LivePresence';
 import { PublicProfileGate } from '@/features/gemelo/components/RedSocial';
 import { VerifyCredentialView } from '@/features/gemelo/components/VerifyCredential';
-import { C, FONT } from './theme';
+import { C, FONT, SIZE } from './theme';
 import { SelfManagedPulseBar } from '@/shared/components/LivePulseBar';
 import { EmotionBridge } from '@/shared/components/EmotionBridge';
 import { omicronAudio } from '@/shared/utils/spatialAudio';
@@ -164,7 +164,7 @@ function AppShell() {
             transition={{ duration: 0.6, ease: 'easeInOut' }}
             style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, background: C.bg, overflow: 'hidden' }}
           >
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 42%, rgba(94,92,230,0.14), transparent 60%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 42%, ${C.purpleFaint}, transparent 60%)`, pointerEvents: 'none' }} />
             <motion.div
               initial={{ scale: 1, opacity: 1 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -181,7 +181,7 @@ function AppShell() {
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}
             >
               <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
-              <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: 10, cursor: 'pointer' }}>
+              <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: SIZE.xxs, cursor: 'pointer' }}>
                 Entrar sin cuenta →
               </button>
             </motion.div>

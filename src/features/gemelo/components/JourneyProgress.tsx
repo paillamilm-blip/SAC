@@ -7,7 +7,7 @@
 // Cada paso lleva a la única pantalla donde se acciona. Gamificado con PE bonus.
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint, SIZE } from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 
 interface JourneyStep {
@@ -78,7 +78,7 @@ export function JourneyProgress({ profile, onNavigate }: Props) {
               cursor: step.completed ? 'default' : 'pointer',
             }}
           >
-            <span style={{ fontSize: 14 }}>{step.completed ? '✅' : step.emoji}</span>
+            <span style={{ fontSize: SIZE.sm }}>{step.completed ? '✅' : step.emoji}</span>
             <span style={{
               ...S.stepLabel,
               textDecoration: step.completed ? 'line-through' : 'none',
@@ -96,8 +96,8 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 14px',
     padding: '12px 14px',
     borderRadius: 14,
-    background: 'rgba(94,92,230,0.06)',
-    border: '1px solid rgba(94,92,230,0.2)',
+    background: tint(C.purple, 6),
+    border: `1px solid ${tint(C.purple, 20)}`,
   },
   header: {
     display: 'flex',
@@ -121,7 +121,7 @@ const S: Record<string, React.CSSProperties> = {
   bar: {
     height: 4,
     borderRadius: 2,
-    background: 'rgba(255,255,255,0.06)',
+    background: C.glass2,
     overflow: 'hidden',
     marginBottom: 10,
   },
@@ -142,8 +142,8 @@ const S: Record<string, React.CSSProperties> = {
     gap: 4,
     padding: '5px 10px',
     borderRadius: 8,
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: C.glass,
+    border: `1px solid ${C.glass2}`,
     transition: 'opacity 0.3s ease',
   },
   stepLabel: {

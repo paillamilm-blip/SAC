@@ -5,7 +5,7 @@
 // la app ya está instalada (display-mode: standalone).
 import { useState, useEffect } from 'react';
 import { Download, X, Share } from 'lucide-react';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -73,20 +73,20 @@ export function InstallPWA() {
         position: 'fixed', left: '50%', bottom: 84, transform: 'translateX(-50%)', zIndex: 140,
         display: 'flex', alignItems: 'center', gap: 12, maxWidth: '92vw',
         padding: '10px 12px 10px 16px', borderRadius: RADIUS.pill,
-        background: 'rgba(6,12,26,0.94)', border: `1px solid ${C.cyanDim}`,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 0 22px rgba(160,174,192,0.18)',
+        background: C.surface, border: `1px solid ${C.cyanDim}`,
+        boxShadow: `0 12px 40px ${C.scrim}, 0 0 22px ${tint(C.cyan, 18)}`,
         backdropFilter: 'blur(12px)',
       }}
     >
       <span style={{ fontSize: 20, lineHeight: 1 }}>Ω</span>
       {iosHint ? (
-        <span style={{ fontFamily: FONT.body, fontSize: 12.5, color: '#eaf0fb', lineHeight: 1.4 }}>
+        <span style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.4 }}>
           Instala Ómicrom: toca <Share size={13} style={{ verticalAlign: 'middle', color: C.cyan }} /> Compartir y
           {' '}<b style={{ color: C.cyan }}>Añadir a inicio</b>
         </span>
       ) : (
         <>
-          <span style={{ fontFamily: FONT.body, fontSize: 13, color: '#eaf0fb' }}>
+          <span style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink }}>
             Instala Ómicrom como app
           </span>
           <button
@@ -94,7 +94,7 @@ export function InstallPWA() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: RADIUS.pill,
               cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, border: 'none',
-              color: '#000206', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+              color: C.bg, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
             }}
           >
             <Download size={14} /> Instalar

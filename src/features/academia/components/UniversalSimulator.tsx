@@ -11,22 +11,14 @@ import {
   ArrowRight, Send, RotateCcw, Clock, Trophy, Target,
 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
-import { C as T } from '@/theme';
+import {C, FONT, tint, SIZE} from '@/theme';
 import { useApp } from '@/store/AppContext';
 import type { SkillTreeNode } from '@/types';
 
-// ── Theme ────────────────────────────────────────────────────────────
-const C = {
-  cyan: T.cyan, cyanDim: T.cyanDim, cyanFaint: T.cyanFaint,
-  gold: T.gold, goldFaint: T.goldFaint,
-  green: T.green, greenFaint: T.greenFaint,
-  red: T.red, redFaint: T.redFaint,
-  purple: T.purple,
-  bg: T.bg, panel: 'rgba(8,16,38,0.72)', card: 'rgba(13,22,46,0.85)',
-  text: T.ink, sub: 'rgba(160,174,192,0.62)', line: T.line,
-} as const;
-const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
-const DISP = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
+// El espejo privado de tokens (un `const C` con 14 entradas reexportadas y sus
+// propios MONO/DISP) se fue el 2026-10-27: el tema se importa, no se copia.
+const MONO = FONT.mono;
+const DISP = FONT.display;
 
 interface Props {
   node: SkillTreeNode;
@@ -163,35 +155,35 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
   // ── RENDER ──────────────────────────────────────────────────────────
   return (
     <div role="dialog" aria-modal="true" aria-label={`Simulador: ${node.title}`}
-      style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(2,6,19,0.94)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 1200, background: C.overlay, backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Header */}
-      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.panel, borderBottom: `1px solid ${C.line}` }}>
+      <header style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: C.surface, borderBottom: `1px solid ${C.line}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.cyanFaint, border: `1px solid ${C.cyanDim}`, boxShadow: `0 0 14px ${C.cyan}44` }}>
             <Brain size={18} style={{ color: C.cyan }} />
           </div>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontFamily: DISP, fontWeight: 700, fontSize: 15, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.title}</p>
-            <p style={{ margin: '2px 0 0', fontFamily: MONO, fontSize: 9, color: C.sub, letterSpacing: 0.5 }}>
+            <p style={{ margin: 0, fontFamily: DISP, fontWeight: 700, fontSize: 15, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.title}</p>
+            <p style={{ margin: '2px 0 0', fontFamily: MONO, fontSize: 9, color: C.mut, letterSpacing: 0.5 }}>
               SIMULADOR UNIVERSAL · NIVEL {difficulty.level}/5
             </p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {elapsed > 0 && <span style={{ fontFamily: MONO, fontSize: 13, color: C.gold, display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} />{Math.floor(elapsed / 60).toString().padStart(2, '0')}:{(elapsed % 60).toString().padStart(2, '0')}</span>}
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: 9, background: C.card, border: `1px solid ${C.line}`, color: C.sub, cursor: 'pointer', fontSize: 16 }}>×</button>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 30, height: 30, borderRadius: 9, background: C.surfaceLight, border: `1px solid ${C.line}`, color: C.mut, cursor: 'pointer', fontSize: SIZE.md }}>×</button>
         </div>
       </header>
 
       {/* Barra de dificultad adaptativa */}
-      <div style={{ flex: '0 0 auto', padding: '8px 16px', background: C.panel, borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: '0 0 auto', padding: '8px 16px', background: C.surface, borderBottom: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Target size={12} style={{ color: C.purple }} />
         <span style={{ fontFamily: MONO, fontSize: 9, color: C.purple, letterSpacing: 0.5 }}>ADAPTADO A TU NIVEL:</span>
-        <span style={{ fontFamily: DISP, fontSize: 11, color: C.text, fontWeight: 600 }}>{difficulty.label}</span>
+        <span style={{ fontFamily: DISP, fontSize: 11, color: C.ink, fontWeight: 600 }}>{difficulty.label}</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 3 }}>
           {[1, 2, 3, 4, 5].map(l => (
-            <div key={l} style={{ width: 14, height: 5, borderRadius: 2, background: l <= difficulty.level ? C.cyan : 'rgba(255,255,255,0.08)' }} />
+            <div key={l} style={{ width: 14, height: 5, borderRadius: 2, background: l <= difficulty.level ? C.cyan : C.glass2 }} />
           ))}
         </div>
       </div>
@@ -203,7 +195,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         {(phase === 'loading' || phase === 'evaluando') && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280 }}>
             <Loader2 size={30} style={{ color: C.cyan, animation: 'cp-spin 1s linear infinite' }} />
-            <p style={{ fontFamily: MONO, fontSize: 12, color: C.sub, letterSpacing: 1, textAlign: 'center' }}>
+            <p style={{ fontFamily: MONO, fontSize: SIZE.xs, color: C.mut, letterSpacing: 1, textAlign: 'center' }}>
               {phase === 'evaluando' ? 'Evaluando tu desempeño con IA...' : 'Generando reto adaptativo...'}
             </p>
           </div>
@@ -213,7 +205,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         {phase === 'error' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280, textAlign: 'center' }}>
             <XCircle size={30} style={{ color: C.red }} />
-            <p style={{ fontFamily: DISP, fontSize: 15, color: C.text, maxWidth: 420 }}>{errMsg}</p>
+            <p style={{ fontFamily: DISP, fontSize: 15, color: C.ink, maxWidth: 420 }}>{errMsg}</p>
             <button onClick={iniciar} style={btnStyle(C.cyan)}><RotateCcw size={15} /> Reintentar</button>
           </div>
         )}
@@ -226,7 +218,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
                 <Sparkles size={14} style={{ color: C.purple }} />
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.purple }}>{reto.titulo?.toUpperCase()}</span>
               </div>
-              <p style={{ margin: 0, fontFamily: DISP, fontSize: 13.5, color: C.text, lineHeight: 1.6 }}>{reto.contexto}</p>
+              <p style={{ margin: 0, fontFamily: DISP, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6 }}>{reto.contexto}</p>
               {reto.pista_adaptativa && (
                 <p style={{ margin: '10px 0 0', fontFamily: MONO, fontSize: 11, color: C.gold, lineHeight: 1.5 }}>💡 {reto.pista_adaptativa}</p>
               )}
@@ -235,15 +227,15 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
             {/* Preguntas de opción múltiple */}
             {reto.preguntas.map((q, qi) => (
               <div key={qi} style={cardS}>
-                <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{qi + 1}. {q.pregunta}</p>
+                <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, fontWeight: 700, color: C.ink, lineHeight: 1.5 }}>{qi + 1}. {q.pregunta}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   {q.opciones.map((op, oi) => {
                     const sel = respuestas[qi] === oi;
                     return (
                       <button key={oi} onClick={() => setRespuestas(p => p.map((v, i) => i === qi ? oi : v))}
                         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
-                          background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.text : 'rgba(230,241,251,0.8)', fontFamily: DISP, fontSize: 13 }}>
-                        <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', border: `2px solid ${sel ? C.cyan : C.sub}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.ink : 'rgba(230,241,251,0.8)', fontFamily: DISP, fontSize: 13 }}>
+                        <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', border: `2px solid ${sel ? C.cyan : C.mut}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {sel && <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.cyan }} />}
                         </span>
                         {op}
@@ -257,7 +249,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
             {/* Caso práctico */}
             <div style={{ ...cardS, borderColor: C.goldFaint }}>
               <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>⬡ CASO PRÁCTICO</p>
-              <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{reto.caso_practico.enunciado}</p>
+              <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{reto.caso_practico.enunciado}</p>
               <textarea value={casoRespuesta} onChange={e => setCasoRespuesta(e.target.value)}
                 placeholder="Desarrolla tu solución con criterio técnico..."
                 style={textareaS} />
@@ -273,7 +265,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
                 <Sparkles size={15} style={{ color: C.cyan }} />
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>DEFENSA · LA IA TE REPREGUNTA</span>
               </div>
-              <p style={{ margin: '0 0 12px', fontFamily: DISP, fontSize: 15, color: C.text, lineHeight: 1.6 }}>{defensaPregunta}</p>
+              <p style={{ margin: '0 0 12px', fontFamily: DISP, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>{defensaPregunta}</p>
               {pista && <p style={{ margin: '0 0 12px', fontFamily: MONO, fontSize: 11, color: C.gold }}>💡 Pista: {pista}</p>}
               <textarea value={defensaRespuesta} onChange={e => setDefensaRespuesta(e.target.value)}
                 placeholder="Responde con tus palabras — la IA evalúa comprensión real, no memorización..."
@@ -289,7 +281,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
       </div>
 
       {/* Footer con acciones */}
-      <footer style={{ flex: '0 0 auto', padding: 14, borderTop: `1px solid ${C.line}`, background: C.panel, display: 'flex', gap: 12 }}>
+      <footer style={{ flex: '0 0 auto', padding: 14, borderTop: `1px solid ${C.line}`, background: C.surface, display: 'flex', gap: 12 }}>
         {phase === 'reto' && (
           <>
             <button onClick={onClose} style={btnGhostS}>Cancelar</button>
@@ -333,13 +325,13 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
         <p style={{ margin: '8px 0 2px', fontFamily: DISP, fontWeight: 700, fontSize: 20, color: accent }}>
           {aprob ? 'Competencia validada' : 'Aún no validada'}
         </p>
-        <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, color: C.sub }}>
+        <p style={{ margin: 0, fontFamily: MONO, fontSize: 11, color: C.mut }}>
           Puntaje: {resultado.puntaje_global}% · Nivel: {difficulty.level}/5 · Tiempo: {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, '0')}
         </p>
         {(resultado.pe_awarded ?? 0) > 0 && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 10, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,176,46,0.2)', border: `1px solid ${C.gold}55` }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 10, padding: '6px 12px', borderRadius: 9, background: tint(C.gold, 20), border: `1px solid ${C.gold}55` }}>
             <Trophy size={14} style={{ color: C.gold }} />
-            <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: C.gold }}>+{resultado.pe_awarded} PE</span>
+            <span style={{ fontFamily: MONO, fontSize: SIZE.xs, fontWeight: 700, color: C.gold }}>+{resultado.pe_awarded} PE</span>
           </div>
         )}
       </div>
@@ -351,10 +343,10 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
           const v = resultado.ejes[k];
           return (
             <div key={k} style={{ marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 11, color: C.text, marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 11, color: C.ink, marginBottom: 4 }}>
                 <span>{EJE_LABELS[k]}</span><span style={{ color: C.cyan }}>{v}/100</span>
               </div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: 6, background: C.glass2, borderRadius: 4, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${v}%`, background: `linear-gradient(90deg, ${C.gold}, ${C.cyan})`, borderRadius: 4, transition: 'width 0.6s ease' }} />
               </div>
             </div>
@@ -366,19 +358,19 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
       {resultado.resumen && (
         <div style={cardS}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>📜 RESUMEN</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.resumen}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.resumen}</p>
         </div>
       )}
       {resultado.feedback && (
         <div style={{ ...cardS, borderColor: `${C.gold}55`, background: C.goldFaint }}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>💡 PARA MEJORAR</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.feedback}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.feedback}</p>
         </div>
       )}
       {resultado.siguiente_paso && (
         <div style={{ ...cardS, borderColor: `${C.green}44`, background: C.greenFaint }}>
           <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.green }}>🎯 TU SIGUIENTE PASO</p>
-          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{resultado.siguiente_paso}</p>
+          <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.siguiente_paso}</p>
         </div>
       )}
     </div>
@@ -386,7 +378,7 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
 }
 
 // ── Estilos ───────────────────────────────────────────────────────────
-const cardS: React.CSSProperties = { padding: 16, borderRadius: 12, background: C.card, border: `1px solid ${C.line}` };
+const cardS: React.CSSProperties = { padding: 16, borderRadius: 12, background: C.surfaceLight, border: `1px solid ${C.line}` };
 const textareaS: React.CSSProperties = {
   width: '100%', minHeight: 110, padding: 12, boxSizing: 'border-box', background: '#040a18', color: '#c9f6ff',
   fontFamily: DISP, fontSize: 13, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
@@ -394,4 +386,4 @@ const textareaS: React.CSSProperties = {
 function btnStyle(color: string): React.CSSProperties {
   return { padding: '13px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, color: C.bg, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 0 16px ${color}55` };
 }
-const btnGhostS: React.CSSProperties = { padding: '13px 18px', borderRadius: 12, background: 'transparent', border: `1px solid ${C.line}`, color: C.sub, cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 };
+const btnGhostS: React.CSSProperties = { padding: '13px 18px', borderRadius: 12, background: 'transparent', border: `1px solid ${C.line}`, color: C.mut, cursor: 'pointer', fontFamily: DISP, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 };

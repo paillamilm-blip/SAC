@@ -418,7 +418,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                         <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textTransform: 'uppercase', letterSpacing: 1 }}>{info?.name || key}</span>
                       </div>
                       <AxisValue to={val} color={isWeak ? C.red : info?.color || C.cyan} delayMs={i * 70} />
-                      <span style={{ fontFamily: FONT.body, fontSize: 10, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
+                      <span style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
                       {isWeak && <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, marginTop: 4 }}>← tu punto ciego</div>}
                     </div>
                   );

@@ -36,7 +36,7 @@
 
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint } from '@/theme';
 import { wordPrefixes } from '../utils/typewriter';
 import { thinkingPulseLevel, revealPulseLevel } from '../utils/orbPulse';
 
@@ -177,7 +177,7 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
     <div style={{
       ...S.container,
       border: `1px solid ${accent.border}`,
-      boxShadow: `0 1px 3px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.45), 0 0 20px ${accent.glow}`,
+      boxShadow: `0 1px 3px ${tint(C.black, 30)}, 0 12px 40px ${tint(C.black, 45)}, 0 0 20px ${accent.glow}`,
       opacity: visible ? 1 : 0,
       transform: visible ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
     }}>
@@ -247,7 +247,7 @@ const S: Record<string, React.CSSProperties> = {
     width: 'min(88%, 340px)',
     padding: '16px',
     borderRadius: 16,
-    background: 'rgba(6,12,26,0.92)',
+    background: C.surface,
     backdropFilter: 'blur(14px)',
     WebkitBackdropFilter: 'blur(14px)',
     transition: 'opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',

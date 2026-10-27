@@ -16,7 +16,7 @@
 // visible usa la marca 'Ómicrom'.
 
 import { useReducedMotion } from 'framer-motion';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint } from '@/theme';
 
 /** Placeholder EXACTO en reposo (home) y en fullscreen. No cambiar los textos. */
 export const OMICRON_BAR_PLACEHOLDER_RESTING = '¿Qué quieres hacer hoy? Habla o escríbeme…';
@@ -127,18 +127,18 @@ export function OmicronBar({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          background: inputFocused ? 'rgba(12,16,30,0.95)' : C.surface,
+          background: C.surface,
           border: `1px solid ${inputFocused ? orbColor + '77' : C.line}`,
           borderRadius: 999,
           padding: inputFocused ? '10px 16px' : '8px 12px',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           boxShadow: inputFocused
-            ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px rgba(0,0,0,0.3)`
+            ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px ${tint(C.black, 30)}`
             // En reposo la barra es el CONTROL PRIMARIO: halo de color de
             // usuario un poco más presente (solo box-shadow, sin nuevos
             // loops; el breathe existente ya lo neutraliza reduced-motion).
-            : (!inputText && !hasResponse ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px rgba(0,0,0,0.28)` : 'none'),
+            : (!inputText && !hasResponse ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px ${tint(C.black, 28)}` : 'none'),
           transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
           transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
           animation: !inputText && !hasResponse && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
@@ -154,7 +154,7 @@ export function OmicronBar({
             height: 44,
             borderRadius: '50%',
             border: `1px solid ${isListening ? C.red : C.line}`,
-            background: isListening ? 'rgba(255,92,122,0.15)' : C.glass2,
+            background: isListening ? tint(C.red, 15) : C.glass2,
             color: isListening ? C.red : orbColor,
             cursor: 'pointer',
             display: 'grid',

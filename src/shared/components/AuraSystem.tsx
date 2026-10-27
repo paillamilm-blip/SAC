@@ -42,7 +42,7 @@ const AXIS_COLORS = [
   { key: 'execution', color: C.cyan, angle: 0 },
   { key: 'quality', color: C.purple, angle: 90 },
   { key: 'transcendence', color: C.gold, angle: 180 },
-  { key: 'foundation', color: '#3fd0c9', angle: 270 },
+  { key: 'foundation', color: C.green, angle: 270 },
 ] as const;
 
 /**

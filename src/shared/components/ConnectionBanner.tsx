@@ -2,6 +2,7 @@
 // Aviso global de estado de conexión. Útil en móvil con señal inestable
 // (complementa la PWA): muestra una barra cuando se pierde internet y un
 // "reconectado" breve al recuperarlo.
+import { C, tint, SIZE } from '@/theme';
 import { useEffect, useState } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
 
@@ -35,9 +36,9 @@ export function ConnectionBanner() {
       style={{
         ...S.bar,
         background: off
-          ? 'linear-gradient(90deg, rgba(255, 176, 46,0.95), rgba(255, 92, 122,0.95))'
-          : 'linear-gradient(90deg, rgba(63, 208, 201,0.95), rgba(160,174,192,0.92))',
-        color: '#000206',
+          ? `linear-gradient(90deg, ${tint(C.gold, 95)}, ${tint(C.red, 95)})`
+          : `linear-gradient(90deg, ${tint(C.green, 95)}, ${tint(C.cyan, 92)})`,
+        color: C.bg,
       }}
     >
       {off ? <WifiOff size={14} /> : <Wifi size={14} />}
@@ -54,8 +55,8 @@ const S: Record<string, React.CSSProperties> = {
     width: 'min(100%, 430px)', zIndex: 90,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     padding: '6px 12px',
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: 12.5, letterSpacing: 0.5,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: SIZE.sm, letterSpacing: 0.5,
+    boxShadow: `0 4px 16px ${tint(C.black, 40)}`,
     animation: 'bannerDrop 0.3s ease-out',
   },
   txt: { whiteSpace: 'nowrap' },

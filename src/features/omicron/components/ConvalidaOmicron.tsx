@@ -276,7 +276,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           value={cvText}
           onChange={(e) => setCvText(e.target.value)}
           placeholder="Rol actual, años de experiencia, tecnologías, certificaciones, empresas donde trabajaste..."
-          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${uc}4d`, background: 'rgba(12,16,30,0.8)', color: C.ink, fontFamily: FONT.body, fontSize: SIZE.sm, padding: 16, outline: 'none', resize: 'vertical' }}
+          style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${uc}4d`, background: C.surface, color: C.ink, fontFamily: FONT.body, fontSize: SIZE.sm, padding: 16, outline: 'none', resize: 'vertical' }}
         />
       </div>
 

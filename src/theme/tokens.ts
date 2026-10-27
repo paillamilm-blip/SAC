@@ -38,6 +38,18 @@ export const C = {
   mut:          '#76829d',
   glass:        'rgba(255,255,255,0.045)',
   glass2:       'rgba(255,255,255,0.08)',
+  // Velo debajo de modales y cinematicos: el negro del sistema, no un gris
+  // inventado. Vivía como rgba(0,0,0,0.5/0.6/0.7) en 5 archivos distintos.
+  scrim:        'rgba(0,0,0,0.6)',
+  // Vidrio de barra sticky: la fija (BASE.header) puede ser translúcida porque
+  // no tiene contenido pasando por debajo; una sticky a 0.55 deja leer la cola
+  // a través del título y se vuelve ilegible.
+  sticky:       'rgba(6,8,16,0.96)',
+  // Lavado oscuro translúcido (fila sobre contenido, celda del radar, overlay
+  // de banner). Existían 6 variantes casi iguales entre 0.25 y 0.72 de alfa.
+  wash:         'rgba(6,10,22,0.6)',
+  white:        '#ffffff',
+  black:        '#000000',
   line:         'rgba(150,180,255,0.14)',
   // Tinta sobre un fondo VIVO (botón plateado, orbe, badge de color). El blanco
   // puro sobre silver no existe en este sistema: se lee lechoso. #021018 estaba

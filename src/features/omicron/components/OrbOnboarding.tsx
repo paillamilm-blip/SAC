@@ -15,7 +15,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
 import { TextReveal } from '@/shared/motion/TextReveal';
@@ -304,7 +304,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
         position: 'absolute', inset: 0, zIndex: 50,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'space-between',
-        background: '#000206',
+        background: C.bg,
         padding: '0 20px',
         paddingTop: 'calc(env(safe-area-inset-top, 20px) + 20px)',
         paddingBottom: kbOpen ? '12px' : 'calc(env(safe-area-inset-bottom, 20px) + 24px)',
@@ -345,7 +345,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   padding: '14px 32px', borderRadius: RADIUS.pill,
                   background: `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)`,
                   border: 'none', color: '#000', fontFamily: FONT.display,
-                  fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  fontSize: SIZE.sm, fontWeight: 700, cursor: 'pointer',
                   boxShadow: `0 4px 24px ${chosenColor}55`,
                 }}>
                   Continuar
@@ -363,9 +363,9 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
               {!kbOpen && (
                 <div style={{
                   padding: '16px 20px', borderRadius: RADIUS.xl,
-                  background: `linear-gradient(145deg, rgba(12,16,30,0.95), rgba(8,12,24,0.98))`,
+                  background: C.surface,
                   border: `1px solid ${chosenColor}33`,
-                  boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 8px ${chosenColor}11`,
+                  boxShadow: `0 4px 24px ${tint(C.black, 40)}, 0 0 8px ${chosenColor}11`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 8px ${chosenColor}`, animation: 'cp-breathe 2s ease-in-out infinite' }} />
@@ -382,7 +382,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                 {hasMicSupport() && (
                   <MagneticButton onClick={handleMic} style={{
                     width: 50, height: 50, borderRadius: '50%',
-                    border: `1.5px solid ${chosenColor}55`, background: 'rgba(255,255,255,0.03)',
+                    border: `1.5px solid ${chosenColor}55`, background: C.glass,
                     color: chosenColor, display: 'grid', placeItems: 'center', fontSize: 20,
                   }}>
                     🎤
@@ -394,7 +394,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   enterKeyHint="send" autoComplete="off"
                   style={{
                     flex: 1, padding: '14px 18px', borderRadius: RADIUS.pill,
-                    background: 'rgba(12,16,30,0.9)', border: `1.5px solid ${chosenColor}44`,
+                    background: C.surface, border: `1.5px solid ${chosenColor}44`,
                     fontFamily: FONT.body, fontSize: 15, color: C.ink, outline: 'none',
                     WebkitAppearance: 'none',
                   }}
@@ -403,8 +403,8 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                 />
                 <MagneticButton onClick={() => handleSubmit()} disabled={!input.trim() || generating} style={{
                   width: 50, height: 50, borderRadius: '50%', border: 'none',
-                  background: input.trim() ? `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)` : 'rgba(255,255,255,0.05)',
-                  color: input.trim() ? '#000' : C.mut, display: 'grid', placeItems: 'center', fontSize: 18,
+                  background: input.trim() ? `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)` : C.glass,
+                  color: input.trim() ? '#000' : C.mut, display: 'grid', placeItems: 'center', fontSize: SIZE.lg,
                   boxShadow: input.trim() ? `0 4px 16px ${chosenColor}44` : 'none',
                 }}>
                   ➤
@@ -424,7 +424,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                       onClick={() => { audioTick(); hapticMedium(); setInput(label); handleSubmit(label); }}
                       style={{
                         padding: '10px 14px', minHeight: 42, borderRadius: RADIUS.pill,
-                        background: 'rgba(255,255,255,0.03)', border: `1px solid ${chosenColor}22`,
+                        background: C.glass, border: `1px solid ${chosenColor}22`,
                         color: C.ink, fontFamily: FONT.body, fontSize: 13, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: 6,
                         WebkitTapHighlightColor: 'transparent',
@@ -458,15 +458,15 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
             >
               <div style={{
                 padding: '18px 22px', borderRadius: RADIUS.xl,
-                background: `linear-gradient(145deg, rgba(12,16,30,0.95), rgba(8,12,24,0.98))`,
+                background: C.surface,
                 border: `1px solid ${chosenColor}44`,
-                boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 16px ${chosenColor}15`,
+                boxShadow: `0 8px 32px ${tint(C.black, 40)}, 0 0 16px ${chosenColor}15`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, justifyContent: 'center' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 10px ${chosenColor}` }} />
                   <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>GEMELO DIGITAL ACTIVADO</span>
                 </div>
-                <div style={{ fontFamily: FONT.body, fontSize: 14, color: C.ink, lineHeight: 1.6 }}>
+                <div style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6 }}>
                   <TextReveal text={resultMsg} speed={16} cursor={false} />
                 </div>
               </div>

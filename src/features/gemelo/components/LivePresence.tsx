@@ -9,7 +9,7 @@ import { useRealtime } from '@/store/RealtimeContext';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { audioPing } from '@/shared/utils/spatialAudio';
 import type { LiveEvent, LiveEventKind } from '@/hooks/useRealtimeNetwork';
-import { C, FONT } from '@/theme';
+import { C, FONT, SIZE } from '@/theme';
 
 const KIND_STYLE: Record<LiveEventKind, { color: string; tag: string }> = {
   join:   { color: C.cyan,  tag: 'RED EN VIVO' },
@@ -55,9 +55,9 @@ export function LiveNetworkFeed() {
         width: 'min(92%, 420px)',
         padding: '9px 13px',
         borderRadius: 12,
-        background: 'linear-gradient(180deg, rgba(10,20,40,0.92), rgba(2,6,19,0.95))',
+        background: `linear-gradient(180deg, ${C.surface}, ${C.overlay})`,
         border: `1px solid ${ks.color}55`,
-        boxShadow: `0 12px 34px rgba(0,0,0,0.55), 0 0 22px ${ks.color}22`,
+        boxShadow: `0 12px 34px ${C.scrim}, 0 0 22px ${ks.color}22`,
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
         animation: 'cp-toast-in 0.24s ease both',
@@ -70,7 +70,7 @@ export function LiveNetworkFeed() {
           alignItems: 'center',
           gap: 8,
           fontFamily: FONT.mono,
-          fontSize: 8.5,
+          fontSize: SIZE.xxs,
           letterSpacing: 1,
           color: ks.color,
         }}
@@ -87,7 +87,7 @@ export function LiveNetworkFeed() {
         />
         {ks.tag} · {onlineCount.toLocaleString()} NODOS
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5, color: '#eaf0fb', marginTop: 3 }}>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, marginTop: 3 }}>
         {current.text}
       </div>
     </div>

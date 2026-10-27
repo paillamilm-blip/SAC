@@ -14,7 +14,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint, SIZE } from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
 import { GlowCard, SmoothNumber, MagneticButton } from '@/shared/motion';
@@ -158,7 +158,7 @@ export function GemeloTab() {
         <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
           {name || 'Tu Gemelo Digital'}
         </h1>
-        <p style={{ margin: '2px 0 0', fontFamily: FONT.body, fontSize: 12, color: C.mut }}>
+        <p style={{ margin: '2px 0 0', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
           {seniorLabel}{years > 0 ? ` · ${years} años` : ''}
         </p>
       </div>
@@ -281,7 +281,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
-      boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Orbital */}
       <div style={{ position: 'relative', width: '100%', maxWidth: 220, height: 220, margin: '0 auto 16px' }}>
@@ -311,8 +311,8 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
             boxShadow: `0 0 30px ${SKILL_COLORS[0]}55`,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
           }}>
-            <span style={{ fontFamily: FONT.display, fontSize: 26, fontWeight: 800, color: SKILL_COLORS[0] }}>{nucleus.pct}%</span>
-            <span style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1, color: C.ink, textTransform: 'uppercase', textAlign: 'center', padding: '0 8px', lineHeight: 1.2 }}>{nucleus.name}</span>
+            <span style={{ fontFamily: FONT.display, fontSize: SIZE.xxl, fontWeight: 800, color: SKILL_COLORS[0] }}>{nucleus.pct}%</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1, color: C.ink, textTransform: 'uppercase', textAlign: 'center', padding: '0 8px', lineHeight: 1.2 }}>{nucleus.name}</span>
           </div>
         )}
       </div>
@@ -341,9 +341,9 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
           padding: '5px 12px', borderRadius: 999,
           background: `${uc}14`, border: `1px solid ${uc}33`,
         }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>Nivel</span>
-          <span style={{ fontFamily: FONT.display, fontSize: 12, fontWeight: 700, color: uc }}>{level.band}</span>
-          <span style={{ fontFamily: FONT.mono, fontSize: 10, color: C.mut }}>({level.range}/100)</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>Nivel</span>
+          <span style={{ fontFamily: FONT.display, fontSize: SIZE.xs, fontWeight: 700, color: uc }}>{level.band}</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>({level.range}/100)</span>
         </div>
         {/* Reputación */}
         <div style={{
@@ -376,7 +376,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
-      boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -394,10 +394,10 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
         {skillsDetail.slice(0, 7).map((skill, i) => (
           <div key={skill.name} style={{ marginBottom: i < Math.min(skillsDetail.length, 7) - 1 ? 8 : 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: 12, color: C.ink }}>{skill.name}</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 600, fontSize: SIZE.xs, color: C.ink }}>{skill.name}</span>
               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i % SKILL_COLORS.length], fontWeight: 700 }}>{skill.pct}%</span>
             </div>
-            <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{ height: 5, borderRadius: 3, background: C.glass2, overflow: 'hidden' }}>
               <motion.div
                 initial={skipAnimation ? false : { width: 0 }}
                 animate={{ width: `${skill.pct}%` }}
@@ -422,8 +422,8 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
         }}>
           <div style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 1, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})`, opacity: 0.6 }} />
           <div style={{ paddingLeft: 12 }}>
-            <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen IA</div>
-            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen IA</div>
+            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.xs, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>
               {cvSummary.slice(0, 300)}{cvSummary.length > 300 ? '…' : ''}
             </p>
           </div>
@@ -446,7 +446,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: 'blur(12px)',
-      boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>

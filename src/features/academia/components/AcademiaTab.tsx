@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { useApp } from '@/store/AppContext';
-import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
+import { C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
@@ -28,7 +28,7 @@ const DIFF_LABEL = ['', 'Inicial', 'Básico', 'Intermedio', 'Avanzado', 'Experto
 
 function Bar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div style={{ height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+    <div style={{ height: 6, borderRadius: 4, background: C.glass2, overflow: 'hidden' }}>
       <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${C.cyan})`, boxShadow: GLOW.cyan, borderRadius: 4, transition: 'width 0.5s ease' }} />
     </div>
   );
@@ -68,23 +68,23 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
 
   return (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
-        border: `1px solid ${C.gold}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
+        border: `1px solid ${C.gold}55`, boxShadow: `0 20px 60px ${C.scrim}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
             <Bot size={18} style={{ color: C.gold }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Tutor IA</div>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink }}>Tutor IA</div>
             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.glass2, border: `1px solid ${C.cyanDim}`, color: C.cyan }}>
             <X size={16} />
           </button>
         </div>
@@ -92,7 +92,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
         <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {msgs.length === 0 && (
             <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
-              👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: '#eaf4ff' }}>{lesson.title}</strong>.
+              👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: C.ink }}>{lesson.title}</strong>.
             </div>
           )}
           {msgs.map((m, i) => {
@@ -105,7 +105,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
                   border: `1px solid ${own ? `${uc}66` : C.gold + '40'}`,
                   borderTopRightRadius: own ? 3 : 12, borderTopLeftRadius: own ? 12 : 3,
                 }}>
-                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#e6f1fb', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
+                  <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</p>
                 </div>
               </div>
             );
@@ -134,10 +134,10 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }}
             placeholder="Escribe tu duda..."
-            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyanFaint}`, color: '#dbeafe', fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
+            style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.ink, fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
           />
           <button onClick={() => ask()} disabled={!input.trim() || loading}
-            style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: '#1a1205', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
+            style={{ width: 44, height: 44, borderRadius: 11, background: C.gold, border: 'none', color: C.onAccent, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !input.trim() || loading ? 0.4 : 1 }}>
             <Send size={16} />
           </button>
         </div>
@@ -174,23 +174,23 @@ function CoachModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(2,6,19,0.8)', backdropFilter: 'blur(6px)',
+      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
-        border: `1px solid ${C.cyan}55`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
+        border: `1px solid ${C.cyan}55`, boxShadow: `0 20px 60px ${C.scrim}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>
             <GraduationCap size={18} style={{ color: C.cyan }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA</div>
+            <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink }}>Coach IA</div>
             <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim }}>Tu diagnostico y proximo paso</div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan, fontSize: 20, lineHeight: 1 }}>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.glass2, border: `1px solid ${C.cyanDim}`, color: C.cyan, fontSize: 20, lineHeight: 1 }}>
             ×
           </button>
         </div>
@@ -202,14 +202,14 @@ function CoachModal({ onClose }: { onClose: () => void }) {
               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>ANALIZANDO TU PERFIL...</span>
             </div>
           ) : (
-            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: '#e6f1fb', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
+            <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
           )}
         </div>
 
         <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
           <button onClick={run} disabled={loading} style={{
             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: loading ? 'wait' : 'pointer',
-            background: C.cyan, border: 'none', color: '#021018', fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
+            background: C.cyan, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.5 : 1,
           }}><Sparkles size={15} /> VOLVER A ANALIZAR</button>
         </div>
@@ -370,15 +370,15 @@ export function AcademiaTab() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
               borderRadius: RADIUS.lg, padding: 12, marginBottom: 14,
-              background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.cyan}44`,
+              background: C.glass, border: `1px solid ${C.cyan}44`,
             }}>
-              <span style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, flex: 1, minWidth: 160, lineHeight: 1.4 }}>
+              <span style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, flex: 1, minWidth: 160, lineHeight: 1.4 }}>
                 Estás como invitado: podés leer los cursos, pero crear tu cuenta es lo que guarda tu progreso en el Gemelo.
               </span>
               <button onClick={() => window.dispatchEvent(new Event('omicron:request-auth'))} style={{
-                padding: '7px 12px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
+                padding: '8px 12px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
                 background: uc, border: 'none', color: '#05070d',
-                fontFamily: FONT.display, fontWeight: 700, fontSize: 11.5,
+                fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs,
               }}>Crear cuenta</button>
             </div>
           )}
@@ -394,8 +394,8 @@ export function AcademiaTab() {
                 <GraduationCap size={22} style={{ color: uc }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Coach IA · ¿Qué estudio ahora?</div>
-                <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, marginTop: 2, lineHeight: 1.35 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink }}>Coach IA · ¿Qué estudio ahora?</div>
+                <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, marginTop: 2, lineHeight: 1.35 }}>
                   Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal. 🧭
                 </div>
               </div>
@@ -435,19 +435,19 @@ export function AcademiaTab() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <Target size={15} style={{ color: C.gold }} />
-                      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: C.gold }}>RECOMENDADO PARA TI</span>
+                      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs, color: C.gold }}>RECOMENDADO PARA TI</span>
                     </div>
-                    <div style={{ fontFamily: FONT.body, fontSize: 11.5, color: C.cyanDim, lineHeight: 1.4, marginBottom: 8 }}>
+                    <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, lineHeight: 1.4, marginBottom: 8 }}>
                       Según tus skills débiles ({weakSkills.map(s => s.name).join(', ')}):
                     </div>
                     {recommended.map(c => (
                       <button key={c.id} onClick={() => openCourse(c)} style={{
                         display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
                         padding: '8px 10px', borderRadius: 12, cursor: 'pointer', marginBottom: 4,
-                        background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.gold}33`,
+                        background: C.glass, border: `1px solid ${C.gold}33`,
                       }}>
-                        <span style={{ fontSize: 18 }}>{c.cover_emoji}</span>
-                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12, color: '#eaf4ff' }}>{c.title}</span>
+                        <span style={{ fontSize: SIZE.lg }}>{c.cover_emoji}</span>
+                        <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs, color: C.ink }}>{c.title}</span>
                         <Sparkles size={12} style={{ color: C.gold, marginLeft: 'auto' }} />
                       </button>
                     ))}
@@ -462,9 +462,9 @@ export function AcademiaTab() {
                 <GeodesicOrb size={110} nodes={totalAll && totalDone >= totalAll ? 42 : 12} color={uc} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
-                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 8, color: uc, letterSpacing: 2 }}>NÚCLEO</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: 2 }}>NÚCLEO</span>
                     <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${uc}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
-                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.75)', letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: tint(C.white, 75), letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
                   </div>
                 </div>
               </div>
@@ -488,14 +488,14 @@ export function AcademiaTab() {
                       <button onClick={() => openCourse(c)} className="oc-card oc-pressable oc-rise" style={{
                         width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
                         borderRadius: 14, padding: 11,
-                        background: 'linear-gradient(165deg, rgba(20,30,52,0.92), rgba(12,20,38,0.96))',
+                        background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
                         border: `1px solid ${accent}66`, boxShadow: `0 0 16px ${accent}26`,
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 22, flexShrink: 0 }}>{c.cover_emoji}</span>
-                          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 12.5, color: '#eaf4ff', lineHeight: 1.15 }}>{c.title}</span>
+                          <span style={{ fontSize: SIZE.xl, flexShrink: 0 }}>{c.cover_emoji}</span>
+                          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.15 }}>{c.title}</span>
                         </div>
-                        <div style={{ fontFamily: FONT.mono, fontSize: 7.5, color: accent, letterSpacing: 0.5, marginTop: 6 }}>{statusLabel} · {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total}</div>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: accent, letterSpacing: 0.5, marginTop: 6 }}>{statusLabel} · {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total}</div>
                         <div style={{ marginTop: 5 }}><Bar pct={pct} color={accent} /></div>
                       </button>
                     </div>
@@ -540,7 +540,7 @@ export function AcademiaTab() {
             return (
               <div key={l.id} style={{
                 borderRadius: RADIUS.lg, marginBottom: 10, overflow: 'hidden',
-                background: 'rgba(20,30,52,0.7)', border: `1px solid ${done ? C.green + '44' : 'rgba(255,255,255,0.08)'}`,
+                background: C.surfaceLight, border: `1px solid ${done ? C.green + '44' : C.glass2}`,
               }}>
                 <button onClick={() => setExpanded(isOpen ? null : l.id)} style={{
                   width: '100%', textAlign: 'left', cursor: 'pointer', background: 'none', border: 'none',
@@ -554,8 +554,8 @@ export function AcademiaTab() {
                     {done ? <CheckCircle2 size={15} style={{ color: C.green }} /> : <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: accent }}>{i + 1}</span>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: '#eaf4ff' }}>{l.title}</div>
-                    <div style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, marginTop: 1 }}>
+                    <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: C.ink }}>{l.title}</div>
+                    <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 1 }}>
                       LECCIÓN {i + 1}{done ? ' · LEÍDA' : ''}
                     </div>
                   </div>
@@ -564,7 +564,7 @@ export function AcademiaTab() {
 
                 {isOpen && (
                   <div style={{ padding: '0 14px 14px', animation: 'acaIn 0.3s ease' }}>
-                    <p style={{ fontFamily: FONT.body, fontSize: 13, color: '#cfe2f0', lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
+                    <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
                     {!done ? (
                       <button onClick={() => completeLesson(l.id)} style={{
                         fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: '#04110a',
@@ -591,14 +591,14 @@ export function AcademiaTab() {
 
           <div style={{
             marginTop: 14, borderRadius: RADIUS.xl, padding: 16,
-            background: allDone ? `${C.gold}10` : 'rgba(255,255,255,0.025)',
-            border: `1px solid ${allDone ? C.gold + '55' : 'rgba(255,255,255,0.08)'}`,
+            background: allDone ? `${C.gold}10` : C.glass,
+            border: `1px solid ${allDone ? C.gold + '55' : C.glass2}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <Sparkles size={16} style={{ color: allDone ? C.gold : C.cyanDim }} />
               <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: allDone ? C.gold : C.cyanDim }}>Quiz final</span>
             </div>
-            <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim, lineHeight: 1.4 }}>
+            <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, lineHeight: 1.4 }}>
               Aprueba con {course.passing_score}% para validar {course.node_id && nodes.get(course.node_id)
                 ? <strong style={{ color: C.gold }}>la habilidad "{nodes.get(course.node_id)!.title}"</strong>
                 : <strong style={{ color: C.cyan }}>el nodo</strong>} en tu Árbol y subir tu <strong style={{ color: C.cyan }}>Fundamento</strong> del Gemelo Digital. 🧬
@@ -606,7 +606,7 @@ export function AcademiaTab() {
             <button onClick={startQuiz} disabled={!allDone} style={{
               width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: allDone ? 'pointer' : 'not-allowed',
               background: allDone ? C.gold : 'transparent', border: `1px solid ${allDone ? C.gold : C.cyanFaint}`,
-              color: allDone ? '#1a1205' : C.cyanDim, fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
+              color: allDone ? C.onAccent : C.cyanDim, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               {allDone ? <><Award size={15} /> RENDIR QUIZ FINAL</> : <><Lock size={14} /> COMPLETA LAS LECCIONES</>}
@@ -643,7 +643,7 @@ export function AcademiaTab() {
               {result.passed ? <CheckCircle2 size={40} style={{ color: C.green }} /> : <Lock size={36} style={{ color: C.red }} />}
             </div>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: result.passed ? C.green : C.red }}>{result.score}%</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: 12, color: result.passed ? C.green : C.red, letterSpacing: 1, marginTop: 4 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: result.passed ? C.green : C.red, letterSpacing: 1, marginTop: 4 }}>
               {result.passed ? '¡APROBADO!' : 'NO APROBADO'}
             </div>
             <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginTop: 12, maxWidth: 280, marginInline: 'auto', lineHeight: 1.5 }}>
@@ -655,7 +655,7 @@ export function AcademiaTab() {
               {result.passed && (
                 <button onClick={() => setActiveTab('maxskill')} style={{
                   padding: '11px 22px', borderRadius: 12, cursor: 'pointer',
-                  background: C.gold, border: 'none', color: '#1a1205',
+                  background: C.gold, border: 'none', color: C.onAccent,
                   fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                 }}><Target size={14} /> VER EN EL ÁRBOL</button>
@@ -671,7 +671,7 @@ export function AcademiaTab() {
           <>
             {questions.map((q, qi) => (
               <div key={q.id} style={{ marginBottom: 18 }}>
-                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#dbeafe', marginBottom: 10 }}>
+                <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 10 }}>
                   {qi + 1}. {q.question}
                 </div>
                 {q.options.map((opt, oi) => {
@@ -679,9 +679,9 @@ export function AcademiaTab() {
                   return (
                     <button key={oi} onClick={() => setAnswers({ ...answers, [q.id]: oi })} style={{
                       width: '100%', textAlign: 'left', marginBottom: 7, padding: '11px 13px', borderRadius: 12, cursor: 'pointer',
-                      background: sel ? `${uc}18` : 'rgba(20,30,52,0.7)',
-                      border: `1px solid ${sel ? uc : 'rgba(255,255,255,0.08)'}`,
-                      color: sel ? '#e2f3ff' : '#b9d4e6', fontFamily: FONT.body, fontSize: 13,
+                      background: sel ? `${uc}18` : C.surfaceLight,
+                      border: `1px solid ${sel ? uc : C.glass2}`,
+                      color: sel ? C.ink : C.cyan, fontFamily: FONT.body, fontSize: 13,
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}>
                       <span style={{
@@ -698,7 +698,7 @@ export function AcademiaTab() {
             <button onClick={submit} disabled={submitting || Object.keys(answers).length < questions.length} style={{
               width: '100%', marginTop: 8, padding: '13px', borderRadius: 12,
               cursor: (submitting || Object.keys(answers).length < questions.length) ? 'not-allowed' : 'pointer',
-              background: C.gold, border: 'none', color: '#1a1205', fontFamily: FONT.mono, fontSize: 12, letterSpacing: 1, fontWeight: 700,
+              background: C.gold, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
               opacity: (submitting || Object.keys(answers).length < questions.length) ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>

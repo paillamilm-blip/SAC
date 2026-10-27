@@ -6,7 +6,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { persistOnboardingProfile } from '@/shared/services/onboardingSync';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -47,13 +47,13 @@ function injectAuthStyles(): void {
     .auth-input {
       transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
-    .auth-input::placeholder { color: rgba(107,117,144,0.85); }
+    .auth-input::placeholder { color: ${tint(C.mut, 85)}; }
     /* !important es necesario porque el estilo base va inline (los estilos
        inline ganan a las hojas de estilo salvo con !important). */
     .auth-input:focus {
       outline: none;
       border-color: var(--omi-accent) !important;
-      background: rgba(255,255,255,0.07) !important;
+      background: ${C.glass2} !important;
       box-shadow: 0 0 0 3px var(--omi-accent-soft);
     }
     .auth-submit { transition: filter .18s ease, box-shadow .18s ease; }
@@ -569,7 +569,7 @@ const S: Record<string, CSSProperties> = {
     position: 'fixed', inset: 0, zIndex: 95,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '32px 24px', overflow: 'auto',
-    background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)',
+    background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
   },
   halo: {
     position: 'absolute', top: '4%', left: '50%',
@@ -602,10 +602,10 @@ const S: Record<string, CSSProperties> = {
   card: {
     position: 'relative', width: '100%',
     borderRadius: RADIUS.xl, padding: 24, overflow: 'hidden',
-    background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+    background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
     backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+    boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
   },
   cardAccent: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 1,
@@ -613,7 +613,7 @@ const S: Record<string, CSSProperties> = {
   tabs: {
     display: 'flex', gap: 4, padding: 4, marginBottom: 22,
     borderRadius: RADIUS.md,
-    background: 'rgba(255,255,255,0.04)',
+    background: C.glass,
     border: `1px solid ${C.line}`,
   },
   tab: {
@@ -635,7 +635,7 @@ const S: Record<string, CSSProperties> = {
   input: {
     width: '100%', boxSizing: 'border-box',
     padding: '13px 16px', borderRadius: RADIUS.md,
-    background: 'rgba(255,255,255,0.045)',
+    background: C.glass,
     border: `1px solid ${C.line}`,
     fontFamily: FONT.body, fontSize: SIZE.md, color: C.ink,
   },
@@ -676,6 +676,6 @@ const S: Record<string, CSSProperties> = {
     width: '100%', marginTop: 16, padding: '13px 0',
     borderRadius: RADIUS.md, background: 'transparent',
     fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5,
-    color: 'rgba(234,240,251,0.7)', cursor: 'pointer',
+    color: tint(C.ink, 70), cursor: 'pointer',
   },
 };

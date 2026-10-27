@@ -22,7 +22,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, EASE, EASING, FONT, TIMING } from '@/theme';
+import { C, EASE, EASING, FONT, TIMING, SIZE } from '@/theme';
 import type { EstadoNodo, NodoRed, RedVivaModel } from '../services/redViva';
 import { NodoEstadoFormaSvg, type VarianteNodo } from './NodoEstadoMarca';
 
@@ -376,7 +376,7 @@ export function RedVivaCanvas({
           x={0}
           y={9.5}
           textAnchor="middle"
-          style={{ fontFamily: FONT.mono, fontSize: 7, fill: alpha(uc, 0.75), letterSpacing: 0.4 }}
+          style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, fill: alpha(uc, 0.75), letterSpacing: 0.4 }}
         >
           /100
         </text>

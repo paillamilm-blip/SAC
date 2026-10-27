@@ -1,9 +1,15 @@
 /* src/styles/responsive.css */
 /* ═══════════════════════════════════════════════════════════════════════ */
-/* RESPONSIVE MOBILE-FIRST — Touch gestures, safe areas, adaptive layout */
+/* BASE TÁCTIL — área segura, comportamiento de touch y el piso de 44px.
+   Este archivo era 367 líneas de utilidades de un prototipo que ya no está
+   en la app: .hub-*, .unified-*, .module-card, .nav-fab, .oraculo-bar,
+   .mobile-only/.tablet-only/.desktop-only, .safe-*, .swipe-indicator,
+   .pull-refresh-indicator, .page-enter/.page-exit, .card-appear, .ripple,
+   .touch-feedback, .no-select, .allow-select. Ninguna aparecía en el código
+   y .scrollbar-hidden estaba duplicada en index.css. Los breakpoints de la
+   app viven en index.css; acá solo queda lo que de verdad afecta al dedo. */
 /* ═══════════════════════════════════════════════════════════════════════ */
 
-/* Safe areas para notch/home indicator */
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
@@ -11,7 +17,6 @@
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
-/* Smooth scrolling */
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -20,9 +25,10 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Touch optimization */
 * {
-  -webkit-tap-highlight-color: rgba(92, 200, 255, 0.1);
+  /* El destello del tap lleva el acento del usuario; el cian saturado del
+     prototipo donante está proscrito en toda la app. */
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--omi-accent) 12%, transparent);
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -36,332 +42,20 @@ input, textarea {
   user-select: text;
 }
 
-/* Disable pull-to-refresh browser default */
+/* Evita el pull-to-refresh nativo sobre el scroll de la app. */
 body {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* BREAKPOINTS */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
-/* Mobile: 0-640px (default) */
-.mobile-only {
-  display: block;
-}
-.tablet-only,
-.desktop-only {
-  display: none;
-}
-
-/* Tablet: 641-1024px */
-@media (min-width: 641px) {
-  .mobile-only {
-    display: none;
-  }
-  .tablet-only {
-    display: block;
-  }
-  .desktop-only {
-    display: none;
-  }
-  
-  /* Adjust hub layout for tablet */
-  .hub-modules-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  .hub-quick-access {
-    justify-content: center;
-  }
-}
-
-/* Desktop: 1025px+ */
-@media (min-width: 1025px) {
-  .mobile-only,
-  .tablet-only {
-    display: none;
-  }
-  .desktop-only {
-    display: block;
-  }
-  
-  /* Adjust hub layout for desktop */
-  .hub-modules-grid {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-  
-  /* Show sidebar navigation on desktop */
-  .desktop-sidebar {
-    display: flex !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* MOBILE OPTIMIZATIONS */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
+/* En teléfono todo se toca con el pulgar: ningún destino bajo 44px. El body
+   a 16px es el piso que evita que iOS haga zoom al enfocar un campo. */
 @media (max-width: 640px) {
-  /* Increase touch targets */
   button, a, [role="button"] {
     min-height: 44px;
     min-width: 44px;
   }
-  
-  /* Larger font sizes for readability */
   body {
-    font-size: 16px; /* Prevents zoom on input focus */
+    font-size: 16px;
   }
-  
-  /* Adjust header for mobile */
-  .unified-header {
-    padding: 12px 14px;
-  }
-  
-  .unified-title {
-    font-size: 16px !important;
-  }
-  
-  /* Full-width cards on mobile */
-  .module-card {
-    grid-column: 1 / -1;
-  }
-  
-  /* Hide breadcrumbs on very small screens */
-  @media (max-width: 480px) {
-    .breadcrumbs {
-      display: none !important;
-    }
-  }
-  
-  /* FAB positioning with safe area */
-  .nav-fab {
-    bottom: calc(80px + var(--safe-area-inset-bottom)) !important;
-    right: 16px !important;
-  }
-  
-  /* Galaxy section height adjustment */
-  .hub-galaxy {
-    min-height: 320px !important;
-  }
-  
-  /* Oraculp bar positioning */
-  .oraculo-bar {
-    bottom: calc(78px + var(--safe-area-inset-bottom)) !important;
-    right: 14px !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* LANDSCAPE MOBILE */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
-@media (max-height: 500px) and (orientation: landscape) {
-  /* Reduce galaxy height in landscape */
-  .hub-galaxy {
-    min-height: 240px !important;
-  }
-  
-  /* Compact header */
-  .hub-header {
-    padding: 8px 12px !important;
-  }
-  
-  .hub-omega {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  
-  /* Hide action card in landscape to save space */
-  .hub-action-card {
-    display: none !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* TOUCH GESTURES */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
-/* Swipe indicator */
-.swipe-indicator {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 80px;
-  background: linear-gradient(180deg, transparent, rgba(92,200,255,0.6), transparent);
-  border-radius: 2px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-  z-index: 1000;
-}
-
-.swipe-indicator.active {
-  opacity: 1;
-}
-
-.swipe-indicator.left {
-  left: 0;
-}
-
-.swipe-indicator.right {
-  right: 0;
-}
-
-/* Pull-to-refresh indicator */
-.pull-refresh-indicator {
-  position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(6,12,26,0.9);
-  border: 1px solid rgba(92,200,255,0.3);
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pull-refresh-indicator.pulling {
-  top: 10px;
-}
-
-.pull-refresh-indicator.refreshing {
-  top: 20px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* ANIMATIONS */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
-/* Page transition */
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutLeft {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-30%);
-    opacity: 0;
-  }
-}
-
-.page-enter {
-  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.page-exit {
-  animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Bounce effect for cards */
-@keyframes bounceIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.02);
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.card-appear {
-  animation: bounceIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Ripple effect for touch */
-@keyframes ripple {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(92, 200, 255, 0.5);
-  width: 20px;
-  height: 20px;
-  margin-top: -10px;
-  margin-left: -10px;
-  animation: ripple 0.6s;
-  pointer-events: none;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════ */
-/* UTILITIES */
-/* ═══════════════════════════════════════════════════════════════════════ */
-
-/* Hide scrollbar but keep functionality */
-.scrollbar-hidden {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.scrollbar-hidden::-webkit-scrollbar {
-  display: none;
-}
-
-/* Safe area padding */
-.safe-top {
-  padding-top: var(--safe-area-inset-top);
-}
-
-.safe-bottom {
-  padding-bottom: var(--safe-area-inset-bottom);
-}
-
-.safe-left {
-  padding-left: var(--safe-area-inset-left);
-}
-
-.safe-right {
-  padding-right: var(--safe-area-inset-right);
-}
-
-/* Touch feedback */
-.touch-feedback {
-  transition: all 0.1s ease;
-}
-
-.touch-feedback:active {
-  transform: scale(0.96);
-  opacity: 0.8;
-}
-
-/* Prevent text selection on UI elements */
-.no-select {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Allow text selection */
-.allow-select {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
 }

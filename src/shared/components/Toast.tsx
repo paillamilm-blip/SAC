@@ -1,6 +1,7 @@
 // components/shared/Toast.tsx
 // Sistema de notificaciones (toasts) global, holográfico.
 // Uso:  const { toast } = useToast();  toast('Guardado', 'success');
+import { C, SIZE } from '@/theme';
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle2, XCircle, Info } from 'lucide-react';
 
@@ -10,7 +11,7 @@ interface ToastItem { id: number; message: string; type: ToastType; }
 interface ToastCtx { toast: (message: string, type?: ToastType) => void; }
 const Ctx = createContext<ToastCtx | null>(null);
 
-const COLOR: Record<ToastType, string> = { success: '#3fd0c9', error: '#ff5066', info: '#a0aec0' };
+const COLOR: Record<ToastType, string> = { success: C.green, error: '#ff5066', info: C.cyan };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -55,11 +56,11 @@ const S: Record<string, React.CSSProperties> = {
   toast: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px',
     borderRadius: 12, border: '1px solid',
-    background: 'rgba(8,16,38,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    background: C.surface, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
     animation: 'msgEnter 0.28s ease-out',
   },
   msg: {
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: 13.5,
-    color: '#eaf0fb', lineHeight: 1.35,
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: SIZE.sm,
+    color: C.ink, lineHeight: 1.35,
   },
 };

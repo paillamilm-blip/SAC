@@ -10,7 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, SIZE, tint } from '@/theme';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type CredType = 'DEGREE' | 'DIPLOMA' | 'CERTIFICATE_QR' | 'CERTIFICATE_DOC' | 'EXPERIENCE';
@@ -148,10 +148,10 @@ export function CredentialsPanel() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: 'rgba(0,245,255,0.04)',
+    background: tint(C.cyan, 4),
     border: `1px solid ${C.cyanFaint}`,
     borderRadius: RADIUS.md, padding: '9px 11px',
-    color: '#e2f3ff', fontFamily: FONT.mono, fontSize: 12,
+    color: C.ink, fontFamily: FONT.mono, fontSize: SIZE.xs,
     outline: 'none',
   };
   const labelStyle: React.CSSProperties = {
@@ -163,8 +163,8 @@ export function CredentialsPanel() {
     <div style={{
       position: 'relative', borderRadius: RADIUS.xl,
       padding: '16px', marginBottom: 14,
-      background: 'rgba(10,17,32,0.98)',
-      border: '1px solid rgba(0,245,255,0.12)',
+      background: C.surface,
+      border: `1px solid ${tint(C.cyan, 12)}`,
       overflow: 'hidden',
     }}>
       {/* Header */}
@@ -193,7 +193,7 @@ export function CredentialsPanel() {
       {adding && (
         <div style={{
           borderRadius: RADIUS.lg, padding: 12, marginBottom: 14,
-          background: 'rgba(0,245,255,0.03)', border: `1px solid ${C.cyanFaint}`,
+          background: tint(C.cyan, 3), border: `1px solid ${C.cyanFaint}`,
         }}>
           {/* Tipo */}
           <label style={labelStyle}>Tipo de credencial</label>
@@ -209,10 +209,10 @@ export function CredentialsPanel() {
                   border: `1px solid ${active ? C.cyan : C.cyanFaint}`,
                 }}>
                   <Icon size={14} style={{ color: active ? C.cyan : C.cyanDim, flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontFamily: FONT.mono, fontSize: 9.5, color: active ? '#e2f3ff' : C.cyanDim, lineHeight: 1.2 }}>
+                  <span style={{ flex: 1, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: active ? C.ink : C.cyanDim, lineHeight: 1.2 }}>
                     {ct.label}
                   </span>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.gold }}>{ct.pts}</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.gold }}>{ct.pts}</span>
                 </button>
               );
             })}
@@ -257,12 +257,12 @@ export function CredentialsPanel() {
                 display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
                 padding: '9px 11px', borderRadius: RADIUS.md, marginBottom: 10,
                 border: `1px dashed ${file ? C.green : C.cyanDim}`,
-                background: 'rgba(0,245,255,0.03)',
+                background: tint(C.cyan, 3),
               }}>
                 <input type="file" accept="image/*,application/pdf" style={{ display: 'none' }}
                   onChange={e => setFile(e.target.files?.[0] ?? null)} />
                 <FileText size={14} style={{ color: file ? C.green : C.cyanDim }} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: file ? '#e2f3ff' : C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: FONT.mono, fontSize: 11, color: file ? C.ink : C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {file ? file.name : 'Toca para subir foto o PDF'}
                 </span>
               </label>
@@ -293,7 +293,7 @@ export function CredentialsPanel() {
           </div>
 
           {meta.needsUrl && (
-            <p style={{ fontFamily: FONT.mono, fontSize: 8.5, color: C.cyanDim, marginTop: 8, letterSpacing: 0.2 }}>
+            <p style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 8, letterSpacing: 0.2 }}>
               🟢 Las credenciales con QR/link se aprueban al instante. Las demás quedan pendientes de revisión.
             </p>
           )}
@@ -317,7 +317,7 @@ export function CredentialsPanel() {
             <div key={c.id} style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 12px', borderRadius: RADIUS.md,
-              background: 'rgba(0,245,255,0.03)', border: `1px solid ${C.cyanFaint}`,
+              background: tint(C.cyan, 3), border: `1px solid ${C.cyanFaint}`,
             }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 8, flexShrink: 0,
@@ -328,23 +328,23 @@ export function CredentialsPanel() {
               </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: FONT.body, fontSize: 13, color: '#e2f3ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.title}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 3,
-                    fontFamily: FONT.mono, fontSize: 8, color: sm.color, letterSpacing: 0.5,
+                    fontFamily: FONT.mono, fontSize: SIZE.xxs, color: sm.color, letterSpacing: 0.5,
                     padding: '1px 6px', borderRadius: 12,
                     background: `${sm.color}14`, border: `1px solid ${sm.color}44`,
                   }}>
                     <SIcon size={9} /> {sm.label}
                   </span>
                   {c.status === 'VERIFIED' && (
-                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.green }}>+{c.points} pts</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green }}>+{c.points} pts</span>
                   )}
                   {c.issuer && (
-                    <span style={{ fontFamily: FONT.mono, fontSize: 8, color: C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       · {c.issuer}
                     </span>
                   )}

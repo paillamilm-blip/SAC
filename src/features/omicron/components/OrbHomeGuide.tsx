@@ -25,7 +25,7 @@
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { hapticLight } from '@/shared/utils/haptics';
-import { C, FONT, RADIUS, SIZE, SP } from '@/theme';
+import { C, FONT, RADIUS, SIZE, SP, tint } from '@/theme';
 import { buildHomeActions, splitGreeting } from '../utils/orbHomeGuide';
 
 // Unión discriminada por `slot`: cada ranura declara solo lo que usa, así el
@@ -156,13 +156,13 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
             width: '100%',
             margin: '0 auto',
             pointerEvents: 'auto',
-            background: 'rgba(12,16,30,0.92)',
+            background: C.surface,
             backdropFilter: 'blur(14px)',
             WebkitBackdropFilter: 'blur(14px)',
             border: `1px solid ${userColor}4D`,
             borderRadius: RADIUS.lg,
             padding: '14px 16px',
-            boxShadow: `0 4px 24px ${userColor}1A, 0 8px 32px rgba(0,0,0,0.4)`,
+            boxShadow: `0 4px 24px ${userColor}1A, 0 8px 32px ${tint(C.black, 40)}`,
           }}
         >
           {/* Cabecera: microcopy + cierre */}
@@ -189,7 +189,7 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
                 height: 24,
                 borderRadius: '50%',
                 border: 'none',
-                background: 'rgba(255,255,255,0.06)',
+                background: C.glass2,
                 color: C.mut,
                 fontSize: 11,
                 cursor: 'pointer',
@@ -219,7 +219,7 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
                   color: C.ink,
                   fontFamily: FONT.body,
                   fontWeight: 600,
-                  fontSize: 12,
+                  fontSize: SIZE.xs,
                   letterSpacing: 0.2,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',

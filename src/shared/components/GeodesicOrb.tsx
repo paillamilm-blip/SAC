@@ -20,6 +20,7 @@
 // The vertex positions are pre-computed from a subdivided icosahedron
 // projected onto a 2D circle (front-hemisphere visible).
 // ═══════════════════════════════════════════════════════════════════════
+import { C } from '@/theme';
 import { useMemo, type CSSProperties } from 'react';
 
 interface Props {
@@ -82,7 +83,7 @@ function project(v: [number, number, number], size: number, depthScale = 0.3): {
 
 export function GeodesicOrb({
   nodes = 12,
-  color = '#a0aec0',
+  color = C.cyan,
   size = 200,
   breathing = true,
   spinning = 20,

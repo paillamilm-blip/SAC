@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
@@ -289,19 +289,19 @@ export function MaxSkillTab() {
             <div style={S.radarSummary}>
               <div style={S.radarStat}>
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>REPUTACIÓN</span>
-                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.ink }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.ink }}>
                   {gemelo?.overallReputation ?? 0}
                 </span>
               </div>
               <div style={S.radarStat}>
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>DOMINIO PROM.</span>
-                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.cyan }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.cyan }}>
                   {avgDominio}%
                 </span>
               </div>
               <div style={S.radarStat}>
                 <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>PE TOTALES</span>
-                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 22, color: C.gold }}>
+                <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.gold }}>
                   {profile?.pe_points ?? 0}
                 </span>
               </div>
@@ -597,7 +597,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 12,
   },
   skillName: {
-    fontFamily: FONT.display, fontWeight: 700, fontSize: 14.5,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md,
     color: C.ink, letterSpacing: -0.2,
   },
   skillMeta: {
@@ -620,16 +620,16 @@ const S: Record<string, React.CSSProperties> = {
     width: '100%', padding: '11px 0', borderRadius: RADIUS.md,
     background: `linear-gradient(135deg, ${C.cyan}, ${C.purple})`,
     border: 'none', color: '#fff',
-    fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    boxShadow: `0 8px 24px rgba(160,174,192,0.3)`,
+    boxShadow: `0 8px 24px ${tint(C.cyan, 30)}`,
   },
   btnAcademia: {
     width: '100%', padding: '10px 0', borderRadius: RADIUS.md,
     background: C.glass, border: `1px solid ${C.line}`,
     color: C.cyan,
-    fontFamily: FONT.display, fontWeight: 600, fontSize: 12.5,
+    fontFamily: FONT.display, fontWeight: 600, fontSize: SIZE.sm,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
   },
@@ -650,7 +650,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 8,
   },
   softPillName: {
-    fontFamily: FONT.display, fontWeight: 600, fontSize: 12,
+    fontFamily: FONT.display, fontWeight: 600, fontSize: SIZE.xs,
     color: C.ink, position: 'relative', zIndex: 1,
   },
   softPillPct: {
@@ -672,7 +672,7 @@ const S: Record<string, React.CSSProperties> = {
     background: `linear-gradient(135deg, ${C.gold}, ${C.purple})`,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#fff', flexShrink: 0,
-    boxShadow: `0 6px 20px rgba(255,176,46,0.3)`,
+    boxShadow: `0 6px 20px ${tint(C.gold, 30)}`,
   },
   coachResult: {
     padding: '12px 14px', borderRadius: RADIUS.md,
@@ -687,7 +687,7 @@ const S: Record<string, React.CSSProperties> = {
     width: '100%', padding: '12px 0', borderRadius: RADIUS.md,
     background: `linear-gradient(135deg, ${C.gold}22, ${C.gold}08)`,
     border: `1px solid ${C.goldDim}`, color: C.gold,
-    fontFamily: FONT.display, fontWeight: 700, fontSize: 13.5,
+    fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
   },
@@ -720,6 +720,6 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    boxShadow: `0 10px 28px rgba(94,92,230,0.35)`,
+    boxShadow: `0 10px 28px ${tint(C.purple, 35)}`,
   },
 };

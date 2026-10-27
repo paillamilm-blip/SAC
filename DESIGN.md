@@ -26,7 +26,10 @@ colors:
   sticky-glass: "rgba(6,8,16,0.96)"
   glass: "rgba(255,255,255,0.045)"
   glass-raised: "rgba(255,255,255,0.08)"
+  wash: "rgba(6,10,22,0.6)"
+  scrim: "rgba(0,0,0,0.6)"
   line: "rgba(150,180,255,0.14)"
+  line-strong: "rgba(150,180,255,0.28)"
   locked: "rgba(255,255,255,0.12)"
   locked-bg: "rgba(255,255,255,0.04)"
   grid: "rgba(92,140,255,0.05)"
@@ -368,6 +371,10 @@ que se juzga cualquier pantalla; no se renegocian caso por caso.
    cada una con su `Dim` (borde), `Faint` (relleno) y `Ghost` (soplo). Un `rgba(160,174,192,0.62)` suelto
    es un error de redondeo: se va al token más cercano. **Está prohibido el cian saturado** (`#00f5ff`,
    `rgba(0,245,255,…)`) incluso como alpha: fue el tono que hizo que 40 archivos se vieran de otra marca.
+   Los rellenos oscuros también son familias, no inventarios: la app tiene **cuatro paneles** —
+   `C.surface` (tarjeta), `C.surfaceLight` (elevado/hover), `C.overlay` (hoja y modal) y `C.wash` (lavado
+   translúcido sobre contenido), además de `C.sticky` para la barra fija y `C.scrim` para las sombras.
+   Antes de este contrato había 28 rgba casi iguales haciendo esos cinco papeles.
 6. **Se toca con el pulgar.** Blancos de 44×44, 8px entre ellos, foco visible en el color del usuario, y
    nada de glifos unicode o emojis como iconos: se dibujan con CSS o con SVG.
 7. **Un solo gesto firma.** El orbe respira con el estado real de la persona, y ese mismo latido (mismo
@@ -390,6 +397,15 @@ golden; no se normalizan con estas reglas.
 - **El alfa se calcula, no se pega.** `tint(color, 34)` en vez de `${color}34`: devuelve `color-mix()` y por
   eso funciona con hex y con `var(--omi-accent)`. Concatenar hex es la razón por la que 20 tonos casi iguales
   circulaban como "el silver del sistema".
+- **En CSS plano, la hoja habla con variables, no con rgba.** `src/index.css` y `src/styles/responsive.css`
+  definen las familias (`--silver`, `--line`, `--glass`, `--sticky`, `--omi-accent`); cualquier otra hoja
+  usa `var(--…)` o `color-mix(in srgb, var(--oro) 30%, transparent)`. Las sombras negras (`rgba(0,0,0,…)`)
+  son la excepción aceptada: no son un tono de marca, son profundidad.
+- **El contrato se vela solo.** `src/theme/contratoAsistente.test.ts` barre el repo y falla si vuelve el
+  cian del prototipo fuera del mapa, si alguien reabre un `const C = {}` propio (el espejo del simulador) o
+  si copia un vidrio de blanco crudo en vez de pedirlo al tema. `design.qa.yaml` + `scripts/design/audit-debt.mjs`
+  (métrica) y `scripts/design/codemod-dedupe.mjs` (barrido, simula si no le pasás `--apply`) son la medida;
+  el test es la reja.
 - Escribí estilos con los tokens `C` / `FONT` / `SIZE` / `RADIUS` en las pantallas premium (auth, credencial, reveal). Esas pantallas son **cero clases Tailwind** — objetos de estilo inline con tokens.
 - Emparejá siempre `backdropFilter` con `WebkitBackdropFilter`.
 - Mostrá la escala completa en cada número: `65/100`, `87/100`. Con su unidad y su contexto.

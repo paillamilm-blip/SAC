@@ -19,7 +19,7 @@
 
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, RADIUS, SIZE, SP } from '@/theme';
+import { C, FONT, RADIUS, SIZE, SP, tint } from '@/theme';
 
 export interface OrbEstadoDelDiaProps {
   /** La línea a mostrar; si es null el ribbon no se renderiza. */
@@ -67,13 +67,13 @@ export function OrbEstadoDelDia({ label, visible }: OrbEstadoDelDiaProps) {
               alignItems: 'center',
               gap: SP[2],
               maxWidth: '100%',
-              padding: '7px 14px',
+              padding: '8px 14px',
               borderRadius: RADIUS.pill,
-              background: 'rgba(12,16,30,0.82)',
+              background: C.surface,
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: `1px solid ${userColor}33`,
-              boxShadow: `0 2px 12px ${userColor}14, 0 4px 18px rgba(0,0,0,0.32)`,
+              boxShadow: `0 2px 12px ${userColor}14, 0 4px 18px ${tint(C.black, 32)}`,
               fontFamily: FONT.body,
               fontSize: SIZE.xs,
               lineHeight: 1.4,

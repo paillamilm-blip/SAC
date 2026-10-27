@@ -14,7 +14,7 @@
      El mapa abajo se pinta SIEMPRE con su paleta fija; esto manda en el andamio.
      Lo sobreescribe el style inline de AprendizajeTab con useUserColor(). */
   --omi-accent: var(--silver);
-  --omi-accent-soft: rgba(160, 174, 192, 0.2);
+  --omi-accent-soft: color-mix(in srgb, var(--omi-accent) 20%, transparent);
   color: var(--ink);
   padding: 0 16px;
 }
@@ -33,10 +33,10 @@
   gap: 12px;
   padding: 10px 16px 11px;
   margin: 0 -16px 12px;
-  background: rgba(6, 8, 16, 0.96);
+  background: var(--sticky);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 1px 0 rgba(150, 180, 255, 0.12); /* la línea de BASE.header, sin ocupar altura */
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 86%, transparent); /* la línea de BASE.header, sin ocupar altura */
 }
 
 .aprendizaje-cabecera-texto {
@@ -66,8 +66,8 @@
   letter-spacing: 0.4px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 176, 46, 0.3); /* BORDER.gold */
-  background: rgba(255, 176, 46, 0.14); /* C.goldFaint: el fondo, no sólo el borde */
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
   color: var(--gold);
 }
 
@@ -139,8 +139,8 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--red);
-  background: rgba(255, 92, 122, 0.14); /* C.redFaint: el error se ve, no sólo se lee */
-  border: 1px solid rgba(255, 92, 122, 0.3);
+  background: color-mix(in srgb, var(--red) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
   border-radius: 12px;
 }
 
@@ -188,7 +188,7 @@
   padding: 12px 14px;
   color: var(--silver);
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--glass);
   border: 1px dashed var(--line);
   border-radius: 12px;
 }
@@ -199,7 +199,7 @@
   border-radius: 16px; /* RADIUS.lg · la tarjeta de la cola */
   margin-bottom: 12px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2); /* SHADOW.sm */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   transition: border-color var(--timing-normal) var(--ease-default),
     box-shadow var(--timing-normal) var(--ease-default);
@@ -207,8 +207,8 @@
 
 @media (hover: hover) {
   .cola-item:hover {
-    border-color: rgba(150, 180, 255, 0.28);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35); /* SHADOW.md */
+    border-color: var(--line-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -312,33 +312,33 @@
   letter-spacing: 0.4px;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(150, 180, 255, 0.14);
+  border: 1px solid var(--line);
   color: var(--silver);
 }
 
 .cola-badge[data-estado='confirmada'] {
   color: var(--teal);
-  border-color: rgba(63, 208, 201, 0.3);
-  background: rgba(63, 208, 201, 0.14);
+  border-color: color-mix(in srgb, var(--teal) 30%, transparent);
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
 }
 
 .cola-badge[data-estado='dominada'] {
   color: var(--gold);
-  border-color: rgba(255, 176, 46, 0.3);
-  background: rgba(255, 176, 46, 0.14);
+  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
 }
 
 /* Descartada: sigue legible (8,49:1) y se distingue por trazo, no por opacidad. */
 .cola-badge[data-estado='rechazada'] {
   border-style: dashed;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
 .cola-cuerpo {
   padding: 4px 14px 14px;
-  border-top: 1px solid rgba(150, 180, 255, 0.1);
+  border-top: 1px solid color-mix(in srgb, var(--line) 71%, transparent);
   font-size: 13px;
   line-height: 1.5;
   color: var(--silver);
@@ -395,8 +395,8 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(150, 180, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid color-mix(in srgb, var(--line) 71%, transparent);
 }
 
 .cola-aprender dt {
@@ -439,7 +439,7 @@
 
 @media (hover: hover) {
   .aprendizaje-cola .boton:hover:not([aria-pressed]):not(:disabled) {
-    background: rgba(255, 255, 255, 0.08); /* C.glass2 */
+    background: var(--glass-2);
   }
 }
 
@@ -464,20 +464,20 @@
   border-color: var(--line);
   border-style: dashed;
   color: var(--silver);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass);
   opacity: 1;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
 .boton-logro {
-  border-color: rgba(255, 176, 46, 0.3);
+  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
   color: var(--gold);
 }
 
 @media (hover: hover) {
   .aprendizaje-cola .boton-logro:hover:not(:disabled) {
-    background: rgba(255, 176, 46, 0.14);
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
   }
 }
 
@@ -488,9 +488,9 @@
   gap: 8px;
   width: 100%;
   padding: 12px;
-  border: 1px solid rgba(255, 176, 46, 0.3);
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
   border-radius: 12px;
-  background: rgba(255, 176, 46, 0.14);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
   color: var(--ink);
   font-size: 13px;
   line-height: 1.5;
@@ -533,7 +533,7 @@
   margin: 12px 0 0;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(255, 176, 46, 0.14);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
   color: var(--gold);
   font-size: 13px;
   font-weight: 600;

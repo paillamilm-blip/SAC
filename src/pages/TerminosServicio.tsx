@@ -4,7 +4,7 @@
 // Documento legal conforme a la ley chilena para marketplace de servicios.
 // ═══════════════════════════════════════════════════════════════════════
 import { ArrowLeft } from 'lucide-react';
-import { C, FONT } from '../theme';
+import { C, FONT, tint, SIZE } from '../theme';
 
 export function TerminosServicio() {
   return (
@@ -290,7 +290,7 @@ const S: Record<string, React.CSSProperties> = {
   container: {
     maxWidth: 800,
     margin: '0 auto',
-    background: 'rgba(11,14,26,0.6)',
+    background: C.surface,
     borderRadius: 20,
     padding: '32px',
     border: `1px solid ${C.line}`,
@@ -301,11 +301,11 @@ const S: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: '8px 16px',
     borderRadius: 12,
-    background: 'rgba(255,255,255,0.05)',
+    background: C.glass,
     border: `1px solid ${C.line}`,
     color: C.ink,
     fontFamily: FONT.display,
-    fontSize: 14,
+    fontSize: SIZE.sm,
     cursor: 'pointer',
     marginBottom: 24,
   },
@@ -318,7 +318,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   updated: {
     fontFamily: FONT.mono,
-    fontSize: 12,
+    fontSize: SIZE.xs,
     color: C.mut,
     marginBottom: 32,
   },
@@ -342,14 +342,14 @@ const S: Record<string, React.CSSProperties> = {
   },
   h3: {
     fontFamily: FONT.display,
-    fontSize: 16,
+    fontSize: SIZE.md,
     fontWeight: 600,
     color: C.ink,
     marginTop: 8,
   },
   p: {
     fontFamily: FONT.body,
-    fontSize: 14,
+    fontSize: SIZE.sm,
     lineHeight: 1.7,
     color: C.mut,
     margin: 0,
@@ -360,7 +360,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   li: {
     fontFamily: FONT.body,
-    fontSize: 14,
+    fontSize: SIZE.sm,
     lineHeight: 1.7,
     color: C.mut,
     marginBottom: 6,
@@ -368,7 +368,7 @@ const S: Record<string, React.CSSProperties> = {
   acceptance: {
     marginTop: 24,
     padding: 16,
-    background: 'rgba(160,174,192,0.1)',
+    background: tint(C.cyan, 10),
     border: `1px solid ${C.cyan}`,
     borderRadius: 12,
   },

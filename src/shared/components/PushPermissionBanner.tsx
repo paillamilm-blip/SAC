@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import {
   isPushSupported,
@@ -91,8 +91,8 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 14px',
     padding: '16px',
     borderRadius: 14,
-    background: 'linear-gradient(145deg, rgba(94,92,230,0.08), rgba(160,174,192,0.05))',
-    border: '1px solid rgba(94,92,230,0.3)',
+    background: `linear-gradient(145deg, ${tint(C.purple, 8)}, ${tint(C.cyan, 5)})`,
+    border: `1px solid ${tint(C.purple, 30)}`,
   },
   close: {
     position: 'absolute',
@@ -109,7 +109,7 @@ const S: Record<string, React.CSSProperties> = {
     width: 32,
     height: 32,
     borderRadius: 8,
-    background: 'rgba(94,92,230,0.2)',
+    background: tint(C.purple, 20),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,14 +118,14 @@ const S: Record<string, React.CSSProperties> = {
   },
   text: { flex: 1, paddingRight: 20 },
   title: { fontFamily: FONT.display, fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 3 },
-  subtitle: { fontFamily: FONT.display, fontSize: 11, color: '#b9d4e6', lineHeight: 1.4 },
+  subtitle: { fontFamily: FONT.display, fontSize: 11, color: C.cyan, lineHeight: 1.4 },
   actions: { display: 'flex', gap: 8 },
   btnYes: {
     flex: 1,
     padding: '10px',
     borderRadius: 8,
     border: 'none',
-    background: 'linear-gradient(135deg, #5e5ce6, #8a88f0)',
+    background: `linear-gradient(135deg, ${C.purple}, #8a88f0)`,
     color: '#fff',
     fontFamily: FONT.mono,
     fontSize: 11,
@@ -135,7 +135,7 @@ const S: Record<string, React.CSSProperties> = {
   btnNo: {
     padding: '10px 14px',
     borderRadius: 8,
-    border: '1px solid rgba(107,117,144,0.3)',
+    border: `1px solid ${tint(C.mut, 30)}`,
     background: 'transparent',
     color: C.mut,
     fontFamily: FONT.mono,

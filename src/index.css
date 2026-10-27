@@ -22,8 +22,11 @@
   --ink:      #eaf0fb;
   --mut:      #76829d;
   --line:     rgba(150,180,255,0.14);
+  --line-strong: rgba(150,180,255,0.28);
   --surface:  rgba(12,16,30,0.86);
   --glass:    rgba(255,255,255,0.045);
+  --glass-2:  rgba(255,255,255,0.08);
+  --sticky:   rgba(6,8,16,0.96);
 
   /* El acento del usuario. App.tsx lo escribe una vez en el root y TODO el
      andamio lo hereda (foco, botones, progreso, estado). El default es silver
@@ -91,10 +94,10 @@ body {
   z-index: 1;
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
-  box-shadow: 0 0 80px rgba(94,92,230,0.10), 0 0 140px rgba(92,200,255,0.06);
+  box-shadow: 0 0 80px color-mix(in srgb, var(--purple) 10%, transparent), 0 0 140px color-mix(in srgb, var(--omi-accent) 6%, transparent);
   background:
-    radial-gradient(circle at 50% -10%, rgba(94,92,230,0.18), transparent 60%),
-    radial-gradient(circle at 50% 110%, rgba(92,200,255,0.10), transparent 55%);
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--purple) 18%, transparent), transparent 60%),
+    radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--omi-accent) 10%, transparent), transparent 55%);
 }
 
 .safe-bottom {
@@ -290,9 +293,9 @@ body::after {
     overflow: hidden;
     padding: 0;
     box-shadow:
-      0 0 0 1px rgba(92,200,255,0.22),
+      0 0 0 1px color-mix(in srgb, var(--omi-accent) 22%, transparent),
       0 40px 90px -24px rgba(0,0,0,0.9),
-      0 0 70px -14px rgba(92,200,255,0.22);
+      0 0 70px -14px color-mix(in srgb, var(--omi-accent) 22%, transparent);
   }
 }
 @media (min-width: 1100px) {

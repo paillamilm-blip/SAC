@@ -6,10 +6,11 @@
 // Taste: uses the Ómicrom color palette, not random colors.
 // Respects prefers-reduced-motion (shows a gentle scale pulse instead).
 // ═══════════════════════════════════════════════════════════════════════
+import { C, tint } from '@/theme';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from './useReducedMotion';
 
-const COLORS = ['#a0aec0', '#5e5ce6', '#3fd0c9', '#ffb02e', '#ff5c7a'];
+const COLORS = [C.cyan, C.purple, C.green, C.gold, C.red];
 const PARTICLE_COUNT = 28;
 const DURATION = 1400; // ms
 
@@ -113,7 +114,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
       }}>
         <div style={{
           width: 60, height: 60, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(160,174,192,0.3), transparent 70%)',
+          background: `radial-gradient(circle, ${tint(C.cyan, 30)}, transparent 70%)`,
           animation: 'cp-pulse 0.6s ease both',
         }} />
       </div>

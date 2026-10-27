@@ -34,7 +34,7 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, EASE, FONT, TIMING } from '@/theme';
+import { C, EASE, FONT, TIMING, tint, SIZE } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -322,7 +322,6 @@ export function OrbShell() {
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [inputText, setInputText] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
@@ -807,36 +806,20 @@ export function OrbShell() {
   );
 
   // ── B: Connect real OraculoBar voice state ──────────────────────────
-  // Listen for custom events dispatched by OraculoBar when listening starts/stops.
-  // Los eventos ('oracle:listening'/'oracle:voice'/'oracle:spectrum'/'omicron:
-  // speaking') se CONSERVAN (otros módulos los emiten/oyen). Con el home ya en
-  // 2D (Red Viva), el nivel de voz y el espectro ya no alimentan un render 3D,
-  // así que estos handlers solo mantienen el estado que el shell todavía usa
-  // (isListening → barra Ómicrom; isSpeaking → pausa el idle). No se renombra ni
-  // se retira ningún evento.
+  // Escuchamos SOLO lo que el shell consume de verdad: 'oracle:listening' pinta
+  // el estado de la barra Ómicrom. Los demás eventos de voz ('oracle:voice',
+  // 'oracle:spectrum', 'omicron:speaking') siguen emitiéndose desde services/
+  // voice.ts e infrastructure/voiceAI.ts —su contrato no se toca— pero acá no
+  // dejan estado: con el home ya en 2D no hay render que los consuma y el
+  // "respiro ocioso" del orbe 3D se retiró en B3. Antes este efecto registraba
+  // tres handlers vacíos y un estado que nadie leía.
   useEffect(() => {
     const handleOracleListening = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       setIsListening(!!detail?.listening);
     };
-    // Handlers no-op conservados para no retirar los eventos de voz existentes.
-    const handleOracleVoice = () => { /* nivel de voz ya no alimenta un render */ };
-    const handleSpectrum = () => { /* bandas de frecuencia ya no se dibujan */ };
     window.addEventListener('oracle:listening', handleOracleListening);
-    window.addEventListener('oracle:voice', handleOracleVoice);
-    window.addEventListener('oracle:spectrum', handleSpectrum);
-    // Escuchar cuando speakAI está hablando (pausa el respiro ocioso del home).
-    const handleSpeaking = (e: Event) => {
-      const active = (e as CustomEvent).detail?.active;
-      setIsSpeaking(!!active);
-    };
-    window.addEventListener('omicron:speaking', handleSpeaking);
-    return () => {
-      window.removeEventListener('oracle:listening', handleOracleListening);
-      window.removeEventListener('oracle:voice', handleOracleVoice);
-      window.removeEventListener('oracle:spectrum', handleSpectrum);
-      window.removeEventListener('omicron:speaking', handleSpeaking);
-    };
+    return () => window.removeEventListener('oracle:listening', handleOracleListening);
   }, []);
 
   // ── GAP 3 FIX: Proactive Engine — Gemelo te empuja sin pedirlo ─────
@@ -1063,7 +1046,7 @@ export function OrbShell() {
             padding: '8px 16px',
             borderRadius: 999,
             border: `1.5px solid ${orbColor}`,
-            background: `linear-gradient(135deg, ${orbColor}22, rgba(6,10,22,0.85))`,
+            background: `linear-gradient(135deg, ${orbColor}22, ${C.surface})`,
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             cursor: 'pointer',
@@ -1075,7 +1058,7 @@ export function OrbShell() {
             fontSize: 13,
             letterSpacing: -0.2,
             color: orbColor,
-            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px rgba(0,0,0,0.4)`,
+            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px ${tint(C.black, 40)}`,
             // El transform lo gobierna framer-motion (whileTap); mantenemos
             // solo la transición de box-shadow para no competir por transform.
             transition: 'box-shadow 0.15s ease',
@@ -1104,7 +1087,7 @@ export function OrbShell() {
             height: 44,
             borderRadius: '50%',
             border: `1.5px solid ${orbColor}`,
-            background: `radial-gradient(circle at 32% 26%, ${orbColor}22, rgba(6,10,22,0.85))`,
+            background: `radial-gradient(circle at 32% 26%, ${orbColor}22, ${C.surface})`,
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
             cursor: 'pointer',
@@ -1112,7 +1095,7 @@ export function OrbShell() {
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px rgba(0,0,0,0.4)`,
+            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px ${tint(C.black, 40)}`,
             // El transform lo gobierna framer-motion (whileTap); mantenemos
             // solo la transición de box-shadow para no competir por transform.
             transition: 'box-shadow 0.15s ease',
@@ -1211,7 +1194,7 @@ export function OrbShell() {
               zIndex: 10,
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 30px ${C.cyanFaint}`,
+              boxShadow: `0 20px 60px ${C.scrim}, 0 0 30px ${C.cyanFaint}`,
               animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
               touchAction: 'pan-y',
             }}
@@ -1231,7 +1214,7 @@ export function OrbShell() {
 
             {/* Node header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <span style={{ fontSize: 26 }}>{selectedNode.icon}</span>
+              <span style={{ fontSize: SIZE.xxl }}>{selectedNode.icon}</span>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
                   {selectedNode.label}
@@ -1255,10 +1238,10 @@ export function OrbShell() {
               background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.glass})`,
               border: `1px solid ${C.cyanFaint}`,
             }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
                 ⬡ Cómo mejorar
               </div>
-              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 12.5, lineHeight: 1.5, color: C.ink }}>
+              <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.5, color: C.ink }}>
                 {guidance}
               </p>
             </div>
@@ -1293,21 +1276,21 @@ export function OrbShell() {
                   border: `1px solid ${orbColor}44`,
                 }}
               >
-                <div style={{ fontFamily: FONT.mono, fontSize: 8, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
                   ⚡ Sinergia activa
                 </div>
                 {/* QUÉ */}
-                <p style={{ margin: '0 0 4px', fontFamily: FONT.display, fontSize: 13.5, fontWeight: 700, color: C.ink }}>
+                <p style={{ margin: '0 0 4px', fontFamily: FONT.display, fontSize: SIZE.sm, fontWeight: 700, color: C.ink }}>
                   {synergyMeta.nombre}
                 </p>
                 {/* POR QUÉ */}
-                <p style={{ margin: '0 0 8px', fontFamily: FONT.body, fontSize: 12, lineHeight: 1.5, color: C.mut }}>
+                <p style={{ margin: '0 0 8px', fontFamily: FONT.body, fontSize: SIZE.xs, lineHeight: 1.5, color: C.mut }}>
                   {synergyMeta.porque}
                 </p>
                 {/* QUÉ GANA */}
                 <div style={{
                   display: 'inline-block', padding: '3px 10px', borderRadius: 999,
-                  fontFamily: FONT.mono, fontSize: 10, fontWeight: 700,
+                  fontFamily: FONT.mono, fontSize: SIZE.xxs, fontWeight: 700,
                   background: `${orbColor}22`, border: `1px solid ${orbColor}44`, color: orbColor,
                 }}>
                   +8/100 en tu dominio
@@ -1331,7 +1314,7 @@ export function OrbShell() {
 
             {/* Swipe hint */}
             {canSwipe && (
-              <p style={{ textAlign: 'center', margin: '10px 0 0', fontFamily: FONT.mono, fontSize: 8, color: C.mut, letterSpacing: 1 }}>
+              <p style={{ textAlign: 'center', margin: '10px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, letterSpacing: 1 }}>
                 ← DESLIZA PARA CAMBIAR DE NODO →
               </p>
             )}
@@ -1378,7 +1361,7 @@ export function OrbShell() {
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
-              fontSize: 16,
+              fontSize: SIZE.md,
               fontWeight: 700,
               transition: 'transform 0.15s ease, background 0.15s ease',
             }}
@@ -1387,7 +1370,7 @@ export function OrbShell() {
           </button>
           {selectedNode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{selectedNode.icon}</span>
+              <span style={{ fontSize: SIZE.lg }}>{selectedNode.icon}</span>
               <span style={{
                 fontFamily: FONT.display,
                 fontSize: 15,
@@ -1449,8 +1432,8 @@ export function OrbShell() {
         {/* Idle help message (30s sin interacción) */}
         {helpMessage && !responseMsg && (
           <div style={{
-            marginBottom: 8, padding: '8px 12px', background: 'rgba(255,176,46,0.08)',
-            border: '1px solid rgba(255,176,46,0.2)', borderRadius: 12,
+            marginBottom: 8, padding: '8px 12px', background: tint(C.gold, 8),
+            border: `1px solid ${tint(C.gold, 20)}`, borderRadius: 12,
             fontFamily: FONT.mono, fontSize: 11, color: C.gold, textAlign: 'center',
           }}>
             {helpMessage}
@@ -1647,7 +1630,7 @@ export function OrbShell() {
       {showCredencial && (
         <ErrorBoundary section="Credencial">
           <Suspense fallback={
-            <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)' }}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)` }}>
               <OmicronPlaceholder2D size={80} color={getUserColor()} />
             </div>
           }>
@@ -1664,9 +1647,9 @@ export function OrbShell() {
         <ErrorBoundary section="ConvalidaCV">
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
-              <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✕</button>
+              <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: SIZE.lg }}>✕</button>
               <OmicronPlaceholder2D size={80} color={getUserColor()} />
-              <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: 12, color: C.mut }}>Cargando módulo CV…</p>
+              <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Cargando módulo CV…</p>
             </div>
           }>
             <ConvalidaOmicron onClose={() => setShowConvalida(false)} />

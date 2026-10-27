@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { C, FONT } from '@/theme';
+import { C, FONT, tint, SIZE } from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { supabase } from '@/infrastructure/supabase/client';
 
@@ -69,7 +69,7 @@ export function DashboardVivo() {
         <div style={S.statValue}>{data.reputation.toFixed(1)}</div>
         <div style={S.statLabel}>Reputación</div>
         {data.repDelta !== 0 && (
-          <div style={{ ...S.delta, color: data.repDelta > 0 ? C.green : '#ff5c7a' }}>
+          <div style={{ ...S.delta, color: data.repDelta > 0 ? C.green : C.red }}>
             {data.repDelta > 0 ? '↑' : '↓'}{Math.abs(data.repDelta).toFixed(1)}
           </div>
         )}
@@ -80,7 +80,7 @@ export function DashboardVivo() {
         <div style={S.statValue}>#{data.ranking}</div>
         <div style={S.statLabel}>Ranking</div>
         {data.rankDelta !== 0 && (
-          <div style={{ ...S.delta, color: data.rankDelta > 0 ? C.green : '#ff5c7a' }}>
+          <div style={{ ...S.delta, color: data.rankDelta > 0 ? C.green : C.red }}>
             {data.rankDelta > 0 ? `↑${data.rankDelta}` : `↓${Math.abs(data.rankDelta)}`}
           </div>
         )}
@@ -96,8 +96,8 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 14px',
     padding: '12px',
     borderRadius: 12,
-    background: 'rgba(8,16,38,0.5)',
-    border: '1px solid rgba(160,174,192,0.1)',
+    background: C.wash,
+    border: `1px solid ${tint(C.cyan, 10)}`,
   },
   stat: {
     flex: 1,
@@ -106,14 +106,14 @@ const S: Record<string, React.CSSProperties> = {
   },
   statValue: {
     fontFamily: FONT.mono,
-    fontSize: 16,
+    fontSize: SIZE.md,
     fontWeight: 700,
     color: C.ink,
     fontVariantNumeric: 'tabular-nums',
   },
   statLabel: {
     fontFamily: FONT.mono,
-    fontSize: 8,
+    fontSize: SIZE.xxs,
     color: C.mut,
     letterSpacing: 1,
     textTransform: 'uppercase' as const,

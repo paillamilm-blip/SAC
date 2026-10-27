@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 import { useApp } from '@/store/AppContext';
 import { nodeGuidance } from '@/shared/utils/guidance';
 import { TextReveal } from '@/shared/motion';
-import { C, FONT } from '@/theme';
+import { C, FONT, SIZE } from '@/theme';
 import type { TabId, GemeloDigital } from '@/types';
 
 interface GemeloGuidanceProps {
@@ -43,7 +43,7 @@ export function GemeloGuidance({ tab }: GemeloGuidanceProps) {
         border: `1px solid ${C.cyanFaint}`,
         borderRadius: 12,
         fontFamily: FONT.body,
-        fontSize: 12,
+        fontSize: SIZE.xs,
         color: C.ink,
         lineHeight: 1.5,
         display: 'flex',
