@@ -1,0 +1,511 @@
+/* features/mapa/mapa.css
+   B3: coreografía y pintura del mapa neuronal, port 1:1 del CSS del donante
+   (bb1434fb/app/globals.css L630-L1090, congelado en
+   .superpowers/sdd/2026-10-26-unificacion-aprendizaje-motor/referencia/
+   donante-css-actos.css). Los tiempos NO se negocian (Invariante 1 del brief):
+     trazo    0.7s ease-out forwards        (pathLength=1, dashoffset de 1)
+     nacer    0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both
+     latir    1s ease-out 0.1s 1            (solo el nodo que acaba de nacer)
+     aparecer 0.5s ease-out both            (etiquetas de categoría)
+     camino   trazo 1.7s ease-in-out forwards con su caminoDelay (960 ms fixture)
+     escaneo  haz 1.6s cubic-bezier(0.45,0,0.55,1) infinite; linea-luz 1.44s ease-in-out infinite
+   El stagger de 45 ms por paso YA viene resuelto por mapaLayout en el
+   animationDelay inline de cada elemento: acá no se recalcula nada. */
+
+/* ── pintura por ROL (Invariante 3) ──────────────────────────────────────────
+   El componente nunca escribe colores: pega data-rol-stroke / data-rol-fill con
+   el rol literal del golden ("cat:dura", "cat:dura+alfa", "nodo-hueco", ...) y
+   las reglas de abajo traducen rol → CSS var. Las --mapa-* tienen que vivir en
+   los tokens (src/theme/tokens.ts / index.css, manos de B1); mientras no
+   existan, el fallback conserva el color medido del donante para que el port se
+   vea igual HOY y el TODO se vea mañana. */
+.mapa-caja {
+  /* TODO B1: borrar los fallbacks cuando tokens.ts defina --mapa-dura/blanda/
+     conocimiento/credencial desde MAPA_CAT (los 4 hex de abajo son exactamente
+     MAPA_CAT, fuente única; el ámbar f2b134 del donante MURIÓ — regla D5). */
+  --cat-dura: var(--mapa-dura, #6aa9ff);
+  --cat-blanda: var(--mapa-blanda, #84cc16);
+  --cat-conocimiento: var(--mapa-conocimiento, #3fd0c9);
+  --cat-credencial: var(--mapa-credencial, #c084fc);
+  /* El fill al 2e (≈18.04 %) de una brecha confirmada del donante (`${color}2e`):
+     se porta con color-mix al 18 %, mismo efecto, cero hex nuevo. */
+  --cat-dura-alfa: color-mix(in srgb, var(--cat-dura) 18%, transparent);
+  --cat-blanda-alfa: color-mix(in srgb, var(--cat-blanda) 18%, transparent);
+  --cat-conocimiento-alfa: color-mix(in srgb, var(--cat-conocimiento) 18%, transparent);
+  --cat-credencial-alfa: color-mix(in srgb, var(--cat-credencial) 18%, transparent);
+  /* Neutros del donante medidos en su CSS (hueco #171b21, bordes #4b545f y
+     #454d57, tinta del check #0b0d10). */
+  /* TODO B1: estas cuatro también deberían venir de tokens como --mapa-*. */
+  --nodo-hueco: var(--mapa-nodo-hueco, #171b21);
+  --borde-pendiente: var(--mapa-borde-pendiente, #4b545f);
+  --borde-rechazada: var(--mapa-borde-rechazada, #454d57);
+  --tinta-sobre-nodo: var(--mapa-tinta-sobre-nodo, #0b0d10);
+  /* Degradado dorado de la raíz (donante #f7c45c → #c98a12; no es el ámbar
+     prohibido, es el brillo de "tu centro"). */
+  /* TODO B1: --mapa-raiz-inicio / --mapa-raiz-fin desde tokens. */
+  --raiz-inicio: var(--mapa-raiz-inicio, #f7c45c);
+  --raiz-fin: var(--mapa-raiz-fin, #c98a12);
+  /* Alias de pintura del donante a los tokens de Ómicrom (el donante tenía
+     --muted/--text/--line-soft/--ok/--accent; acá se aterizan sin tocar
+     index.css). TODO B1: si B1 exporta alias globales, estos se disuelven. */
+  --mapa-texto: var(--ink, #eaf0fb);
+  --mapa-tenue: var(--mut, #6b7590);
+  --mapa-linea: var(--line, rgba(150, 180, 255, 0.14));
+  --mapa-superficie: var(--surface, rgba(12, 16, 30, 0.86));
+  --mapa-ok: var(--teal, #3fd0c9);
+}
+
+/* rol → propiedad. Cada combinación que el golden emite, enumerada: el color
+   nunca se calcula, se declara. */
+[data-rol-stroke="cat:dura"] { stroke: var(--cat-dura); }
+[data-rol-stroke="cat:blanda"] { stroke: var(--cat-blanda); }
+[data-rol-stroke="cat:conocimiento"] { stroke: var(--cat-conocimiento); }
+[data-rol-stroke="cat:credencial"] { stroke: var(--cat-credencial); }
+[data-rol-stroke="borde-pendiente"] { stroke: var(--borde-pendiente); }
+[data-rol-stroke="borde-rechazada"] { stroke: var(--borde-rechazada); }
+[data-rol-stroke="tinta-sobre-nodo"] { stroke: var(--tinta-sobre-nodo); }
+[data-rol-fill="cat:dura"] { fill: var(--cat-dura); }
+[data-rol-fill="cat:blanda"] { fill: var(--cat-blanda); }
+[data-rol-fill="cat:conocimiento"] { fill: var(--cat-conocimiento); }
+[data-rol-fill="cat:credencial"] { fill: var(--cat-credencial); }
+[data-rol-fill="cat:dura+alfa"] { fill: var(--cat-dura-alfa); }
+[data-rol-fill="cat:blanda+alfa"] { fill: var(--cat-blanda-alfa); }
+[data-rol-fill="cat:conocimiento+alfa"] { fill: var(--cat-conocimiento-alfa); }
+[data-rol-fill="cat:credencial+alfa"] { fill: var(--cat-credencial-alfa); }
+[data-rol-fill="nodo-hueco"] { fill: var(--nodo-hueco); }
+/* Los 4 chips de categoría de la leyenda pintan su <i> con el mismo rol. */
+.mapa-chip > i[data-rol-stroke="cat:dura"] { background: var(--cat-dura); }
+.mapa-chip > i[data-rol-stroke="cat:blanda"] { background: var(--cat-blanda); }
+.mapa-chip > i[data-rol-stroke="cat:conocimiento"] { background: var(--cat-conocimiento); }
+.mapa-chip > i[data-rol-stroke="cat:credencial"] { background: var(--cat-credencial); }
+
+/* ── caja y cabecera (donante .mapa-caja/.mapa-cabecera/.mapa-sub) ────────── */
+.mapa-caja {
+  margin-bottom: 8px;
+  /* El donante venía envuelto en su .card global; Ómicrom no la tiene, se
+     define solo para el mapa sin tocar index.css. */
+  border: 1px solid var(--mapa-linea);
+  border-radius: 12px;
+  background: var(--mapa-superficie);
+  color: var(--mapa-texto);
+  padding: 18px;
+}
+
+.mapa-caja .card-titulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--mapa-texto);
+}
+
+.mapa-cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.mapa-sub {
+  color: var(--mapa-tenue);
+  font-size: 13.5px;
+  margin: 0;
+  max-width: 58ch;
+}
+
+/* Invariante 4: táctil >= 44 px y foco visible (con currentColor del tema hasta
+   que B1 defina la variable de foco del usuario). */
+.mapa-caja .boton {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--mapa-linea);
+  border-radius: 10px;
+  background: var(--mapa-superficie);
+  color: var(--mapa-texto);
+  font: inherit;
+  cursor: pointer;
+}
+.mapa-caja .boton:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* ── el svg ────────────────────────────────────────────────────────────────── */
+.mapa-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.mapa-orbita {
+  fill: none;
+  stroke: var(--mapa-linea);
+  stroke-dasharray: 3 8;
+}
+
+.mapa-trazo {
+  fill: none;
+  stroke-width: 1.6;
+  opacity: 0.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: trazo 0.7s ease-out forwards;
+}
+
+.mapa-trazo-suave {
+  opacity: 0.32;
+}
+
+.mapa-trazo[data-apagado="true"] {
+  opacity: 0.09;
+}
+
+.mapa-trazo-logro {
+  opacity: 0.85;
+  stroke-width: 1.4;
+}
+
+@keyframes trazo {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.mapa-camino {
+  fill: none;
+  stroke: #ffffff; /* el camino blanco del donante: literal, sin rol (no hay
+                     brecha que lo pinte; B1 no lo gobierna) */
+  stroke-width: 2;
+  opacity: 0.7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: trazo 1.7s ease-in-out forwards;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+}
+
+/* transform-box/transform-origin: lo que hace que scale(0.35) escale el nodo y
+   no el viewBox. Sin estas dos líneas el mapa "explota" desde la esquina. */
+.mapa-nodo {
+  animation: nacer 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes nacer {
+  from {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* latir: solo el nodo que acaba de nacer (el donante lo encadenaba en .pulso:
+   `animation: nacer ..., latir ...`). */
+@keyframes latir {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulso {
+  animation: nacer 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both, latir 1s ease-out 0.1s 1;
+}
+
+/* Invariante 2, modo 'vivo': el nodo que llega por realtime SOLO hace brillar
+   1100 ms (tiempo dictado por el brief; la forma del destello no estaba en el
+   CSS del donante — decisión documentada en el reporte B3). El crecimiento del
+   anillo queda pendiente para B4, cuando exista el evento realtime. */
+@keyframes brillar {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  40% {
+    transform: scale(1.12);
+    filter: brightness(1.6);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.mapa-brillar {
+  animation: brillar 1100ms ease-out 1;
+}
+
+.mapa-brecha-rechazada {
+  opacity: 0.22;
+}
+
+.mapa-anillo {
+  fill: none;
+  stroke-dasharray: 4 5;
+  opacity: 0.85;
+}
+
+.mapa-raiz {
+  /* El halo del donante era rgba(242,177,52,.35) — ámbar D5 muerto: mismo
+     35 % sobre el dorado propio de la raíz (--raiz-inicio). */
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--raiz-inicio) 35%, transparent));
+}
+
+.mapa-raiz-stop-inicio {
+  stop-color: var(--raiz-inicio);
+}
+.mapa-raiz-stop-fin {
+  stop-color: var(--raiz-fin);
+}
+
+.mapa-raiz-texto {
+  fill: #1a1408; /* tinta oscura sobre la raíz dorada: literal del donante */
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.mapa-cat-texto {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  animation: aparecer 0.5s ease-out both;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── leyenda ───────────────────────────────────────────────────────────── */
+.mapa-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.mapa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--mapa-tenue);
+}
+
+.mapa-chip i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.mapa-punto-estado[data-estado="pendiente"] {
+  background: var(--nodo-hueco);
+  border: 1.6px solid var(--borde-pendiente);
+}
+
+.mapa-punto-estado[data-estado="confirmada"] {
+  background: color-mix(in srgb, var(--mapa-ok) 20%, transparent);
+  border: 2px solid var(--mapa-ok);
+}
+
+.mapa-punto-estado[data-estado="dominada"] {
+  background: var(--mapa-ok);
+  border: 2px solid var(--mapa-ok);
+}
+
+.mapa-punto-estado[data-estado="rechazada"] {
+  background: var(--borde-rechazada);
+  border: 2px solid var(--borde-rechazada);
+  opacity: 0.5;
+}
+
+/* ── escaneo (acto 1): SOLO las animaciones y sus tiempos medidos ───────────
+   El markup del escaneo lo monta B4; acá vive el tiempo del donante para que
+   la lista reduced-motion de abajo no apague clases fantasma. El destello
+   ámbar rgba(242,177,52,α) del donante MURIÓ con la regla D5: se portó con
+   la misma alfa sobre --mapa-ok. Decisión documentada en el reporte B3. */
+.escaneo-haz {
+  animation: haz 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.escaneo-haz[data-activo="false"] {
+  display: none;
+}
+
+.escaneo-haz rect:first-child {
+  fill: var(--mapa-ok);
+}
+
+.escaneo-haz-bruma {
+  fill: color-mix(in srgb, var(--mapa-ok) 15%, transparent);
+}
+
+@keyframes haz {
+  0% {
+    transform: translateY(12px);
+  }
+  50% {
+    transform: translateY(134px);
+  }
+  100% {
+    transform: translateY(12px);
+  }
+}
+
+.escaneo-linea {
+  fill: #2a313b; /* gris de la hoja del documento: literal del donante */
+}
+
+.escaneo-linea[data-activo="true"] {
+  animation: linea-luz 1.44s ease-in-out infinite;
+}
+
+.escaneo-linea[data-listo="true"] {
+  fill: color-mix(in srgb, var(--mapa-ok) 35%, transparent);
+}
+
+@keyframes linea-luz {
+  0%,
+  100% {
+    fill: #2a313b;
+  }
+  45% {
+    fill: color-mix(in srgb, var(--mapa-ok) 55%, transparent);
+  }
+}
+
+/* ── el camino (actos 3-4) ─────────────────────────────────────────────── */
+.camino-caja {
+  margin-top: 22px;
+  border-top: 1px solid var(--mapa-linea);
+  padding-top: 16px;
+}
+
+.camino-caja .card-titulo {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.camino-vacio {
+  color: var(--mapa-tenue);
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.camino-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.camino-paso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--mapa-linea);
+  font-size: 14px;
+}
+
+.camino-paso:last-child {
+  border-bottom: 0;
+}
+
+.camino-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.camino-punto[data-tipo="reconocida"] {
+  background: var(--mapa-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mapa-ok) 20%, transparent);
+}
+
+.camino-punto[data-tipo="dominada"] {
+  background: var(--mapa-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mapa-ok) 20%, transparent);
+}
+
+.camino-fecha {
+  color: var(--mapa-tenue);
+  font-size: 12.5px;
+  min-width: 100px;
+  font-variant-numeric: tabular-nums;
+}
+
+.camino-texto {
+  color: var(--mapa-tenue);
+}
+
+.camino-texto strong {
+  color: var(--mapa-texto);
+  font-weight: 600;
+}
+
+.camino-num {
+  margin-left: auto;
+  color: var(--mapa-tenue);
+  font-size: 12px;
+  border: 1px solid var(--mapa-linea);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+@media (max-width: 560px) {
+  .camino-fecha {
+    min-width: 0;
+  }
+  .camino-paso {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+}
+
+/* ── reduced motion (Invariante 4, lista literal del donante) ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .escaneo-haz,
+  .escaneo-linea,
+  .mapa-nodo,
+  .mapa-trazo,
+  .mapa-camino,
+  .mapa-cat-texto,
+  .pulso,
+  .spinner {
+    animation: none !important;
+  }
+  /* Sin animación el trazo quedaría al 0 % de su largo (dashoffset=1): el mapa
+     se pintaría en blanco. Estas dos líneas son las que salvan el acto 1. */
+  .mapa-trazo,
+  .mapa-camino {
+    stroke-dashoffset: 0;
+  }
+  .escaneo-haz {
+    display: none;
+  }
+  /* El brillar del modo 'vivo' es del port, no del donante: se apaga igual. */
+  .mapa-brillar {
+    animation: none !important;
+  }
+}
