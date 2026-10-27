@@ -31,7 +31,10 @@ colors:
   locked-bg: "rgba(255,255,255,0.04)"
   grid: "rgba(92,140,255,0.05)"
   ink: "#eaf0fb"
-  muted: "#6b7590"
+  muted: "#76829d"
+  on-accent: "#021018"
+  ice: "#8bd4ff"
+  iris: "#8a88f0"
   user-hielo: "#7dd3fc"
   user-rosa: "#ff6b9d"
   user-oro: "#ffb02e"
@@ -345,12 +348,48 @@ Reglas duras:
 2. **Siempre el color del usuario.** `color={uc}` o `color={getUserColor()}`.
 3. **`breathing` sí, `spinning` según contexto.** En retrato (`CredencialModal`) `spinning={0}`.
 
+## El estándar asistente (aplica a TODA la app)
+
+Ómicrom no es un tablero: es un asistente que vive en un bolsillo. Estas siete reglas son la vara con la
+que se juzga cualquier pantalla; no se renegocian caso por caso.
+
+1. **Una barra por pantalla, de una sola fila.** Título + estado + el progreso como línea inferior. La
+   altura del primer viewport es la moneda: en un teléfono de 353px visibles, una barra de dos filas con
+   avisos adentro se come el 39% de la pantalla antes de mostrar nada.
+2. **Habla, no etiqueta.** "Preparando tu gemelo…" y no "INICIALIZANDO PROTOCOLO". Un código de nivel se
+   escribe como palabra ("Fundamento", no `FOUNDATION`). Si hay que explicar la sigla, la sigla sobra.
+3. **Los cuatro estados o la pantalla no existe:** vacío con acción, cargando visible, error con causa y
+   salida, y listo con confirmación. Un botón que no cambia de aspecto al tocar no es un botón.
+4. **Cero repetición.** `src/shared/components/OmicronChrome.tsx` es la ÚNICA biblioteca de andamio que
+   queda: barra, tarjeta, chip, métrica, progreso, anillo, carga y vacío salen de ahí. Dos archivos que
+   dibujan lo mismo (una credencial en canvas, un vidrio, un badge) se suben a esa biblioteca o a un token.
+   Copiar y pegar estilo está tan prohibido como copiar y pegar lógica.
+5. **Cinco familias de tono, no cincuenta.** El sistema tiene silver-ice, índigo, teal, ámbar y rosa-rojo,
+   cada una con su `Dim` (borde), `Faint` (relleno) y `Ghost` (soplo). Un `rgba(160,174,192,0.62)` suelto
+   es un error de redondeo: se va al token más cercano. **Está prohibido el cian saturado** (`#00f5ff`,
+   `rgba(0,245,255,…)`) incluso como alpha: fue el tono que hizo que 40 archivos se vieran de otra marca.
+6. **Se toca con el pulgar.** Blancos de 44×44, 8px entre ellos, foco visible en el color del usuario, y
+   nada de glifos unicode o emojis como iconos: se dibujan con CSS o con SVG.
+7. **Un solo gesto firma.** El orbe respira con el estado real de la persona, y ese mismo latido (mismo
+   `ANIM.breathe`, mismo color de acento) es el que heredan las barras de progreso, los puntos de estado y
+   el indicador de "guardando". Una animación que no comunica estado es decoración y se borra.
+
+**Excepción documentada y única:** `src/features/mapa/**` es un port 1:1 del donante. Su escala (17/14/12px,
+radio 10, sus `#1a1408`/`#2a313b`) y su coreografía de 4 actos son el contrato y se prueban contra un
+golden; no se normalizan con estas reglas.
+
 ## Do's and Don'ts
 
 **Do**
 
 - Leé `src/theme/` antes de escribir un valor visual. Si el token existe, usalo.
-- Usá `useUserColor()` / `getUserColor()` para cualquier cosa que represente a la persona.
+- **El acento se hereda, no se pide.** `App.tsx` escribe `var(--omi-accent)` una vez en la shell y toda la
+  app lo usa con `ACCENT` de `src/theme/tokens.ts`. Un componente de andamio que llama `getUserColor()` en
+  el render congela el color del usuario en el momento del import: se borra. Solo leen el hook (`useUserColor()`)
+  los roots que ponen la variable y los canvas que pintan píxeles (orbe, credencial).
+- **El alfa se calcula, no se pega.** `tint(color, 34)` en vez de `${color}34`: devuelve `color-mix()` y por
+  eso funciona con hex y con `var(--omi-accent)`. Concatenar hex es la razón por la que 20 tonos casi iguales
+  circulaban como "el silver del sistema".
 - Escribí estilos con los tokens `C` / `FONT` / `SIZE` / `RADIUS` en las pantallas premium (auth, credencial, reveal). Esas pantallas son **cero clases Tailwind** — objetos de estilo inline con tokens.
 - Emparejá siempre `backdropFilter` con `WebkitBackdropFilter`.
 - Mostrá la escala completa en cada número: `65/100`, `87/100`. Con su unidad y su contexto.

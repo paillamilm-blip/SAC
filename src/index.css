@@ -20,13 +20,17 @@
   --red:      #ff5c7a;
   --bg:       #000206;
   --ink:      #eaf0fb;
-  --mut:      #6b7590;
+  --mut:      #76829d;
   --line:     rgba(150,180,255,0.14);
   --surface:  rgba(12,16,30,0.86);
   --glass:    rgba(255,255,255,0.045);
 
-  --glow-cyan:   0 0 16px rgba(92,200,255,0.50);
-  --glow-purple: 0 0 18px rgba(94,92,230,0.55);
+  /* El acento del usuario. App.tsx lo escribe una vez en el root y TODO el
+     andamio lo hereda (foco, botones, progreso, estado). El default es silver
+     para que nada dependa de que el JS alcance a ponerlo. El mapa neuronal
+     queda fuera: se pinta siempre con su paleta fija. */
+  --omi-accent: var(--silver);
+  --glow-omi:    0 0 16px color-mix(in srgb, var(--omi-accent) 45%, transparent);
   --glow-teal:   0 0 16px rgba(63,208,201,0.45);
 
   /* Motion tokens */
@@ -120,9 +124,10 @@ button, [role="button"], a {
   }
 }
 
-/* Focus ring (keyboard only, WCAG AA) */
+/* Focus ring (keyboard only, WCAG AA) — en el acento del usuario, no en un
+   azul fijo: es la firma que recorre toda la app. */
 :focus-visible {
-  outline: 2px solid rgba(92, 200, 255, 0.5);
+  outline: 2px solid var(--omi-accent);
   outline-offset: 2px;
   border-radius: inherit;
 }
@@ -206,7 +211,7 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(115deg, transparent 30%, rgba(92,200,255,0.06) 45%, rgba(63,208,201,0.06) 55%, transparent 70%);
+  background: linear-gradient(115deg, transparent 30%, rgba(160,174,192,0.07) 45%, rgba(63,208,201,0.06) 55%, transparent 70%);
   background-size: 250% 250%;
   animation: holoShimmer 7s ease-in-out infinite;
 }
@@ -220,123 +225,6 @@ body::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   UTILITY CLASSES
-   ═══════════════════════════════════════════════════════════ */
-
-/* Neon text */
-.cyber-text-neon {
-  text-shadow: 0 0 8px rgba(92,200,255,0.6), 0 0 16px rgba(92,200,255,0.35);
-}
-
-/* Holo gradient text */
-.holo-text {
-  background: linear-gradient(90deg, var(--silver), var(--purple), var(--teal), var(--silver));
-  background-size: 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: holoText 6s linear infinite;
-}
-
-/* Glass panel */
-.holo-panel {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  box-shadow: 0 14px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(150,180,255,0.10);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-}
-
-/* Glass utility */
-.holo-glass {
-  background: rgba(8,16,38,0.40);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-/* Glow utilities */
-.glow-cyan    { box-shadow: var(--glow-cyan); }
-.glow-purple  { box-shadow: var(--glow-purple); }
-
-/* Neon button */
-.neon-btn {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--silver);
-  color: var(--silver);
-  background: rgba(92,200,255,0.05);
-  box-shadow: 0 0 12px rgba(92,200,255,0.25), inset 0 0 12px rgba(92,200,255,0.08);
-  transition: all 0.25s ease;
-}
-.neon-btn:hover {
-  background: rgba(92,200,255,0.15);
-  box-shadow: 0 0 22px rgba(92,200,255,0.55);
-}
-
-/* Neon border animation */
-.neon-border {
-  position: relative;
-  border-radius: 12px;
-}
-.neon-border::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(120deg, var(--silver), var(--purple), var(--teal), var(--silver));
-  background-size: 300% 300%;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: holoText 5s linear infinite;
-  pointer-events: none;
-}
-
-/* Card hover */
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-.card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(92,200,255,0.5);
-  box-shadow: 0 0 22px rgba(92,200,255,0.18);
-}
-
-/* Pulse dot */
-.pulse-dot {
-  animation: pulseDot 1.6s ease-in-out infinite;
-}
-
-/* Liquid dot (status) */
-.liquid-dot {
-  display: inline-block;
-  width: 7px; height: 7px; border-radius: 50%;
-  background: currentColor;
-  animation: liquidPulse 2.2s ease-in-out infinite;
-}
-
-/* Message enter animation */
-.msg-enter {
-  animation: msgEnter 0.28s ease-out;
-}
-
-/* Hologram float */
-.holo-float { animation: hologramFloat 6s ease-in-out infinite; }
-
-/* Tab active bar */
-.tab-active-bar {
-  background: linear-gradient(90deg, var(--purple), var(--silver), var(--teal));
-  background-size: 200% 100%;
-  box-shadow: 0 0 10px var(--silver);
-  border-radius: 2px;
-  animation: barFlow 3s linear infinite;
-}
-
-/* ═══════════════════════════════════════════════════════════
    KEYFRAMES (deduplicated)
    ═══════════════════════════════════════════════════════════ */
 @keyframes gridPan {
@@ -346,30 +234,6 @@ body::after {
 @keyframes holoShimmer {
   0%, 100% { background-position: 0% 0%; }
   50%      { background-position: 100% 100%; }
-}
-@keyframes holoText {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes barFlow {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-@keyframes hologramFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
-}
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
-}
-@keyframes pulseDot {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.4; transform: scale(0.7); }
-}
-@keyframes liquidPulse {
-  0%, 100% { box-shadow: 0 0 5px currentColor; opacity: 0.85; }
-  50%      { box-shadow: 0 0 14px currentColor; opacity: 1; }
 }
 @keyframes msgEnter {
   from { opacity: 0; transform: translateY(6px); }

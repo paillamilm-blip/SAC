@@ -11,11 +11,9 @@ import { C, FONT, BASE, RADIUS, GLOW, cx } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
-import { LoadingScreen } from '@/shared/components/CyberComponents';
-import { oc, OmicronHeader } from '@/shared/components/OmicronChrome';
+import { oc, OmicronHeader, OmicronLoading, OmicronEmpty } from '@/shared/components/OmicronChrome';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { EmptyState } from '@/shared/components/EmptyState';
 import { useToast } from '@/shared/components/Toast';
 
 interface Course {
@@ -352,7 +350,7 @@ export function AcademiaTab() {
     setView('list'); setCourse(null); setLessons([]); setQuestions([]); setResult(null); setAnswers({}); setExpanded(null);
   }
 
-  if (loading) return <LoadingScreen message="CARGANDO ACADEMIA..." />;
+  if (loading) return <OmicronLoading message="Cargando tus cursos…" />;
 
   if (view === 'list') {
     const totalDone = [...counts.values()].reduce((s, c) => s + c.done, 0);
@@ -406,7 +404,7 @@ export function AcademiaTab() {
           </button>
 
           {courses.length === 0 ? (
-            <EmptyState
+            <OmicronEmpty
               icon={<BookOpen size={30} />}
               title="Aún no hay cursos"
               hint="Pronto los docentes publicarán cursos aquí. Mientras tanto, gana Fundamento validando nodos en el Árbol de Habilidades."

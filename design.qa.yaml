@@ -1,0 +1,38 @@
+project:
+  name: sistema-omicrom
+  baseUrl: http://localhost:5173
+  outputDir: .design-qa
+  appCommand: npm run dev
+  appReadyUrl: http://localhost:5173
+
+design:
+  designMd: DESIGN.md
+
+# Sin SCREEN_SPEC.md todavía: las pantallas se auditan por código, no por baseline visual.
+screens: []
+
+# Dónde vive el valor crudo cuenta más que el valor en sí. Estas rutas son la
+# fuente de tokens o un port 1:1 documentado: ahí un hex/rgba NO es deuda.
+code:
+  include:
+    - src/**/*.{ts,tsx,css}
+  exclude:
+    - node_modules/**
+    - dist/**
+    - .design-qa/**
+    - '**/*.test.ts'
+    - '**/*.test.tsx'
+    - '**/__fixtures__/**'
+    - src/theme/** # C / SIZE / RADIUS / SHADOW / BASE: la definición de tokens
+    - src/index.css # las variables CSS globales (--ink, --silver, --line...)
+    - src/shared/components/ColorPicker.tsx # las 4 opciones de color del usuario
+    - src/features/mapa/** # port 1:1 del donante: su escala propia es el contrato
+
+debt:
+  maxHardCodedColors: 0
+  maxArbitraryTailwindValues: 0
+  maxInlineStyles: 40 # el sistema de Ómicrom ESCRIBE con objetos de estilo inline
+  allowedColorValues:
+    - '#000'
+    - '#fff'
+    - transparent

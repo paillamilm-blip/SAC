@@ -1,5 +1,6 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
@@ -131,7 +132,15 @@ function AppShell() {
   const isGuest = authStatus === 'unauthenticated' || forceGuest;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
+    <div
+      style={{
+        display: 'flex', flexDirection: 'column', height: '100%',
+        overflow: 'hidden', position: 'relative',
+        // El color del usuario se inyecta UNA vez acá y todo el andamio lo
+        // hereda por var(--omi-accent). Los componentes dejan de leer localStorage.
+        ['--omi-accent' as string]: uc,
+      } as CSSProperties}
+    >
       <SelfManagedPulseBar />
       <OrbShell />
       {isGuest && showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}

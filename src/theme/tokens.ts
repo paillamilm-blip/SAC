@@ -32,10 +32,22 @@ export const C = {
   lockedBg:     'rgba(255,255,255,0.04)',
   grid:         'rgba(92,140,255,0.05)',
   ink:          '#eaf0fb',
-  mut:          '#6b7590',
+  // Nota tenue para labels y body secundario. Subió de #6b7590 a #76829d: la
+  // versión anterior quedaba en ~4.0:1 sobre el vidrio de la app y el estándar
+  // asistente pide AA (4.5:1) en TODO el texto, no solo en el héroe.
+  mut:          '#76829d',
   glass:        'rgba(255,255,255,0.045)',
   glass2:       'rgba(255,255,255,0.08)',
   line:         'rgba(150,180,255,0.14)',
+  // Tinta sobre un fondo VIVO (botón plateado, orbe, badge de color). El blanco
+  // puro sobre silver no existe en este sistema: se lee lechoso. #021018 estaba
+  // suelto en 3 archivos con el mismo rol; acá queda su nombre.
+  onAccent:     '#021018',
+  // Los dos tonos claros que la credencial compartible y el radar usan para
+  // datos. Viven en la misma familia que silver-ice/índigo, no en la paleta
+  // genérica de Tailwind. Se promueven a token porque se repetían en 3 archivos.
+  ice:          '#8bd4ff',
+  iris:         '#8a88f0',
 } as const;
 
 export function statusColor(status: string, options?: { master?: boolean; depth?: number }): string {
@@ -70,4 +82,17 @@ export const MAPA_CAT = {
 
 export function categoryColor(cat: string): string {
   return CATEGORY_COLOR[cat?.toUpperCase()] ?? CATEGORY_COLOR.DEFAULT;
+}
+
+// ─── El acento heredado ─────────────────────────────────────────────────────
+// El color del usuario se pone UNA vez en el root de la app (App.tsx) y todo el
+// andamio lo hereda por CSS. Nadie vuelve a leer localStorage en el render ni a
+// concatenar alfa sobre un hex (`${uc}33`), que era como cada componente
+// reinventaba el mismo degradado. Vale `var()`, así que también funciona dentro
+// de color-mix y de un gradiente.
+export const ACCENT = 'var(--omi-accent)';
+
+/** Alfa de un color vivo. Acepta hex ('#a0aec0') y referencia ('var(--omi-accent)'). */
+export function tint(color: string, pct: number): string {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }

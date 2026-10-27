@@ -22,6 +22,7 @@ export const ANIM = {
   trail: 'cp-trail 1.5s linear infinite',
   breathe: 'cp-breathe 2s ease-in-out infinite',
   toastIn: 'cp-toast-in 0.2s ease both',
+  float: 'floatY 6s ease-in-out infinite',
 } as const;
 
 /** Curvas de easing — nunca usar 'ease' ni 'ease-in' para UI */
