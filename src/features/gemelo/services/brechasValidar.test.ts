@@ -176,6 +176,17 @@ describe('ejesUsables: ni un eje presente-pero-no-numerico ni un cero falso pasa
     expect(ejesUsables({ axes: { exec: '0', qual: '100', trans: '50', fund: '0' } })).toBe(true);
   });
 
+  it('la politica de "se lee como numero": espaciado, notacion y hex pasan; el no-entero tambien', () => {
+    // Fila de politica sobre conducta YA existente (no es codigo nuevo detrás de un
+    // RED): fija lo que el guard acepta hoy para que nadie lo endurezca sin saber
+    // que estaba decidido. El menor 1 de la re-review de 10-C es lo que se pincha aca.
+    expect(ejesUsables(conEjes('  5  '))).toBe(true);
+    expect(ejesUsables(conEjes('1e2'))).toBe(true);
+    expect(ejesUsables(conEjes('0x10'))).toBe(true);
+    expect(ejesUsables(conEjes(-0))).toBe(true);
+    expect(ejesUsables(conEjes(80.5))).toBe(true);
+  });
+
   it('axes siendo un array no es analisis (los ejes son claves, no posiciones)', () => {
     expect(ejesUsables({ axes: [80, 70, 60, 50] })).toBe(false);
   });

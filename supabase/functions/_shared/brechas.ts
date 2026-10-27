@@ -74,8 +74,8 @@ export function normalizarBrechas(x: unknown): BrechaValidada[] {
 // El numero tiene que llegar como numero, o como string que se lee como numero.
 // Number(null), Number(''), Number('   '), Number(false) y Number([]) devuelven 0:
 // un analisis con los 4 ejes en 0 pasa cualquier guard de "estan los 4" y se guarda
-// como si fuera un perfil real. El prompt exige enteros 0-100; lo que no se pueda
-// leer como numero no es un eje.
+// como si fuera un perfil real. El prompt pide enteros 0-100; el guard, en cambio,
+// acepta lo que se lee como numero (80.5 pasa y el consumidor redondea).
 const numEje = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   if (typeof v === 'string' && v.trim() !== '') {

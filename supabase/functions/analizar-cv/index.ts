@@ -11,7 +11,7 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '10c-ejes-estrictos';
+const BUILD = '10d-invitado-llega';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
@@ -122,8 +122,8 @@ function normalizarBrechas(x: unknown): BrechaValidada[] {
 // El numero tiene que llegar como numero, o como string que se lee como numero.
 // Number(null), Number(''), Number('   '), Number(false) y Number([]) devuelven 0:
 // un analisis con los 4 ejes en 0 pasa cualquier guard de "estan los 4" y se guarda
-// como si fuera un perfil real. El prompt exige enteros 0-100; lo que no se pueda
-// leer como numero no es un eje.
+// como si fuera un perfil real. El prompt pide enteros 0-100; el guard, en cambio,
+// acepta lo que se lee como numero (80.5 pasa y el consumidor redondea).
 const numEje = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   if (typeof v === 'string' && v.trim() !== '') {
@@ -466,6 +466,9 @@ Deno.serve(async (req) => {
     // salio. Si el que gano fue el propio timer, clearTimeout es un no-op inocuo.
     clearTimeout(cronometro);
     if (crudo === CORTE_PRESUPUESTO) {
+      // Ya se cobro el cupo del dia (topeDelDia corre antes de la carrera), asi que
+      // un corte por saturacion sin log es un gasto invisible en las metricas.
+      console.error(`[analizar-cv] presupuesto de IA agotado (${PRESUPUESTO_IA_MS} ms): el cupo del dia ya estaba consumido`);
       return json({ ok: false, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' }, 504);
     }
     if (!crudo) return json({ ok: false, error: 'La IA no genero respuesta.' }, 502);

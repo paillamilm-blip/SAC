@@ -153,5 +153,6 @@ grant execute on function public.check_rate_limit(text, text, integer, integer) 
 -- tercero cae mas de una hora despues del primero. Los dos primeros dan 200 y el
 -- tercero tiene que dar 429 — si da 200, la poda sigue borrando la fila de hoy y
 -- el tope es decorativo. Verifique ademas la huella del deploy en la respuesta
--- (`x-omicron-build`, hoy `10a-motor-guards`): un 429 de la funcion VIEJA tambien
+-- (`x-omicron-build`: el valor del `const BUILD` del archivo que se desplego). Un
+-- 429 de la funcion VIEJA tambien
 -- llega, y no prueba nada de este archivo.

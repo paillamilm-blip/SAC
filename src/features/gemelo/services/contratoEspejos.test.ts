@@ -121,8 +121,13 @@ describe('el gate de ejes (copia INLINE) y el presupuesto de IA viven en el entr
     expect(entryRaw).toContain('503');
   });
 
-  it('la huella nueva esta puesta (el curl de deploy verifica contra esto)', () => {
-    expect(entryRaw).toContain("const BUILD = '10c-ejes-estrictos'");
+  it('el entry declara una sola huella legible (el curl de deploy la verifica contra el archivo)', () => {
+    // El literal de la huella NO se fija aca: fijarlo obligaba a tocar este archivo
+    // en cada ronda de fix y una ronda (10-D) no pudo bumpear la huella por eso. La
+    // forma si se garantiza: un unico BUILD y un slug no vacio.
+    const huellas = entryRaw.match(/^const BUILD = '[^']+'/gm) ?? [];
+    expect(huellas).toHaveLength(1);
+    expect(huellas[0]).toMatch(/^const BUILD = '[0-9a-z]+(-[0-9a-z]+)+'$/);
   });
 });
 

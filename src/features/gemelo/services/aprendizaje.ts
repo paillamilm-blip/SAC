@@ -49,8 +49,6 @@ export interface AnalysisCrudoIA {
   summary?: string;
 }
 
-export type FuenteAnalisis = 'motor' | 'gemini' | 'bloqueado';
-
 // El status importa: 401/429/503 son decisiones del servidor sobre ESTE usuario
 // (sesion, cupo del dia, origen no identificable), no una falla del motor. Sin el
 // numero, el llamador no puede distinguir "el motor esta caido" (cae a Gemini) de
