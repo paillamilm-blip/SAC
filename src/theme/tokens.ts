@@ -55,6 +55,19 @@ export const CATEGORY_COLOR: Record<string, string> = {
   ADVANCED: C.purple, GOVERNANCE: C.red, ECONOMY: C.green, DEFAULT: C.cyan,
 };
 
+// Mapa neuronal (port del donante bb1434fb/components/MapaCapacidades.tsx).
+// Fijos SIEMPRE: el mapa nunca pinta con el color del usuario. Regla D5 del
+// dueño: el ámbar histórico del donante desaparece — 'blanda' toma el
+// verde-lima que ya es opción del ColorPicker; 'conocimiento' reutiliza
+// C.green. La geometría y los tiempos del mapa viven en
+// features/mapa/mapaLayout.ts y se prueban en features/mapa/contratoMapa.test.ts.
+export const MAPA_CAT = {
+  dura: '#6aa9ff',
+  blanda: '#84cc16',
+  conocimiento: C.green,
+  credencial: '#c084fc',
+} as const;
+
 export function categoryColor(cat: string): string {
   return CATEGORY_COLOR[cat?.toUpperCase()] ?? CATEGORY_COLOR.DEFAULT;
 }

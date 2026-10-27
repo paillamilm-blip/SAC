@@ -11,7 +11,9 @@
    CSS VARIABLES — Single source of truth (mirrors theme/tokens.ts)
    ═══════════════════════════════════════════════════════════ */
 :root {
-  --cyan:     #5cc8ff;
+  /* --silver es C.cyan de theme/tokens.ts (silver ice). El cian de marca que
+     vivía aquí fue proscrito por el spec; contratoMapa.test.ts lo vigila. */
+  --silver:   #a0aec0;
   --purple:   #5e5ce6;
   --teal:     #3fd0c9;
   --gold:     #ffb02e;
@@ -182,7 +184,7 @@ body::after {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(var(--cyan), var(--purple));
+  background: linear-gradient(var(--silver), var(--purple));
   border-radius: 3px;
 }
 
@@ -213,7 +215,7 @@ body::after {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cyan), var(--teal), transparent);
+  background: linear-gradient(90deg, transparent, var(--silver), var(--teal), transparent);
   opacity: 0.7;
 }
 
@@ -228,7 +230,7 @@ body::after {
 
 /* Holo gradient text */
 .holo-text {
-  background: linear-gradient(90deg, var(--cyan), var(--purple), var(--teal), var(--cyan));
+  background: linear-gradient(90deg, var(--silver), var(--purple), var(--teal), var(--silver));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -263,8 +265,8 @@ body::after {
 .neon-btn {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--cyan);
-  color: var(--cyan);
+  border: 1px solid var(--silver);
+  color: var(--silver);
   background: rgba(92,200,255,0.05);
   box-shadow: 0 0 12px rgba(92,200,255,0.25), inset 0 0 12px rgba(92,200,255,0.08);
   transition: all 0.25s ease;
@@ -285,7 +287,7 @@ body::after {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(120deg, var(--cyan), var(--purple), var(--teal), var(--cyan));
+  background: linear-gradient(120deg, var(--silver), var(--purple), var(--teal), var(--silver));
   background-size: 300% 300%;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -327,9 +329,9 @@ body::after {
 
 /* Tab active bar */
 .tab-active-bar {
-  background: linear-gradient(90deg, var(--purple), var(--cyan), var(--teal));
+  background: linear-gradient(90deg, var(--purple), var(--silver), var(--teal));
   background-size: 200% 100%;
-  box-shadow: 0 0 10px var(--cyan);
+  box-shadow: 0 0 10px var(--silver);
   border-radius: 2px;
   animation: barFlow 3s linear infinite;
 }
@@ -384,7 +386,7 @@ body::after {
   to { transform: rotate(360deg); }
 }
 @keyframes cp-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--silver); }
   50%      { opacity: 0.3; box-shadow: none; }
 }
 @keyframes cp-breathe {

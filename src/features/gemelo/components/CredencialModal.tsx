@@ -463,8 +463,9 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             en la misma banda que el sheen (zIndex:0) para que el contenido del
             encabezado (zIndex:1) quede por encima. Recortado por el
             overflow:'hidden' de la tarjeta. Construido SOLO con uc + blanco-alfa
-            a muy baja opacidad (nunca C.cyan ni #5cc8ff). No desplaza ni empuja
-            contenido: está posicionado en absoluto sobre la franja superior. */}
+            a muy baja opacidad (nunca C.cyan ni el cian saturado de marca — el
+            spec lo proscribe y contratoMapa.test.ts lo vigila). No desplaza ni
+            empuja contenido: está posicionado en absoluto sobre la franja superior. */}
         <div
           aria-hidden
           style={{
