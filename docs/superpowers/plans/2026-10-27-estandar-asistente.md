@@ -97,13 +97,68 @@ Hitos del cierre:
   (el que sí pinta la barra). Los eventos de voz **siguen emitiéndose** —el contrato de la capa de voz
   no se toca—, solo deja de fingir que la UI los consume. **Lint: 1 warning → 0.**
 
-### Qué son los 127 que quedan
+### Qué eran los 127 que quedaban
 
-No son basura dispersa: son **el plano de trabajo de L2**. Se repiten exactamente en los tres canvas de
-credencial (`CredencialModal` 29, `RedSocial` 20, `PasaporteGemelo` 18, `ProgressRadar` ~10), y los
-tres valores más repetidos del sistema están ahí: `#eaf4ff` (7×, tres archivos —un "ink" paralelo que
-nadie nombró), `rgba(255,255,255,0.06)` (6×) y `rgba(160,174,192,0.75)` (3×), además del `9.5px`
-tipográfico y los `7px`/`28px` mágicos. **Cerrar L2 borra el bloque principal de la deuda restante.**
+No eran basura dispersa: eran **el plano de trabajo de L2**, ejecutado en el mismo loop. Se repetían
+exactamente en los tres canvas de credencial (`CredencialModal` 29, `RedSocial` 20, `PasaporteGemelo` 18,
+`ProgressRadar` ~10) y los tres valores más repetidos del sistema estaban ahí: `#eaf4ff` (7×, tres
+archivos —un "ink" paralelo que nadie nombró), `rgba(255,255,255,0.06)` (6×) y `rgba(160,174,192,0.75)`
+(3×), además del `9.5px` tipográfico y los `7px`/`28px` mágicos.
+
+---
+
+## 2b · L2 · Un solo dibujante de credenciales (cerrado)
+
+**Lo que había:** dos módulos dibujaban la misma tarjeta. `drawCredential` en `CredencialModal.tsx` y
+`drawPassport` en `PasaporteGemelo.tsx`. La segunda copia no estaba a la vista: **ningún archivo del repo
+importaba `PasaporteGemelo`** —era un componente huérfano con su propio modal, su propio botón de descarga
+y 18 valores crudos. La "Técnica rescatada de PasaporteGemelo" que decía el comentario de la primera era
+literal: la tarjeta madre era la que nadie mostraba.
+
+**Lo que se hizo:**
+
+- Se fue `PasaporteGemelo.tsx` (127 líneas, inalcanzable) y el lienzo quedó en
+  `src/features/gemelo/services/credencialCanvas.ts`, que expone `credentialPng(data)` y devuelve el data
+  URL. El componente eligió datos y disparó el clic; nada más.
+- Nace **`src/theme/canvasInk.ts` — la hoja del tema para el medio que no lee CSS**. Canvas y SVG no
+  entienden `var()` ni `color-mix()`, pero eso no habilita una segunda paleta: habilita una segunda hoja.
+  `inkAt(hex, alfa)` es el equivalente de `tint()` para píxeles; `CARD_INK` da la tinta **por rol**
+  (`title / label / value / track / meta / stat / frame / footer`) y `CARD_NAVY` el fondo de la tarjeta
+  imprimida, que es el único color propio del medio y está nombrado.
+- **Drift de alfa unificado** (lo que dos dibujantes producen sin que nadie lo vea): filete 0.35 vs 0.45
+  → 0.4; etiquetas 0.8 vs 0.85 → 0.85; valores 0.4 vs 0.5 → 0.5; pie 0.55 vs 0.6 → 0.6.
+- **`#eaf4ff` → `C.ink`.** Era el mismo blanco de la tinta con otro nombre en tres archivos (delta de 4
+  puntos en un PNG descargable: invisible; dos blancos para un rol: eso es lo que se copia).
+- **ProgressRadar sale de la paleta genérica de Tailwind.** `#fbbf24 / #10b981 / #3b82f6 / #64748b /
+  #94a3b8` eran C.gold, C.green, C.purple, C.cyan y C.mut con nombre de otra librería. Dos de ellos
+  (`#fbbf24` y `#ffb02e`) eran el mismo ámbar casi igual: ahora son un token y los dos tiers comparten
+  borde, distinguidos por su etiqueta escrita.
+- **Se promueven dos tonos que ya circulaban sin nombre:** `C.tealDeep` (#008b9e, extremo oscuro del
+  degradado silver→teal de los botones grandes, en dos archivos) y `C.flame` (#ff6432, el naranja de la
+  racha, que `StreakBanner` escribía tres veces: un hex y dos rgba).
+- **`ELEVATED.cta(color)`** en `theme/shadows.ts`: la sombra de un elemento cuyo color *es* la marca.
+  `SHADOW` es negro y no sirve ahí; la forma estaba escrita a mano en cuatro archivos con dos geometrías
+  casi iguales (`0 8px 28px` y `0 10px 28px`) → una, con blur en la escala (24).
+- RedSocial: velo de modal `rgba(2,6,19,0.78)` → `C.wash`, tinta `#eaf4ff` → `C.ink`, tipografía
+  `12.5`/`9.5` → `SIZE.sm`/`SIZE.xxs`. UniversalSimulator: iris y hielo tokenizados y el negro inventado
+  del input (`#040a18`) es `C.bg`. Cuatro padding fuera de rejilla (28) → 24.
+
+**Guards:** `contratoAsistente.test.ts` pasa de 4 a 5 afirmaciones. Exige que **exactamente un archivo**
+del sistema tenga `getContext('2d')` y que el navy del PNG no aparezca fuera de `theme/`. La allowlist
+`DEUDA_VIDRIO` quedó **vacía a propósito**: si alguien reabre el permiso de vidrio crudo, la prueba 3
+vuelve a fallar en el acto.
+
+**Trayectoria del loop completo:** 323 → 191 → 138 → 127 (L1) → **46 valores** fuera de sistema, con 33
+distintos repartidos en 18 archivos. Cian prohibido fuera de `mapa/`: 0.
+
+**Verificación en el navegador (no inferida):** se importó el dibujante en vivo y se descargó la tarjeta
+de prueba — PNG de 600×860, 516.000 píxeles pintados (opacidad total), fondo `rgb(4,17,40)` = `CARD_NAVY.top`,
+barra de eje en `rgb(160,174,192)` = el acento del usuario, 9.000 píxeles de texto en la banda del título,
+546 KB de data URL. Además: `ELEVATED.cta()` resuelve a `rgba(160,174,192,0.3) 0px 8px 24px`, el degradado
+con `C.tealDeep` aplica, `tint(C.flame, 8)` y `inkAt(C.cyan, 0.22)` aplican en SVG (`stroke` efectivo
+`rgba(160, 174, 192, 0.22)`), 8 botones y **0 por debajo de 40 px**, consola sin errores. Build de
+producción limpia (32,65 s).
+
 
 ### Verificación
 
@@ -132,16 +187,18 @@ tipográfico y los `7px`/`28px` mágicos. **Cerrar L2 borra el bloque principal 
 
 ## 4 · Siguiente loop
 
-**L2 · Un solo dibujante de credenciales.** `CredencialModal.tsx`, `PasaporteGemelo.tsx`,
-`RedSocial.tsx` y `ProgressRadar.tsx` dibujaban la misma credencial con geometría propia. Objetivo: un
-fondo compartido de tokens con **cero cambio visual percibido** (en canvas los colores quedan hex
-concretos del token; `color-mix` no existe en canvas 2D). Criterio de salida: los 127 → menos de 60 y
-`DEUDA_VIDRIO` vacío o en una entrada.
+**L3 · Voz amigable y los cuatro estados en cada superficie.** Criterio de salida: 0 glifos unicode o
+emoji haciendo de icono, 0 avisos repetidos en la misma pantalla, 44 px reales en toda la app, y las
+cuatro estados (vacío / cargando / error / éxito) nombrados en el idioma del asistente y no en jerga.
+Los lugares ya detectados: navegación de `OrbShell` con `icon: '◈'` y `emoji: '◈'`, `AcademiaTab` con
+`🧭`/`👋`/`🎤 ➤`, `dailyChallenge` con `🔗` y compañía, `RedSocial.tsx:305` "CARGANDO CREDENCIAL...",
+`ErrorBoundary` con `✕` y `getReputationBadge` devolviendo `emoji` (👑⭐📈🔄🌱) que `ProgressRadar` todavía
+arrastra.
 
-Después: L3 (voz amigable y los cuatro estados en cada superficie, sin avisos repetidos y sin glifos
-unicode como iconos: `◈` en la navegación de `OrbShell`, `🧭`/`👋`/`🎤 ➤` en `AcademiaTab`,
-"CARGANDO CREDENCIAL..." en `RedSocial`, `✕` en `ErrorBoundary`) y L4 (gesto firma único, dedupe de
-`spin`/`cp-spin` y de las copias de keyframes entre `index.css` y `theme/`).
+Después: L4 (gesto firma único, dedupe de `spin`/`cp-spin` y de las copias de keyframes entre `index.css`
+y `theme/`) y el cierre de la cola de `px` mágicos que dejó L2 (46 valores, de los cuales la mayoría son
+geometría: `7px` 7×, `900px` 3×, tamaños de lienzo).
+
 
 El **handoff de producción** sigue siendo del usuario (migraciones 10011→10012→10013, borrar las 6 Edge
 Functions muertas, secrets, desplegar `analizar-cv`, curl de invitado, RLS cruzada, QA Q1-Q10). Nada de
