@@ -859,3 +859,133 @@ git commit -m "analizar-cv: tope diario por usuario (espíritu usoDeHoy de la ap
 - [ ] **Step 2:** Para cada run, el usuario marca cada brecha como Es real / No es real (UI mínima de lista: este plan persiste estados con RPCs ya existentes; la pantalla de revisión vive hoy en la app CV y se porta entera en el Plan B — hasta entonces, la tabla se puede marcar a mano con `select` + `marcar_brecha` desde SQL Editor con la sesión del usuario).
 - [ ] **Step 3:** Métrica: `select count(*) filter (where state='confirmada')::float / nullif(count(*) filter (where state in ('confirmada','rechazada')),0) from brechas_aprendizaje;` **≥ 0.6** → Fase 1 cerrada. Si < 0.6: iterar el prompt SYS (Task 6 Step 1) con los casos rechazados como ejemplos — no cambiar la arquitectura.
 - [ ] **Step 4:** Commit de cierre: `git commit --allow-empty -m "Fase 1 cerrada: 10 CVs reales con precision >= 6/10 (spec §10)"` con el número real en el mensaje.
+
+---
+
+## Pase de QA del dueño (después del handoff de producción)
+
+Escrito para que lo corras vos, en orden, sin leer código. Cada paso dice qué hacer, qué tenés que ver y **qué
+significa ver otra cosa**. Ningún paso exige esperar una hora.
+
+### Q1 · Que lo que corre sea el código del repo
+
+Subí un CV desde la app, devtools → Network → el request a `analizar-cv` → *Response Headers*.
+**Esperado:** `x-omicron-build: 10d-invitado-llega` (se ve en el navegador: está en `Access-Control-Expose-Headers`).
+**Si no aparece:** el deploy no corrió o corrió con un archivo viejo. No sigas con el resto del pase: estaría
+midiendo otra cosa.
+
+### Q2 · El invitado llega al motor
+
+En **modo invitado** (sin iniciar sesión), subí un CV real de más de 2000 caracteres.
+**Esperado:** HTTP 200, cuerpo con `analysis.axes` (los 4 ejes), `analysis.brechas` como array (puede ser `[]`) y
+`guardado: null` — el invitado no persiste, va al puente de `localStorage`.
+**Si ves `401 {"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`:** el cliente volvió a mandar el request sin `Authorization`
+(es el borde de Supabase, no la función: regresión de T10-D).
+**Si ves `503` con "No pudimos identificar tu conexión…":** la función ya corre, pero el borde no está entregando
+`cf-connecting-ip` y el tope de invitados falla **cerrado** a propósito. Eso no es un bug del QA: se reporta con
+la huella y el texto exacto, y decide si el bucket de invitados cambia de llave.
+
+### Q3 · Un análisis real deja filas reales
+
+Iniciá sesión y subí el mismo CV. **Esperado:** el cuerpo trae `guardado.analisis_id` con un uuid. En SQL Editor:
+
+```sql
+select id, nombre_archivo, created_at from public.analisis_cv order by created_at desc limit 5;
+select titulo, titulo_normalizado, categoria, severidad, state from public.brechas_aprendizaje
+ order by created_at desc limit 20;
+```
+
+**Si `guardado` es `null` habiendo sesión:** el guardado falló (`guardado_error: true`) y las brechas no llegaron a
+la BD. Con las dos consultas vacías, el gate de la Fase 1 todavía no puede medirse.
+
+### Q4 · La skill tiene identidad (spec §4)
+
+Con la sesión abierta, subí **el mismo CV otra vez**. **Esperado:** no aparecen duplicados y una brecha que ya
+habías marcado conserva su estado.
+
+```sql
+select titulo_normalizado, count(*) from public.brechas_aprendizaje group by 1 having count(*) > 1;  -- 0 filas
+```
+
+**Si sale alguna fila:** el upsert por `titulo_normalizado` no está aplicando (10012 no se pegó, o se pegó a medias).
+
+### Q5 · La máquina de estados no permite saltos imposibles
+
+Hoy **no hay pantalla** para marcar una brecha (eso es Plan B), así que se marca por REST con tu token — copialo
+de devtools → Network → cualquier request de la app logueada, el header `Authorization`:
+
+```bash
+curl -s -X POST "https://cuwuyqpxaibbqjrvamjb.supabase.co/rest/v1/rpc/marcar_brecha" \
+  -H "apikey: $ANON" -H "Authorization: Bearer <TU JWT>" -H "Content-Type: application/json" \
+  -d '{"p_brecha":"<uuid de Q3>","p_state":"confirmada"}'
+```
+
+**Esperado:** `detectada → confirmada` ok · `confirmada → dominada` ok · `rechazada → confirmada` ok (reactivar
+refresca `confirmed_at`) · `detectada → dominada` **rechazado** · `confirmada → detectada` **rechazado** ·
+`dominada → anything` **rechazado**. Los rechazos contestan texto en español, no un código.
+**No lo pruebes en el SQL Editor:** ahí `auth.uid()` es `null` y la función no te deja tocar la brecha de otro;
+la prueba real es con sesión, como arriba.
+
+### Q6 · El tope diario existe y se ve
+
+Bajá temporariamente el secret `ANALISIS_TOPE_DIARIO` a `2` (Dashboard → Edge Functions → Configuration/Secrets →
+guardar). Con sesión, pedí tres análisis seguidos.
+**Esperado:** 200, 200 y el tercero **429** con `Llegaste a los 2 análisis de hoy…` y header `Retry-After`.
+Tres lecturas inmediatas, en SQL Editor:
+
+```sql
+select bucket, identifier, window_sec, count, window_start
+  from public.rate_limits order by window_start desc limit 8;
+-- debe verse el bucket `analisis-dia` con window_sec = 86400 y el count acumulando entre requests
+-- separados segundos (antes de 10013 la poda se comía la fila del día)
+
+select prosrc from pg_proc where proname = 'check_rate_limit';
+-- debe contener: make_interval(secs => window_sec * 2)
+-- NO debe contener: interval '1 hour'
+```
+
+Si algún tope estuviera apagado, la función lo grita en **Dashboard → Edge Functions → analizar-cv → Logs** con la
+línea `tope dia apagado`. Sin esa línea, el limitador está corriendo. **Devolvé `ANALISIS_TOPE_DIARIO` a 10.**
+
+### Q7 · El motor se rinde a tiempo y lo dice
+
+Con los modelos gratuitos saturados, el request corta en ~60 s con 504 y el texto
+`El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.`
+**Esperado en la app:** ese texto en la UI y **sin** caerse al respaldo Gemini (un 504 del motor es el motor
+hablando), y la pantalla de subida vuelve a estar útil. El timer propio del cliente es 150 s: si ves el spinner
+pasando los 150 s, eso es un defecto, no lentitud.
+
+### Q8 · Un bloqueo habla en español
+
+Con un token vencido (dejá la app abierta hasta que expire): **esperado**
+`Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.` en la UI. **Nunca** tiene que aparecer la palabra
+`HTTP` ni un número de status en la cara del usuario; si aparece, es la regresión que cierra T10-D.
+
+### Q9 · El puente del invitado no se pierde al iniciar sesión
+
+Modo invitado → subí un CV → devtools → Application → Local Storage → clave `omicron.brechas.puente` trae las
+brechas. Iniciá sesión. **Esperado:** la app se remonta, el análisis se ve, y el puente no se vació en el intento.
+La **promoción** del puente (que esas brechas pasen a la BD del usuario) es deuda declarada de Plan B: acá se
+verifica que no se pierdan, no que se copien.
+
+### Q10 · El gate de la Fase 1
+
+Diez CVs reales con tu sesión (Task 9) y una sola pasada humana. En SQL Editor:
+
+```sql
+select a.nombre_archivo, a.created_at, b.titulo, b.categoria, b.severidad
+  from public.analisis_cv a
+  join public.brechas_aprendizaje b on b.analisis_id = a.id
+ order by a.created_at;
+```
+
+Por cada análisis decidís si esa lista de brechas la conservarías como diagnosis tuya. **Gate: ≥ 6 de 10
+conservadas.** El número se anota en el ledger de la tarea, no en la BD. Si sale < 6 se itera el prompt `SYS` con
+las listas rechazadas como ejemplos — no se toca la arquitectura.
+
+### Lo que este pase **no** prueba (para que no lo busques)
+
+El mapa neuronal dibujando esas brechas, el orbe y la **ley de salida** (un paso hecho en el dispositivo A se ve
+en B en <3 s) son **Plan B**: `mezclarAnalisis` todavía no consume `ia.brechas` y la pantalla del mapa no está
+portada. Plan A compra el motor, los datos y las reglas; Plan B compra la vista.
+
