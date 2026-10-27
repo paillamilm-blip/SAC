@@ -35,6 +35,11 @@ const NAV: { keys: string[]; tab: TabId; label: string }[] = [
   { keys: ['inicio', 'gemelo', 'perfil', 'principal', 'home', 'ranking', 'posici', 'posición', 'reputaci', 'fama'], tab: 'perfil', label: 'Inicio' },
   { keys: ['habilidad', 'skill', 'competenc', 'maxskill', 'destreza', 'examen', 'valida', 'nodo'], tab: 'maxskill', label: 'Habilidades' },
   { keys: ['empleo', 'trabajo', 'oferta', 'vacante', 'mercado', 'demanda', 'viva'], tab: 'perfil', label: 'La Red Viva' },
+  // Va antes de Academia: 'aprend' (academia) es prefijo de 'aprendizaje' y se
+  // lo quedaba. Sus claves son palabras compuestas, ninguna colisiona con
+  // 'curso'/'lección'. El coach revisa 'mi brecha' antes que esta fila, así que
+  // la diagnosis hablada sigue respondiéndola Ómicrom y no abre una pantalla.
+  { keys: ['aprendizaje', 'cola de revisi', 'mapa de capacidades', 'brechas'], tab: 'aprendizaje', label: 'Aprendizaje' },
   { keys: ['academia', 'aprend', 'curso', 'estudi', 'arbol', 'árbol', 'lecci', 'conocimiento', 'boveda', 'bóveda'], tab: 'academia', label: 'Academia' },
 ];
 

@@ -41,6 +41,30 @@ describe('interpret — navegación', () => {
   it('es case-insensitive', () => {
     expect(interpret('ACADEMIA')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
   });
+
+  // El mapa de capacidades quedó montado como pestaña del hub, pero el Oráculo
+  // no sabía nombrarla: 'aprend' es palabra de Academia y la secuestraba.
+  it('"abrir aprendizaje" abre el mapa de capacidades, no la Academia', () => {
+    expect(interpret('abrir aprendizaje')).toEqual({ kind: 'navigate', tab: 'aprendizaje', label: 'Aprendizaje' });
+  });
+
+  it('"¿cómo va mi aprendizaje?" pregunta por la pestaña, no por una lección', () => {
+    expect(interpret('¿cómo va mi aprendizaje?')).toEqual({ kind: 'navigate', tab: 'aprendizaje', label: 'Aprendizaje' });
+  });
+
+  it('"ver mis brechas" y "la cola de revisión" viven en el mapa de capacidades', () => {
+    expect(interpret('quiero ver mis brechas')).toEqual({ kind: 'navigate', tab: 'aprendizaje', label: 'Aprendizaje' });
+    expect(interpret('abrir la cola de revisión')).toEqual({ kind: 'navigate', tab: 'aprendizaje', label: 'Aprendizaje' });
+  });
+
+  it('"curso" y "lección" siguen siendo Academia: la fila nueva no les pisa el vocabulario', () => {
+    expect(interpret('dame un curso')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
+    expect(interpret('quiero una lección')).toEqual({ kind: 'navigate', tab: 'academia', label: 'Academia' });
+  });
+
+  it('"¿cuál es mi brecha?" sigue siendo coach: la diagnosis la responde Ómicrom, no una pantalla', () => {
+    expect(interpret('¿cuál es mi brecha?')).toEqual({ kind: 'coach' });
+  });
 });
 
 // ── ÓRDENES NATURALES DE LA BARRA JARVIS (Matar el Escritorio, Inc 3) ──
