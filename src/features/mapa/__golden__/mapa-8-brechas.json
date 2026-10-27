@@ -1,5 +1,5 @@
 {
-  "_fuente": "bb1434fb/components/MapaCapacidades.tsx ejecutado con node sobre su propio data/db.json — despues cada hex del donante se reemplazo por su ROL (cat:* y grises con nombre), porque el color del port viene de tokens y el contrato prohibe hex literales en src/",
+  "_fuente": "bb1434fb/components/MapaCapacidades.tsx ejecutado con node sobre su propio data/db.json",
   "_nota": "las fechas formateadas con Intl(es-CL) quedan FUERA: dependen de la zona horaria del ejecutor",
   "geometria": {
     "W": 980,
@@ -281,6 +281,7 @@
   "labelsCat": [
     {
       "cat": "dura",
+      "texto": "HABILIDAD DURA",
       "x": 490,
       "y": 156,
       "anchor": "middle",
@@ -288,6 +289,7 @@
     },
     {
       "cat": "blanda",
+      "texto": "HABILIDAD BLANDA",
       "x": 691,
       "y": 364,
       "anchor": "start",
@@ -295,6 +297,7 @@
     },
     {
       "cat": "conocimiento",
+      "texto": "CONOCIMIENTO",
       "x": 490,
       "y": 570,
       "anchor": "middle",
@@ -302,6 +305,7 @@
     },
     {
       "cat": "credencial",
+      "texto": "CREDENCIAL",
       "x": 289,
       "y": 364,
       "anchor": "end",
@@ -313,7 +317,7 @@
       "id": "ccfa0020-8efc-4d71-9f05-bea2ad185c19",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-dominada",
       "animationDelay": "135ms",
-      "tooltip": "Resultados cuantificados en la mayoría de los cargos · dura · impacto alta · dominada",
+      "tooltip": "Resultados cuantificados en la mayoría de los cargos · Habilidad dura · impacto alta · dominada",
       "anillo": {
         "cx": 430.99,
         "cy": 69.94,
@@ -339,7 +343,7 @@
       "id": "7c9c5b7b-c3c0-4c7f-9b50-db5d345b11b4",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-confirmada",
       "animationDelay": "180ms",
-      "tooltip": "Análisis de datos con planillas o SQL · dura · impacto media · confirmada",
+      "tooltip": "Análisis de datos con planillas o SQL · Habilidad dura · impacto media · confirmada",
       "anillo": null,
       "circulo": {
         "cx": 549.01,
@@ -356,7 +360,7 @@
       "id": "9c638c77-c131-4a4f-8a65-81774b1b5728",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-confirmada",
       "animationDelay": "315ms",
-      "tooltip": "Negociación y manejo de conflicto · blanda · impacto alta · confirmada",
+      "tooltip": "Negociación y manejo de conflicto · Habilidad blanda · impacto alta · confirmada",
       "anillo": null,
       "circulo": {
         "cx": 780.06,
@@ -373,7 +377,7 @@
       "id": "05d2bb7c-8201-482f-b1e6-e8f33ae064de",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-pendiente",
       "animationDelay": "360ms",
-      "tooltip": "Comunicación escrita breve · blanda · impacto media · pendiente",
+      "tooltip": "Comunicación escrita breve · Habilidad blanda · impacto media · pendiente",
       "anillo": null,
       "circulo": {
         "cx": 780.06,
@@ -390,7 +394,7 @@
       "id": "9591fa09-ae7c-4862-b904-c4a1c760e4b3",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-pendiente",
       "animationDelay": "495ms",
-      "tooltip": "Marco normativo o técnico actualizado del rubro · conocimiento · impacto alta · pendiente",
+      "tooltip": "Marco normativo o técnico actualizado del rubro · Conocimiento · impacto alta · pendiente",
       "anillo": null,
       "circulo": {
         "cx": 549.01,
@@ -407,7 +411,7 @@
       "id": "6e54dac0-83b5-434c-bbf5-73876e5d9859",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-pendiente",
       "animationDelay": "540ms",
-      "tooltip": "Gestión de proyectos · conocimiento · impacto media · pendiente",
+      "tooltip": "Gestión de proyectos · Conocimiento · impacto media · pendiente",
       "anillo": null,
       "circulo": {
         "cx": 430.99,
@@ -424,7 +428,7 @@
       "id": "0013cae3-3493-41e3-95ee-b57199eec4b0",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-pendiente",
       "animationDelay": "675ms",
-      "tooltip": "Certificación reconocida en el rubro · credencial · impacto baja · pendiente",
+      "tooltip": "Certificación reconocida en el rubro · Credencial · impacto baja · pendiente",
       "anillo": null,
       "circulo": {
         "cx": 199.94,
@@ -441,7 +445,7 @@
       "id": "0217e508-2dd1-4e46-8f4a-eef976a94019",
       "clase": "mapa-nodo mapa-brecha mapa-brecha-pendiente",
       "animationDelay": "720ms",
-      "tooltip": "Idioma con nivel verificable · credencial · impacto baja · pendiente",
+      "tooltip": "Idioma con nivel verificable · Credencial · impacto baja · pendiente",
       "anillo": null,
       "circulo": {
         "cx": 199.94,
@@ -508,18 +512,22 @@
   "leyenda": [
     {
       "cat": "dura",
+      "texto": "Habilidad dura",
       "color": "cat:dura"
     },
     {
       "cat": "blanda",
+      "texto": "Habilidad blanda",
       "color": "cat:blanda"
     },
     {
       "cat": "conocimiento",
+      "texto": "Conocimiento",
       "color": "cat:conocimiento"
     },
     {
       "cat": "credencial",
+      "texto": "Credencial",
       "color": "cat:credencial"
     },
     {

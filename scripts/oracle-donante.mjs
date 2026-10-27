@@ -13,6 +13,30 @@ const ocupacion = analisis.ocupacion;
 // ---- literales del donante ----
 const ORDEN = ["dura", "blanda", "conocimiento", "credencial"];
 const COLOR_CAT = { dura: "#6aa9ff", blanda: "#f2b134", conocimiento: "#3ddc97", credencial: "#c084fc" };
+// Literal de bb1434fb/lib/types.ts L78-83. El mapa pinta estas palabras, no la clave de
+// categoria: confundirlas cambia el tooltip, la etiqueta y la leyenda a la vez.
+const CATEGORIAS = { dura: "Habilidad dura", blanda: "Habilidad blanda", conocimiento: "Conocimiento", credencial: "Credencial" };
+// El port pinta con tokens del theme, asi que el golden fija ROLES de color y no hexes del
+// donante (un contrato en src/features/mapa/ prohibe literales # ahi). Mapear aqui, en el
+// generador, para que volver a correr el script dé exactamente el mismo golden en disco.
+const ROLES = {
+  "#6aa9ff": "cat:dura",
+  "#f2b134": "cat:blanda",
+  "#3ddc97": "cat:conocimiento",
+  "#c084fc": "cat:credencial",
+  "#171b21": "nodo-hueco",
+  "#454d57": "borde-rechazada",
+  "#4b545f": "borde-pendiente",
+  "#0b0d10": "tinta-sobre-nodo",
+};
+const rol = (hex) => {
+  const base = hex.slice(0, 7);
+  const alfa = hex.length > 7 ? hex.slice(7) : "";
+  const r = ROLES[base];
+  if (!r) throw new Error(`hex sin rol declarado en el golden: ${hex}`);
+  return alfa ? `${r}+alfa` : r;
+};
+const rolCat = (cat) => rol(COLOR_CAT[cat]);
 const RADIO_CAT = 170;
 const RADIO_BRECHA = 296;
 const RADIO_LOGRO = 352;
@@ -126,7 +150,7 @@ const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
 const aristasRaizCat = nodosCat.map((nc, i) => ({
   key: `rc-${nc.cat}`,
   d: curva({ x: CX, y: CY }, nc.p, i),
-  stroke: COLOR_CAT[nc.cat],
+  stroke: rolCat(nc.cat),
   animationDelay: `${nc.delay}ms`,
   pathLength: 1,
 }));
@@ -135,7 +159,7 @@ const aristasCatBrecha = nodosBrecha.map((nb, i) => ({
   key: `cb-${nb.b.id}`,
   // atencion: la semilla es el indice GLOBAL de la brecha, no el de su categoria
   d: curva(nb.pCat, nb.p, i),
-  stroke: COLOR_CAT[nb.b.categoria],
+  stroke: rolCat(nb.b.categoria),
   animationDelay: `${nb.delay}ms`,
   pathLength: 1,
   "data-apagado": nb.b.veredicto === "rechazada",
@@ -159,7 +183,8 @@ const labelsCat = nodosCat.map((nc) => {
   } else {
     ly = sin < 0 ? r2(nc.p.y - 34) : r2(nc.p.y + 40);
   }
-  return { cat: nc.cat, x: lx, y: ly, anchor, animationDelay: `${nc.labelDelay}ms` };
+  // el donante pinta CATEGORIAS[cat].toUpperCase(): "HABILIDAD DURA", no "DURA".
+  return { cat: nc.cat, texto: CATEGORIAS[nc.cat].toUpperCase(), x: lx, y: ly, anchor, animationDelay: `${nc.labelDelay}ms` };
 });
 
 const nodosBrechaRender = nodosBrecha.map((nb) => {
@@ -174,19 +199,19 @@ const nodosBrechaRender = nodosBrecha.map((nb) => {
     id: b.id,
     clase: `mapa-nodo mapa-brecha mapa-brecha-${estado}`,
     animationDelay: `${nb.delay}ms`,
-    tooltip: `${b.titulo} · ${b.categoria} · impacto ${b.severidad} · ${estado}`,
-    anillo: dominada ? { cx: p.x, cy: p.y, r: r + 7, stroke: color } : null,
+    tooltip: `${b.titulo} · ${CATEGORIAS[b.categoria]} · impacto ${b.severidad} · ${estado}`,
+    anillo: dominada ? { cx: p.x, cy: p.y, r: r + 7, stroke: rol(color) } : null,
     circulo: {
       cx: p.x,
       cy: p.y,
       r,
-      fill: dominada ? color : confirmada ? `${color}2e` : "#171b21",
-      stroke: rechazada ? "#454d57" : confirmada || dominada ? color : "#4b545f",
+      fill: rol(dominada ? color : confirmada ? `${color}2e` : "#171b21"),
+      stroke: rol(rechazada ? "#454d57" : confirmada || dominada ? color : "#4b545f"),
       strokeWidth: confirmada || dominada ? 2.4 : 1.6,
       filter: confirmada || dominada ? "url(#brillo)" : null,
     },
     check: dominada
-      ? { d: `M ${r2(p.x - 4.5)} ${r2(p.y)} l 3.2 3.6 l 6 -7`, stroke: "#0b0d10", strokeWidth: 2.2 }
+      ? { d: `M ${r2(p.x - 4.5)} ${r2(p.y)} l 3.2 3.6 l 6 -7`, stroke: rol("#0b0d10"), strokeWidth: 2.2 }
       : null,
   };
 });
@@ -195,8 +220,8 @@ const logrosRender = logros.map(({ nb, p, delay }) => ({
   key: `logro-${nb.b.id}`,
   animationDelay: `${delay}ms`,
   tooltip: `Logro: ${nb.b.titulo}`,
-  trazo: { d: curva(nb.p, p, 1), stroke: COLOR_CAT[nb.b.categoria], animationDelay: `${delay}ms`, pathLength: 1 },
-  circulo: { cx: p.x, cy: p.y, r: 6, fill: COLOR_CAT[nb.b.categoria], filter: "url(#brillo)" },
+  trazo: { d: curva(nb.p, p, 1), stroke: rolCat(nb.b.categoria), animationDelay: `${delay}ms`, pathLength: 1 },
+  circulo: { cx: p.x, cy: p.y, r: 6, fill: rolCat(nb.b.categoria), filter: "url(#brillo)" },
 }));
 
 const caminoLista = eventos.map((e, i) => ({
@@ -211,7 +236,6 @@ const salida = {
   _fuente: "bb1434fb/components/MapaCapacidades.tsx ejecutado con node sobre su propio data/db.json",
   _nota: "las fechas formateadas con Intl(es-CL) quedan FUERA: dependen de la zona horaria del ejecutor",
   geometria: { W, H, CX, CY, RADIO_CAT, RADIO_BRECHA, RADIO_LOGRO, PASO_MS, ordenCategorias: ORDEN },
-  colorCat: COLOR_CAT,
   modelo: { raizDelay, nodosCat, nodosBrecha: nodosBrecha.map(({ b, ...rest }) => ({ ...rest, id: b.id })), logros: logros.map(({ nb, ...r }) => ({ ...r, id: nb.b.id })), camino, caminoDelay, totalPasos: paso },
   lineasOcupacion,
   ariaLabel: `Mapa de capacidades de ${ocupacion}: ${brechas.length} brechas detectadas, ${reconocidas} reconocidas, ${dominadas} dominadas y ${rechazadas} descartadas.`,
@@ -221,7 +245,7 @@ const salida = {
   nodosBrechaRender,
   logrosRender,
   caminoLista,
-  leyenda: ORDEN.map((c) => ({ cat: c, color: COLOR_CAT[c] })).concat([
+  leyenda: ORDEN.map((c) => ({ cat: c, texto: CATEGORIAS[c], color: rolCat(c) })).concat([
     { estado: "pendiente", texto: "detectada" },
     { estado: "confirmada", texto: "reconocida" },
     { estado: "dominada", texto: "dominada" },
