@@ -63,6 +63,8 @@ import type { TabId, GemeloDigital } from '@/types';
 const GemeloTab     = lazy(() => import('@/features/gemelo/components/GemeloTab').then(m => ({ default: m.GemeloTab })));
 const MaxSkillTab   = lazy(() => import('@/features/academia/components/MaxSkillTab').then(m => ({ default: m.MaxSkillTab })));
 const AcademiaTab   = lazy(() => import('@/features/academia/components/AcademiaTab').then(m => ({ default: m.AcademiaTab })));
+// B4: el mapa neuronal como pestaña. Default export → lazy directo.
+const AprendizajeTab = lazy(() => import('@/features/aprendizaje/AprendizajeTab'));
 const ConvalidaOmicron = lazy(() => import('./ConvalidaOmicron'));
 const CredencialModal = lazy(() => import('@/features/gemelo/components/CredencialModal').then(m => ({ default: m.CredencialModal })));
 
@@ -70,14 +72,16 @@ const CredencialModal = lazy(() => import('@/features/gemelo/components/Credenci
 // Los primeros 9 son los HUBS navegables de la app.
 // El resto son NODOS DE CONOCIMIENTO: cada partícula es una posibilidad
 // de integrar conocimiento al Gemelo Digital.
-// ── Hub nodes (the 3 sections of the learning path) ────────────────
+// ── Hub nodes (the sections of the learning path) ────────────────────
 // El recorte de la Fase 5 dejó tres nodos: mirar tu Gemelo, aprender y
-// validar. Los siete hubs económicos salieron de la navegación porque las
-// tablas que los alimentan tienen 0 filas de usuarios reales.
+// validar. B4 suma el mapa neuronal como cuarto destino navegable
+// ('aprendizaje'); el default de navegación sigue siendo 'perfil', así que
+// el alta del mapa no secuestra el onboarding del Gemelo.
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',      label: 'Mi Gemelo',   tab: 'perfil',   icon: '⬡' },
-  { id: 'academia',    label: 'Academia',    tab: 'academia', icon: '◈' },
-  { id: 'habilidades', label: 'Habilidades', tab: 'maxskill', icon: '◎' },
+  { id: 'inicio',       label: 'Mi Gemelo',    tab: 'perfil',      icon: '⬡' },
+  { id: 'academia',     label: 'Academia',     tab: 'academia',    icon: '◈' },
+  { id: 'habilidades',  label: 'Habilidades',  tab: 'maxskill',    icon: '◎' },
+  { id: 'aprendizaje',  label: 'Aprendizaje',  tab: 'aprendizaje', icon: '⬢' },
 ];
 
 // Todo nodo de la Red Viva es UNA HABILIDAD TUYA: se acciona probándola, y eso
@@ -197,6 +201,7 @@ function renderTab(tab: TabId) {
     case 'perfil':   return <GemeloTab />;
     case 'academia': return <AcademiaTab />;
     case 'maxskill': return <MaxSkillTab />;
+    case 'aprendizaje': return <AprendizajeTab />;
     default:         return null;
   }
 }
@@ -477,6 +482,7 @@ export function OrbShell() {
       inicio:      { level: Math.min(1, rep / 100), nextStep: nodeGuidance('perfil', sbProfile, gemeloDigital) || (rep < 50 ? 'Completa tu perfil' : '¡Perfil sólido!') },
       academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: nodeGuidance('academia', sbProfile, gemeloDigital) },
       habilidades: { level: qualNorm, nextStep: nodeGuidance('maxskill', sbProfile, gemeloDigital) },
+      aprendizaje: { level: qualNorm, nextStep: 'Reconocé y dominá tus brechas: cada una que marcabas enciende un nodo del mapa.' },
       // Invitation nodes (when user has no skills)
       'inv-cv':       { level: hasSkill(['cv', 'curriculum']) ? 0.9 : 0.1, nextStep: '¡Sube tu CV para activar tu Gemelo!' },
       'inv-skills':   { level: qualNorm, nextStep: 'Descubre tus habilidades ocultas' },
@@ -1139,7 +1145,7 @@ export function OrbShell() {
       {state === 'preview' && selectedNode && (() => {
         // ── Swipe: encontrar nodos adyacentes para navegar
         const hubNodes = orbNodesWithLevels.filter((n: OrbNode) =>
-          ['inicio','academia','habilidades'].includes(n.id)
+          ['inicio','academia','habilidades','aprendizaje'].includes(n.id)
         );
         const currentIdx = hubNodes.findIndex((n: OrbNode) => n.id === selectedNode.id);
         const canSwipe = currentIdx >= 0;

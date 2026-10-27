@@ -1,0 +1,305 @@
+/* features/aprendizaje/aprendizaje.css
+   B4 · layout del workspace de aprendizaje y su cola. CERO hex literales: todo
+   sale de los tokens globales de index.css (--surface/--line/--ink/--mut/--teal/
+   --red/--gold/--purple/--bg/--glass). El mapa (mapa.css) y su coreografía NO se
+   tocan acá.
+   Invariante visual (brief §3): 2 columnas desde 900px (mapa centro, cola derecha),
+   apilado mobile-first por debajo; header sticky; objetivo < 2 viewports. */
+
+.aprendizaje-workspace {
+  color: var(--ink);
+  padding: 0 14px;
+}
+
+/* ── header sticky con progreso (como el del donante) ─────────────────────── */
+.aprendizaje-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 4px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.aprendizaje-cabecera-texto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.aprendizaje-titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.aprendizaje-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.aprendizaje-progreso {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mut);
+}
+
+.aprendizaje-progreso strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ── aviso de muestra y error ─────────────────────────────────────────────── */
+.aprendizaje-aviso {
+  margin: 10px 0;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--mut);
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.aprendizaje-aviso strong {
+  color: var(--gold);
+}
+
+.aprendizaje-error {
+  margin: 10px 0;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--red);
+  background: var(--glass);
+  border: 1px solid var(--red);
+  border-radius: 10px;
+}
+
+/* ── grilla de dos columnas ───────────────────────────────────────────────── */
+.aprendizaje-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .aprendizaje-grid {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 20px;
+  }
+}
+
+/* ── cola de revisión (port de PanelReporte) ──────────────────────────────── */
+.aprendizaje-cola {
+  min-width: 0;
+}
+
+.cola-titulo {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.cola-vacia {
+  color: var(--mut);
+  font-size: 13.5px;
+}
+
+.cola-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.cola-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cola-punto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.cola-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* El estado se lee por TEXTO, nunca sólo por color (Invariante de a11y). */
+.cola-badge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--mut);
+}
+.cola-badge[data-estado='confirmada'] {
+  color: var(--teal);
+  border-color: var(--teal);
+}
+.cola-badge[data-estado='dominada'] {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.cola-badge[data-estado='rechazada'] {
+  color: var(--mut);
+  opacity: 0.7;
+}
+
+.cola-cuerpo {
+  padding: 4px 12px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+  color: var(--mut);
+}
+
+.cola-severidad {
+  margin: 8px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--red);
+  letter-spacing: 0.02em;
+}
+
+.cola-evidencia {
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.cola-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mut);
+  margin-bottom: 2px;
+}
+
+.cola-importa {
+  margin: 0 0 10px;
+}
+
+.cola-aprender {
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cola-aprender dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mut);
+}
+
+.cola-aprender dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+}
+
+.cola-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.boton {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.boton:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.cola-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
+.boton:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.boton-ok[aria-pressed] {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.boton-bad[aria-pressed] {
+  border-color: var(--mut);
+  color: var(--mut);
+}
+
+.boton-logro {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.cola-confirma {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.cola-nota {
+  color: var(--mut);
+  font-size: 12.5px;
+}
+
+.cola-nota-logro {
+  margin: 10px 0 0;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+}

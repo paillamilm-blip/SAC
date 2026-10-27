@@ -10,7 +10,10 @@ export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_a
 // El recorte (Fase 5) deja UN solo camino: Gemelo → Academia → Habilidades.
 // Empleos, Mercado, Bóveda, Red Social, Billetera, Contratos y Gobernanza
 // salieron de la navegación: tienen 0 filas de usuarios reales.
-export type TabId = 'perfil' | 'academia' | 'maxskill';
+// 'aprendizaje' (B4) suma el mapa neuronal como producto único. El default de
+// NavigationContext sigue siendo 'perfil': el alta del mapa NO secuestra el
+// onboarding del Gemelo.
+export type TabId = 'perfil' | 'academia' | 'maxskill' | 'aprendizaje';
 
 // ===== APP STATE (Context) =====
 export interface AppState {
