@@ -143,11 +143,15 @@ grant execute on function public.check_rate_limit(text, text, integer, integer) 
 -- esperado; la prueba de que el arrego funciona es un paseo por `analizar-cv`
 -- con el header de sesion PUESTO: `Authorization: Bearer <JWT authenticated>`
 -- (se copia de devtools -> Network -> cualquier request de la app logueada, o
--- del token de `supabase.auth.getSession()`). Si en vez del JWT de usuario va la
--- anon key como Bearer (o el borde no recibe ningun Bearer: `verify_jwt` esta ON y
--- responde 401 antes de correr la funcion), no se prueba este arrego: la funcion
--- consulta el bucket `analisis-dia-ip` (tope 3 por IP), NO el `analisis-dia` que
--- este archivo repara, y daria 429 igual midiendo otra cosa.
+-- del token de `supabase.auth.getSession()`). Los dos modos de no-traer ese JWT
+-- NO son la misma cosa, y cada uno se corta en un punto distinto:
+--   * va la anon key como Bearer: la funcion SI corre, pero se lee como invitado
+--     y consulta el bucket `analisis-dia-ip` (tope 3 por IP), NO el
+--     `analisis-dia` que este archivo repara. Daria 429 igual, midiendo otra cosa.
+--   * no va ningun Bearer: la funcion NUNCA corre. `verify_jwt` esta ON y el borde
+--     de Supabase responde 401 `UNAUTHORIZED_NO_AUTH_HEADER` antes de ejecutar el
+--     handler, asi que NINGUN bucket se consulta y no se cobra nada.
+-- En los dos casos no se prueba este arrego; solo difiere donde se corta.
 --
 -- Con `ANALISIS_TOPE_DIARIO=2`, tres requests del MISMO usuario JWT, donde el
 -- tercero cae mas de una hora despues del primero. Los dos primeros dan 200 y el

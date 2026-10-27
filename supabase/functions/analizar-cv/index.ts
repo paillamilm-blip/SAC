@@ -11,7 +11,7 @@ const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_
 
 import { corsHeaders } from '../_shared/cors.ts';
 const CORS = corsHeaders();
-const BUILD = '10d-invitado-llega';
+const BUILD = '10e-dos-claves';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
   // La huella va en el header (para el curl de verificacion) y en el cuerpo
   // (para que el cliente distinga funcion vieja de funcion nueva).
@@ -391,7 +391,7 @@ Deno.serve(async (req) => {
     // supabase-js v2 getUser NO lanza con token invalido — devuelve
     // {data:{user:null}, error} —, por eso se mira el error aca: un token DE
     // USUARIO rechazado es un 401 (dentro de puertaDeAcceso, despues del burst por
-    // IP), nunca un invitado silencioso; la clave publica es la otra rama.
+    // IP), nunca un invitado silencioso; las credenciales publicas son la otra rama.
     const auth = req.headers.get('authorization') ?? '';
     const token = auth.replace(/^Bearer\s+/i, '');
     // El INVITADO llega con la clave publica del proyecto como Bearer: es justo lo
@@ -401,19 +401,36 @@ Deno.serve(async (req) => {
     // usuario: eso es invitado, no el 401 de abajo. Forjar este empate no gana
     // nada que la ruta anonima no de ya — su tope cuelga de cf-connecting-ip, no
     // del token.
-    const clavePublica = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? '';
-    const esInvitado = token === '' || (clavePublica !== '' && token === clavePublica);
+    // SON UNA LISTA, no un string: en rotacion de claves conviven `SUPABASE_ANON_KEY`
+    // (JWT viejo) y `SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…`), y el navegador
+    // manda la que resolvio SU build (`VITE_SUPABASE_ANON_KEY`, o el default
+    // hardcodeado del cliente), que puede ser la otra. Elegir con `??` la primera env
+    // existente dejaba a ese invitado en `getUser(<clave publica>)` → rechazado → 401
+    // "Tu sesión expiró", mentira para quien nunca tuvo sesion y, encima, bloqueo sin
+    // respaldo. El `apikey` esta porque supabase-js lo manda en el mismo request: es
+    // la misma credencial publica por otra via.
+    const clavesPublicas = [
+      Deno.env.get('SUPABASE_ANON_KEY'),
+      Deno.env.get('SUPABASE_PUBLISHABLE_KEY'),
+      req.headers.get('apikey'),
+    ].filter((k): k is string => typeof k === 'string' && k !== '');
+    const esInvitado = token === '' || clavesPublicas.includes(token);
     // traiaToken: sirvio para distinguir invitado real de "usuario al que no
     // pudimos verificar" cuando _admin falta (I1, se usa en el guardado).
     const traiaToken = !esInvitado;
     let userId: string | null = null;
     let tokenRechazado = false;
     if (esInvitado) {
-      console.log(`[analizar-cv] rama invitado (bearer ${token === '' ? 'ausente' : 'igual a la clave publica'}): sin guardado, tope dia por IP.`);
+      console.log(`[analizar-cv] rama invitado (bearer ${token === '' ? 'ausente' : 'igual a una credencial publica'}): sin guardado, tope dia por IP.`);
     } else {
-      // Token distinto de la clave publica: se lee como sesion de usuario.
-      if (clavePublica === '') {
-        console.error('[analizar-cv] falta SUPABASE_ANON_KEY/SUPABASE_PUBLISHABLE_KEY en el runtime: un bearer de invitado no se puede reconocer y cae como token rechazado (401)');
+      // Token distinto de toda credencial publica: se lee como sesion de usuario.
+      // El aviso es SOLO cuando no hubo NADA con que comparar (los dos env ausentes
+      // y sin header `apikey`): ahi un bearer de invitado no se puede reconocer y
+      // cae en el 401 de abajo. Si al menos una fuente existia, la pertenencia si
+      // tuvo con que comparar y este token no es clave publica — no hay nada que
+      // anunciar, y decirlo seria mentir sobre la rama que se tomo.
+      if (clavesPublicas.length === 0) {
+        console.error('[analizar-cv] sin credenciales publicas (SUPABASE_ANON_KEY/SUPABASE_PUBLISHABLE_KEY ausentes en el runtime y sin header apikey): un bearer de invitado no se puede reconocer y cae como token rechazado (401)');
       }
       if (_admin) {
         const { data, error } = await _admin.auth.getUser(token);

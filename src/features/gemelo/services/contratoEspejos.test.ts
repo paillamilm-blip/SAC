@@ -129,6 +129,29 @@ describe('el gate de ejes (copia INLINE) y el presupuesto de IA viven en el entr
     expect(huellas).toHaveLength(1);
     expect(huellas[0]).toMatch(/^const BUILD = '[0-9a-z]+(-[0-9a-z]+)+'$/);
   });
+
+  it('la decision de invitado es pertenencia a las credenciales publicas, no igualdad con una sola (fallo de rotacion de claves)', () => {
+    // ROTACION DE CLAVES, el importante #1 de la re-review de 10-D. Con las dos
+    // claves publicas del proyecto conviviendo (`SUPABASE_ANON_KEY` = JWT viejo y
+    // `SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_…`), un `??` elige la PRIMERA que
+    // exista, y el navegador manda la que resolvio su build — `VITE_SUPABASE_ANON_KEY`
+    // o el `DEFAULT_SUPABASE_ANON_KEY` hardcodeado de
+    // src/infrastructure/supabase/client.ts. Puede ser LA OTRA. Ahi `esInvitado` sale
+    // false, `getUser(<clave publica>)` rechaza, `tokenRechazado` queda true y el
+    // invitado recibe 401 "Tu sesión expiró": mentira para quien nunca tuvo sesion, y
+    // como lo redacta el motor el cliente lo trata como bloqueo y no cae al respaldo.
+    // La forma que lo cierra es la PERTENENCIA a la lista de credenciales publicas —
+    // los dos env mas el header `apikey`, que supabase-js manda en el mismo request.
+    // Se afirma sobre el texto porque el repo no tiene runner Deno.
+    expect(entryRaw, 'el invitado se decide con igualdad contra un solo string').toContain('clavesPublicas.includes(token)');
+    expect(entryRaw, 'volvio la comparacion contra UNA sola clave publica (10-D)').not.toContain('token === clavePublica');
+    // Y la lista tiene que estar armada por las tres fuentes: la que falte deja de
+    // ser invitado exactamente como antes del fix.
+    const lista = entryRaw.slice(i('const clavesPublicas'), i('const esInvitado'));
+    expect(lista).toContain("Deno.env.get('SUPABASE_ANON_KEY')");
+    expect(lista).toContain("Deno.env.get('SUPABASE_PUBLISHABLE_KEY')");
+    expect(lista).toContain("req.headers.get('apikey')");
+  });
 });
 
 describe('la maquina de estados del TS es la del SQL de 10012 (M4)', () => {

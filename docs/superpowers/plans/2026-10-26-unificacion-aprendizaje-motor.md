@@ -870,7 +870,7 @@ significa ver otra cosa**. Ningún paso exige esperar una hora.
 ### Q1 · Que lo que corre sea el código del repo
 
 Subí un CV desde la app, devtools → Network → el request a `analizar-cv` → *Response Headers*.
-**Esperado:** `x-omicron-build: 10d-invitado-llega` (se ve en el navegador: está en `Access-Control-Expose-Headers`).
+**Esperado:** `x-omicron-build: 10e-dos-claves` (se ve en el navegador: está en `Access-Control-Expose-Headers`).
 **Si no aparece:** el deploy no corrió o corrió con un archivo viejo. No sigas con el resto del pase: estaría
 midiendo otra cosa.
 
@@ -881,6 +881,11 @@ En **modo invitado** (sin iniciar sesión), subí un CV real de más de 2000 car
 `guardado: null` — el invitado no persiste, va al puente de `localStorage`.
 **Si ves `401 {"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`:** el cliente volvió a mandar el request sin `Authorization`
 (es el borde de Supabase, no la función: regresión de T10-D).
+**Si ves `401` con "Tu sesión expiró…" estando SIN sesión:** la función corrió pero no reconoció la clave pública
+que mandó el navegador. Con la clave rotada conviven dos (`SUPABASE_ANON_KEY` JWT viejo + `SUPABASE_PUBLISHABLE_KEY`
+`sb_publishable_…`) y el header `apikey`: la decisión de invitado es pertenencia a esa lista, no igualdad con un
+solo valor (regresión de T10-E). Se reporta con la huella y las dos claves del proyecto **por nombre, nunca su
+valor**.
 **Si ves `503` con "No pudimos identificar tu conexión…":** la función ya corre, pero el borde no está entregando
 `cf-connecting-ip` y el tope de invitados falla **cerrado** a propósito. Eso no es un bug del QA: se reporta con
 la huella y el texto exacto, y decide si el bucket de invitados cambia de llave.
