@@ -8,17 +8,21 @@
 //
 // Contrato con el SQL: marcar_brecha(p_brecha uuid, p_state text) → jsonb. Levanta
 // exception con un texto legible si la fila no es tuya o si la transición no va
-// (dominada no revierte). PostgREST traduce esa exception a error en el cliente:
-// lo relanzamos como Error con el mensaje del servidor para que la UI lo muestre
-// y revierta el estado optimista. Con el motor sin desplegar el RPC no existe y
-// el guard no encuentra la fila: siempre falla y la UI lo dice (nada de inventar
-// que se guardó).
+// (dominada no revierte). PostgREST traduce esa exception a code P0001: ese y solo
+// ese mensaje es español escrito para el fundador y se muestra tal cual. Cualquier
+// otro error (PGRST202 con el RPC sin desplegar, red caída, JWT vencido) es jerga
+// de infraestructura y se enmascara por una línea propia; el detalle crudo queda
+// en la consola para quien depure. La UI siempre revierte el estado optimista.
 import { supabase } from '@/infrastructure/supabase/client';
 import type { EstadoBrecha } from '@/features/gemelo/services/brechas';
 
+const CODE_DEL_SQL = 'P0001';
+const FALLBACK = 'No se pudo guardar tu respuesta. Probá de nuevo.';
+
 export async function marcarBrecha(id: string, state: EstadoBrecha): Promise<void> {
   const { error } = await supabase.rpc('marcar_brecha', { p_brecha: id, p_state: state });
-  if (error) {
-    throw new Error(error.message || 'No se pudo guardar tu respuesta. Probá de nuevo.');
-  }
+  if (!error) return;
+  if (error.code === CODE_DEL_SQL && error.message?.trim()) throw new Error(error.message);
+  console.warn('[marcarBrecha]', error.code ?? 'sin-code', error.message ?? '');
+  throw new Error(FALLBACK);
 }

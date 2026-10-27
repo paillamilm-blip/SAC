@@ -145,7 +145,7 @@ describe('cola de revisión con la máquina del huésped', () => {
   });
 
   it('una escritura que falla muestra el motivo y revierte el estado', () => {
-    rpc.mockResolvedValue({ data: null, error: { message: 'No encontramos ese aprendizaje entre los tuyos.' } });
+    rpc.mockResolvedValue({ data: null, error: { code: 'P0001', message: 'No encontramos ese aprendizaje entre los tuyos.' } }); // P0001: raise exception del SQL, lo unico que se muestra crudo
     render(<AprendizajeTab />);
     abrirFila('Comunicación escrita breve');
     fireEvent.click(screen.getByRole('button', { name: /^Es real/ }));
