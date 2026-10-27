@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
-import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE, ELEVATED } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
@@ -720,6 +720,6 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    boxShadow: `0 10px 28px ${tint(C.purple, 35)}`,
+    boxShadow: ELEVATED.cta(tint(C.purple, 35)),
   },
 };

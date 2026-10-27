@@ -213,7 +213,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         {phase === 'reto' && reto && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Contexto del reto */}
-            <div style={{ ...cardS, borderColor: `${C.purple}44`, background: 'rgba(138,136,240,0.06)' }}>
+            <div style={{ ...cardS, borderColor: `${C.purple}44`, background: tint(C.iris, 6) }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                 <Sparkles size={14} style={{ color: C.purple }} />
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.purple }}>{reto.titulo?.toUpperCase()}</span>
@@ -234,7 +234,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
                     return (
                       <button key={oi} onClick={() => setRespuestas(p => p.map((v, i) => i === qi ? oi : v))}
                         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
-                          background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.ink : 'rgba(230,241,251,0.8)', fontFamily: DISP, fontSize: 13 }}>
+                          background: sel ? C.cyanFaint : 'transparent', border: `1px solid ${sel ? C.cyan : C.line}`, color: sel ? C.ink : tint(C.ink, 80), fontFamily: DISP, fontSize: 13 }}>
                         <span style={{ width: 16, height: 16, flexShrink: 0, borderRadius: '50%', border: `2px solid ${sel ? C.cyan : C.mut}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {sel && <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.cyan }} />}
                         </span>
@@ -380,7 +380,7 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
 // ── Estilos ───────────────────────────────────────────────────────────
 const cardS: React.CSSProperties = { padding: 16, borderRadius: 12, background: C.surfaceLight, border: `1px solid ${C.line}` };
 const textareaS: React.CSSProperties = {
-  width: '100%', minHeight: 110, padding: 12, boxSizing: 'border-box', background: '#040a18', color: '#c9f6ff',
+  width: '100%', minHeight: 110, padding: 12, boxSizing: 'border-box', background: C.bg, color: C.ice,
   fontFamily: DISP, fontSize: 13, lineHeight: 1.5, resize: 'vertical', outline: 'none', borderRadius: 9, border: `1px solid ${C.line}`,
 };
 function btnStyle(color: string): React.CSSProperties {

@@ -38,6 +38,8 @@ colors:
   on-accent: "#021018"
   ice: "#8bd4ff"
   iris: "#8a88f0"
+  teal-deep: "#008b9e"
+  flame: "#ff6432"
   user-hielo: "#7dd3fc"
   user-rosa: "#ff6b9d"
   user-oro: "#ffb02e"
@@ -375,6 +377,10 @@ que se juzga cualquier pantalla; no se renegocian caso por caso.
    `C.surface` (tarjeta), `C.surfaceLight` (elevado/hover), `C.overlay` (hoja y modal) y `C.wash` (lavado
    translúcido sobre contenido), además de `C.sticky` para la barra fija y `C.scrim` para las sombras.
    Antes de este contrato había 28 rgba casi iguales haciendo esos cinco papeles.
+   Dos tonos se promovieron porque ya estaban circulando sin nombre: `C.tealDeep` (#008b9e, el extremo
+   oscuro del degradado silver→teal de los botones grandes) y `C.flame` (#ff6432, el naranja de la racha,
+   que StreakBanner escribía tres veces). Para la sombra teñida —la de un elemento cuyo color es la
+   marca— existe `ELEVATED.cta(color)`: `SHADOW` es negro y no sirve ahí.
 6. **Se toca con el pulgar.** Blancos de 44×44, 8px entre ellos, foco visible en el color del usuario, y
    nada de glifos unicode o emojis como iconos: se dibujan con CSS o con SVG.
 7. **Un solo gesto firma.** El orbe respira con el estado real de la persona, y ese mismo latido (mismo
@@ -397,6 +403,11 @@ golden; no se normalizan con estas reglas.
 - **El alfa se calcula, no se pega.** `tint(color, 34)` en vez de `${color}34`: devuelve `color-mix()` y por
   eso funciona con hex y con `var(--omi-accent)`. Concatenar hex es la razón por la que 20 tonos casi iguales
   circulaban como "el silver del sistema".
+- **El canvas tiene su propia hoja del mismo tema.** `src/theme/canvasInk.ts` es la única fuente de color
+  para lo que se pinta en píxeles: `inkAt(hex, alfa)` reemplaza a `tint()` (canvas no lee `color-mix()`),
+  `CARD_INK` da la tinta por rol y `CARD_NAVY` el fondo de la tarjeta imprimida. Ningún componente escribe
+  un hex para dibujar, y la credencial la dibuja un solo módulo (`features/gemelo/services/
+  credencialCanvas.ts`) —antes eran dos dibujantes con alfas de 0.35 contra 0.45 para el mismo filete.
 - **En CSS plano, la hoja habla con variables, no con rgba.** `src/index.css` y `src/styles/responsive.css`
   definen las familias (`--silver`, `--line`, `--glass`, `--sticky`, `--omi-accent`); cualquier otra hoja
   usa `var(--…)` o `color-mix(in srgb, var(--oro) 30%, transparent)`. Las sombras negras (`rgba(0,0,0,…)`)

@@ -21,10 +21,11 @@ import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCi
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
+import { credentialPng } from '@/features/gemelo/services/credencialCanvas';
 
 // Fondo radial de la marca Ómicrom (mismo lenguaje que BASE.root del tema).
 const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
@@ -36,107 +37,6 @@ type TabIndex = 0 | 1 | 2;
 // Ease del brillo holográfico (sheen). Tupla cubic-bezier MUTABLE tipada
 // [number, number, number, number] (NO `as const`) para cumplir el lint de CI.
 const SHEEN_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
-
-// ── Stacks tipográficos para el canvas (los tokens FONT no son legibles
-// desde el contexto 2D; replicamos las familias del tema como literales). ──
-const CANVAS_SANS = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif";
-const CANVAS_MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace";
-
-// Datos mínimos para dibujar la credencial descargable. Los colores llegan
-// como hex (el canvas no puede leer los tokens del tema) para respetar el
-// color personal del usuario en los acentos.
-type CredentialDrawData = {
-  name: string;
-  seniorLabel: string;
-  years: number;
-  reputation: number;
-  accent: string; // color personal del usuario (uc)
-  axes: { label: string; value: number; color: string }[];
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// drawCredential — Renderiza la credencial como tarjeta PNG compartible.
-//
-// Técnica rescatada de PasaporteGemelo (canvas 2D 600x860 + toDataURL), pero
-// adaptada a los datos propios de la Credencial y al color personal del
-// usuario: la "Ω", el número de reputación y la línea de acento superior usan
-// `accent` (uc), NO un cian hardcodeado. Cada número se muestra con /100.
-// ═══════════════════════════════════════════════════════════════════════
-function drawCredential(cv: HTMLCanvasElement, data: CredentialDrawData): void {
-  const x = cv.getContext('2d');
-  if (!x) return;
-  const W = cv.width, H = cv.height;
-  const accent = data.accent;
-
-  // Fondo: gradiente navy Ómicrom.
-  const g = x.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, '#04122a'); g.addColorStop(0.5, '#02081a'); g.addColorStop(1, '#06122e');
-  x.fillStyle = g; x.fillRect(0, 0, W, H);
-
-  // Borde fino.
-  x.strokeStyle = 'rgba(160,174,192,0.35)'; x.lineWidth = 2; x.strokeRect(16, 16, W - 32, H - 32);
-
-  // Línea de acento superior (color del usuario).
-  x.fillStyle = accent; x.fillRect(W / 2 - 60, 40, 120, 3);
-
-  x.textAlign = 'center';
-
-  // Glifo Ω (acento del usuario).
-  x.fillStyle = accent; x.font = 'bold 92px Georgia, serif'; x.fillText('\u03A9', W / 2, 148);
-
-  // Título + subtítulo.
-  x.fillStyle = '#eaf4ff'; x.font = `bold 34px ${CANVAS_SANS}`; x.fillText('Sistema Ómicrom', W / 2, 196);
-  x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = `15px ${CANVAS_MONO}`;
-  x.fillText('CREDENCIAL · GEMELO DIGITAL', W / 2, 224);
-
-  // Nombre + seniority + años.
-  const name = data.name.trim() || 'Tu Gemelo Digital';
-  x.fillStyle = '#eaf4ff'; x.font = `bold 30px ${CANVAS_SANS}`; x.fillText(name, W / 2, 292);
-  const sub = data.years > 0 ? `${data.seniorLabel} · ${data.years} años` : data.seniorLabel;
-  x.fillStyle = 'rgba(234,244,255,0.6)'; x.font = `16px ${CANVAS_SANS}`; x.fillText(sub, W / 2, 322);
-
-  // Reputación: número grande (acento) + /100.
-  x.fillStyle = 'rgba(234,244,255,0.55)'; x.font = `14px ${CANVAS_MONO}`;
-  x.fillText('REPUTACIÓN', W / 2, 372);
-  const rep = Math.round(data.reputation);
-  const repStr = String(rep);
-  // Dibujamos el número (acento) y su "/100" centrados como conjunto.
-  x.font = `bold 78px ${CANVAS_SANS}`;
-  const repW = x.measureText(repStr).width;
-  x.font = `20px ${CANVAS_MONO}`;
-  const suffixW = x.measureText('/100').width;
-  const totalW = repW + 8 + suffixW;
-  const startX = W / 2 - totalW / 2;
-  x.textAlign = 'left';
-  x.fillStyle = accent; x.font = `bold 78px ${CANVAS_SANS}`;
-  x.fillText(repStr, startX, 440);
-  x.fillStyle = 'rgba(160,174,192,0.75)'; x.font = `20px ${CANVAS_MONO}`;
-  x.fillText('/100', startX + repW + 8, 440);
-  x.textAlign = 'center';
-
-  // Modelo 20/80.
-  x.fillStyle = 'rgba(160,174,192,0.7)'; x.font = `13px ${CANVAS_MONO}`;
-  x.fillText('20% credenciales · 80% desempeño demostrado', W / 2, 470);
-
-  // Los 4 ejes como barras etiquetadas con /100 (colores del modal).
-  let yy = 522;
-  x.textAlign = 'left';
-  data.axes.forEach(({ label, value, color }) => {
-    const v = Math.max(0, Math.min(100, Math.round(value)));
-    x.fillStyle = 'rgba(234,244,255,0.85)'; x.font = `15px ${CANVAS_MONO}`;
-    x.fillText(label, 50, yy - 8);
-    x.textAlign = 'right'; x.fillStyle = 'rgba(255,255,255,0.5)'; x.font = `13px ${CANVAS_MONO}`;
-    x.fillText(`${v}/100`, W - 50, yy - 8);
-    x.textAlign = 'left';
-    x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(50, yy, W - 100, 11);
-    x.fillStyle = color; x.fillRect(50, yy, ((W - 100) * v) / 100, 11);
-    yy += 56;
-  });
-
-  // Pie de página.
-  x.textAlign = 'center'; x.fillStyle = 'rgba(160,174,192,0.6)'; x.font = `12px ${CANVAS_MONO}`;
-  x.fillText('Verificable en Ómicrom · Conocimiento verificable, no declarado', W / 2, H - 40);
-}
 
 // Título de bloque reutilizable: punto de acento del color personal + label mono.
 function BlockTitle({ uc, children }: { uc: string; children: ReactNode }) {
@@ -233,27 +133,24 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
   // Genera una tarjeta compartible (WhatsApp/email) usando canvas 2D. Los
   // acentos usan el color personal del usuario (uc); cada número lleva /100.
   const handleDownload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 600;
-    canvas.height = 860;
-    drawCredential(canvas, {
+    // La tarjeta la dibuja el único dibujante (services/credencialCanvas): acá
+    // solo se eligen los datos y se dispara el PNG. El acento es el color del
+    // usuario; los ejes salen de los tokens del tema (el canvas lee hex, no var()).
+    const href = credentialPng({
       name,
       seniorLabel,
       years,
       reputation,
       accent: uc,
-      // Colores hex explícitos (el canvas no lee los tokens del tema):
-      // Ejecución = color del usuario, Calidad = C.purple, Trascendencia =
-      // C.gold, Fundamento = C.green. Mismos ejes/orden que el modal.
       axes: [
         { label: 'Ejecución', value: axes[0].value, color: uc },
-        { label: 'Calidad', value: axes[1].value, color: '#5e5ce6' },
-        { label: 'Trascendencia', value: axes[2].value, color: '#ffb02e' },
-        { label: 'Fundamento', value: axes[3].value, color: '#3fd0c9' },
+        { label: 'Calidad', value: axes[1].value, color: C.purple },
+        { label: 'Trascendencia', value: axes[2].value, color: C.gold },
+        { label: 'Fundamento', value: axes[3].value, color: C.green },
       ],
     });
     const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
+    a.href = href;
     a.download = 'credencial-omicron.png';
     document.body.appendChild(a);
     a.click();
@@ -275,7 +172,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
   // Marco visual compartido por los tres cuerpos de pestaña.
   const tabPanelStyle: CSSProperties = {
     width: '100%', padding: 16,
-    borderRadius: RADIUS.lg, background: 'rgba(255,255,255,0.04)',
+    borderRadius: RADIUS.lg, background: C.glass,
     border: `1px solid ${C.line}`,
   };
 
@@ -304,7 +201,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
     if (tab === 1) {
       // ── Nivel de Competencias (topSkills) ──
       return (
-        <section style={{ ...tabPanelStyle, background: 'rgba(255,255,255,0.035)' }}>
+        <section style={{ ...tabPanelStyle, background: C.glass }}>
           <BlockTitle uc={uc}>Nivel de Competencias</BlockTitle>
           {topSkills.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
@@ -343,7 +240,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
 
     // ── Trayectoria Verificada (evidencia + 4 ejes) ──
     return (
-      <section style={{ ...tabPanelStyle, background: 'rgba(255,255,255,0.045)' }}>
+      <section style={{ ...tabPanelStyle, background: C.glass }}>
         <BlockTitle uc={uc}>Trayectoria Verificada</BlockTitle>
 
         {/* Evidencia de tono profesional (solo filas con dato > 0). */}
@@ -422,10 +319,10 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
           borderRadius: RADIUS.xl,
-          background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+          background: `linear-gradient(160deg, ${C.glass2}, ${tint(C.white, 2)})`,
           border: `1px solid ${C.line}`,
           backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          boxShadow: `0 20px 60px ${C.scrim}`,
         }}
       >
         {/* ═══ BRILLO HOLOGRÁFICO (sheen) ═══════════════════════════════
@@ -474,7 +371,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             borderRadius: `${RADIUS.xl}px ${RADIUS.xl}px 0 0`,
             backgroundImage: [
               `repeating-linear-gradient(45deg, ${uc}0a 0px, ${uc}0a 1px, transparent 1px, transparent 7px)`,
-              `repeating-linear-gradient(-45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 7px)`,
+              `repeating-linear-gradient(-45deg, ${C.glass} 0px, ${C.glass} 1px, transparent 1px, transparent 7px)`,
               `repeating-radial-gradient(circle at 50% 0%, ${uc}09 0px, ${uc}09 1px, transparent 1px, transparent 11px)`,
             ].join(', '),
             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)',
@@ -493,7 +390,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             position: 'absolute', top: 14, right: 14, zIndex: 2,
             width: 32, height: 32, borderRadius: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.line}`, color: C.ink,
+            background: C.glass2, border: `1px solid ${C.line}`, color: C.ink,
           }}
         >
           <X size={16} />
@@ -545,7 +442,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               </span>
               <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, color: C.mut }}>/100</span>
             </div>
-            <div style={{ height: 5, borderRadius: 3, marginTop: 8, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{ height: 5, borderRadius: 3, marginTop: 8, background: C.glass2, overflow: 'hidden' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${reputation}%` }}
@@ -661,7 +558,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             style={{
               width: '100%', padding: '13px', borderRadius: RADIUS.lg,
               cursor: username ? 'pointer' : 'not-allowed',
-              background: username ? uc : 'rgba(255,255,255,0.05)',
+              background: username ? uc : C.glass,
               border: username ? 'none' : `1px solid ${C.line}`,
               color: username ? '#021018' : C.mut,
               fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
@@ -678,7 +575,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             style={{
               width: '100%', marginTop: 10, padding: '13px', borderRadius: RADIUS.lg,
               cursor: 'pointer',
-              background: 'rgba(255,255,255,0.05)',
+              background: C.glass,
               border: `1px solid ${C.line}`,
               color: C.ink,
               fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,

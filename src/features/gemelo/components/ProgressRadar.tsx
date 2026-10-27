@@ -2,6 +2,7 @@
 // Visualización del Gemelo Digital como radar dinámico en tiempo real
 
 import { useMemo } from 'react';
+import { C, inkAt, tint } from '@/theme';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
 import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
@@ -30,20 +31,20 @@ const AXIS_LABELS = {
 } as const;
 
 const AXIS_COLORS = {
-  execution:    '#a0aec0',   // silver ice — flujo de ejecución
-  quality:      '#8a88f0',   // acero-cyan — calidad
-  transcendence:'#ffb02e',   // ámbar — trascendencia
-  foundation:   '#3fd0c9',   // esmeralda — fundamento
+  execution:    C.cyan,   // silver ice — flujo de ejecución
+  quality:      C.iris,   // acero-cyan — calidad
+  transcendence:C.gold,   // ámbar — trascendencia
+  foundation:   C.green,   // esmeralda — fundamento
 } as const;
 
 // ✓ FIX: getReputationBadge devuelve el hex directamente para que el componente
 // no dependa de strings arbitrarios que se pueden desincronizar.
 const BADGE_BORDER_HEX: Record<string, string> = {
-  gold:    '#fbbf24',
-  emerald: '#10b981',
-  blue:    '#3b82f6',
-  amber:   '#ffb02e',
-  slate:   '#64748b',
+  gold:    C.gold,
+  emerald: C.green,
+  blue:    C.purple,
+  amber:   C.gold,
+  slate:   C.cyan,
 };
 
 export function ProgressRadar({
@@ -128,7 +129,7 @@ export function ProgressRadar({
   // ETIQUETA visible del nivel es la banda humana única (Estudiante / Técnico
   // / Arquitecto) derivada de la reputación real, coherente con toda la app.
   const badge       = getReputationBadge(gemelo.overallReputation);
-  const borderColor = BADGE_BORDER_HEX[badge.color] ?? '#64748b';
+  const borderColor = BADGE_BORDER_HEX[badge.color] ?? C.cyan;
   const levelBand   = levelBandFor(gemelo.overallReputation);
 
   const dotRadius   = size === 'sm' ? 4 : size === 'md' ? 5 : 7;
@@ -166,8 +167,8 @@ export function ProgressRadar({
             position: 'relative',
             borderRadius: '50%',
             padding: 6,
-            background: 'radial-gradient(circle at 50% 45%, rgba(160,174,192,0.10), rgba(8,16,38,0.25) 60%, transparent 75%)',
-            boxShadow: '0 0 40px rgba(160,174,192,0.12), inset 0 0 40px rgba(94, 92, 230,0.10)',
+            background: `radial-gradient(circle at 50% 45%, ${tint(C.cyan, 10)}, ${tint(C.surface, 25)} 60%, transparent 75%)`,
+            boxShadow: `0 0 40px ${tint(C.cyan, 12)}, inset 0 0 40px ${tint(C.purple, 10)}`,
             animation: animated ? 'floatY 6s ease-in-out infinite' : undefined,
           }}
         >
@@ -183,13 +184,13 @@ export function ProgressRadar({
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
             <radialGradient id="radar-fill" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#a0aec0" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="#5e5ce6" stopOpacity="0.10" />
+              <stop offset="0%" stopColor={C.cyan} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={C.purple} stopOpacity="0.10" />
             </radialGradient>
           </defs>
 
           {/* Grid (malla del poliedro) */}
-          <g stroke="rgba(160,174,192,0.22)" strokeWidth="1" opacity="0.55">
+          <g stroke={inkAt(C.cyan, 0.22)} strokeWidth="1" opacity="0.55">
             {gridLines.filter(l => l.type === 'concentric').map((line, i) => (
               <polygon key={`concentric-${i}`} points={line.points} fill="none" />
             ))}
@@ -203,7 +204,7 @@ export function ProgressRadar({
           <polygon
             points={polygonPoints}
             fill="url(#radar-fill)"
-            stroke="#a0aec0"
+            stroke={C.cyan}
             strokeWidth="2"
             strokeLinejoin="round"
             filter="url(#radar-glow)"
@@ -214,7 +215,7 @@ export function ProgressRadar({
           {points.map((p) => (
             <g key={p.key}>
               <circle cx={p.x} cy={p.y} r={glowRadius} fill={p.color} fillOpacity="0.25" stroke={p.color} strokeWidth="1" strokeOpacity="0.5" />
-              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke="#000206" strokeWidth="1.5" filter="url(#radar-glow)" />
+              <circle cx={p.x} cy={p.y} r={dotRadius}  fill={p.color} stroke={C.bg} strokeWidth="1.5" filter="url(#radar-glow)" />
             </g>
           ))}
 
@@ -226,7 +227,7 @@ export function ProgressRadar({
                   <text x={p.labelX} y={p.labelY} textAnchor="middle" dominantBaseline="middle" fill={p.color}>
                     {p.label}
                   </text>
-                  <text x={p.labelX} y={p.labelY + labelOffset} textAnchor="middle" dominantBaseline="middle" fill="#94a3b8" fontSize={subFontSize}>
+                  <text x={p.labelX} y={p.labelY + labelOffset} textAnchor="middle" dominantBaseline="middle" fill={C.mut} fontSize={subFontSize}>
                     {formatScore(p.value)}
                   </text>
                 </g>

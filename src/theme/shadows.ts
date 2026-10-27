@@ -15,6 +15,16 @@ export const SHADOW = {
   glowGold: '0 0 16px rgba(255,176,46,0.25), 0 8px 24px rgba(0,0,0,0.3)',
 } as const;
 
+/**
+ * Elevación teñida: la sombra de un elemento cuyo color ES la marca (el color
+ * personal del usuario, un tinte del tema). SHADOW es negro y no sirve acá.
+ * La forma vivía escrita a mano en cuatro archivos, con dos geometrías casi
+ * iguales (0 8px 28px y 0 10px 28px).
+ */
+export const ELEVATED = {
+  cta: (color: string): string => `0 8px 24px ${color}`,
+} as const;
+
 export const GLOW = {
   cyan: '0 0 18px rgba(160,174,192,0.45)',
   gold: '0 0 18px rgba(255,176,46,0.42)',

@@ -34,7 +34,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
   const repColor = cred && cred.rep >= 70 ? C.green : cred && cred.rep >= 50 ? C.gold : C.cyan;
 
   return (
-    <div style={{ minHeight: '100vh', background: `radial-gradient(circle at 50% 0%, #061024, ${C.bg})`, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 16px' }}>
+    <div style={{ minHeight: '100vh', background: `radial-gradient(circle at 50% 0%, #061024, ${C.bg})`, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})` }}>
           <span style={{ color: C.bg, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>

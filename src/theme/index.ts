@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 export * from './tokens';
+export * from './canvasInk';
 export * from './typography';
 export * from './animations';
 export * from './shadows';

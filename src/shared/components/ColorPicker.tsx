@@ -95,7 +95,7 @@ export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) 
               style={{
                 width: dotSize, height: dotSize,
                 borderRadius: '50%',
-                border: isActive ? `2.5px solid ${option.hex}` : '2px solid rgba(255,255,255,0.1)',
+                border: isActive ? `2.5px solid ${option.hex}` : `2px solid ${C.locked}`,
                 background: isActive
                   ? `radial-gradient(circle at 35% 35%, ${option.hex}, ${option.hex}88)`
                   : `radial-gradient(circle at 35% 35%, ${option.hex}88, ${option.hex}44)`,

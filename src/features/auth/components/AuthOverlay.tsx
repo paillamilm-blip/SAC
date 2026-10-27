@@ -6,7 +6,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { persistOnboardingProfile } from '@/shared/services/onboardingSync';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
+import { C, FONT, SIZE, RADIUS, tint, ELEVATED } from '@/theme';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -515,7 +515,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
               style={{
                 ...S.submit,
                 background: `linear-gradient(135deg, ${uc}, ${C.purple})`,
-                boxShadow: `0 8px 28px ${uc}4d`,
+                boxShadow: ELEVATED.cta(`${uc}4d`),
                 opacity: loading ? 0.6 : 1,
                 cursor: loading ? 'default' : 'pointer',
               }}

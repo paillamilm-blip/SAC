@@ -14,7 +14,7 @@ import { useApp } from '@/store/AppContext';
 import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
-import { C, FONT, RADIUS } from '@/theme';
+import { C, FONT, RADIUS, SIZE } from '@/theme';
 import type { GemeloDigital } from '@/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(2,6,19,0.78)', backdropFilter: 'blur(6px)',
+        background: C.wash, backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
         animation: 'redFadeIn 0.2s ease',
       }}
@@ -71,7 +71,7 @@ function CloseBtn({ onClose }: { onClose: () => void }) {
         position: 'absolute', top: 12, right: 12, zIndex: 2,
         width: 32, height: 32, borderRadius: 12, cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.cyanDim}`, color: C.cyan,
+        background: C.glass2, border: `1px solid ${C.cyanDim}`, color: C.cyan,
       }}
     >
       <X size={16} />
@@ -137,11 +137,11 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
       <div style={{ padding: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <Share2 size={16} style={{ color: uc }} />
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff' }}>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.ink }}>
             Comparte tu credencial
           </span>
         </div>
-        <p style={{ margin: '0 0 18px', fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim, lineHeight: 1.4 }}>
+        <p style={{ margin: '0 0 18px', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.cyanDim, lineHeight: 1.4 }}>
           Muestra este QR en persona o envía el link. Quien lo abra verá tu Gemelo Digital y podrá conectar contigo.
         </p>
 
@@ -179,7 +179,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           onClick={copy}
           style={{
             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer',
-            background: 'rgba(255,255,255,0.05)', border: `1px solid ${uc}66`, color: uc,
+            background: C.glass, border: `1px solid ${uc}66`, color: uc,
             fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
@@ -191,7 +191,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         <div style={{ height: 1, background: C.cyanFaint, margin: '18px 0' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <ShieldCheck size={15} style={{ color: C.green }} />
-          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: '#eaf4ff' }}>Pasaporte Verificable</span>
+          <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink }}>Pasaporte Verificable</span>
         </div>
         <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: 12, color: C.cyanDim, lineHeight: 1.4 }}>
           Credencial firmada: quien la reciba puede comprobar que es auténtica y no fue alterada, <b>sin necesidad de cuenta</b>.
@@ -210,7 +210,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
               </div>
             </div>
             <button onClick={() => { navigator.clipboard?.writeText(passportUrl); setCopiedP(true); setTimeout(() => setCopiedP(false), 2000); }}
-              style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: C.glass, border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               {copiedP ? <Check size={15} /> : <Copy size={15} />} {copiedP ? 'COPIADO' : 'COPIAR LINK VERIFICABLE'}
             </button>
           </>
@@ -309,10 +309,10 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
       {!loading && notFound && (
         <div style={{ padding: 50, textAlign: 'center' }}>
-          <p style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: '#eaf4ff', margin: '0 0 6px' }}>
+          <p style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 16, color: C.ink, margin: '0 0 6px' }}>
             Credencial no encontrada
           </p>
-          <p style={{ fontFamily: FONT.body, fontSize: 12.5, color: C.cyanDim, margin: 0 }}>
+          <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.cyanDim, margin: 0 }}>
             El usuario @{username} no existe o el link es inválido.
           </p>
         </div>
@@ -327,7 +327,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
               width: 72, height: 72, borderRadius: 18, overflow: 'hidden', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: cred.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${r.color}, ${C.cyan})`,
-              color: '#060a12', fontWeight: 700, fontSize: 26, fontFamily: FONT.display,
+              color: C.onAccent, fontWeight: 700, fontSize: 26, fontFamily: FONT.display,
               boxShadow: `0 0 18px ${r.color}44`,
             }}>
               {cred.avatar_url
@@ -335,7 +335,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                 : initialsOf(cred.full_name)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: '#eaf4ff', lineHeight: 1.1 }}>
+              <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.ink, lineHeight: 1.1 }}>
                 {cred.full_name}
               </div>
               <div style={{ fontFamily: FONT.mono, fontSize: 12, color: C.cyanDim, marginTop: 2 }}>@{cred.username}</div>
@@ -369,7 +369,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
           <div style={{
             padding: '12px 8px 4px', borderRadius: RADIUS.lg, marginBottom: 16,
-            background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+            background: C.glass, border: `1px solid ${C.line}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 2 }}>
               <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>Reputación</span>
@@ -395,7 +395,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             return (
               <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: `${ac}10`, border: `1px solid ${ac}40` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: ac, letterSpacing: 1 }}>AFINIDAD DE COLABORACION</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: ac, letterSpacing: 1 }}>AFINIDAD DE COLABORACION</span>
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: ac }}>{aff}%</span>
                 </div>
                 <p style={{ margin: '6px 0 0', fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
@@ -420,7 +420,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             return (
               <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9.5, color: uc, letterSpacing: 1 }}>FUSIÓN DE ORBES</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: 1 }}>FUSIÓN DE ORBES</span>
                 </div>
 
                 {!hasData ? (
@@ -436,7 +436,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                           {fusion.shared.map((s) => (
                             <span key={`shared-${s.name}`} style={{
                               padding: '3px 9px', borderRadius: 999, background: `${uc}18`, border: `1px solid ${uc}44`,
-                              fontFamily: FONT.mono, fontSize: 9.5, color: uc,
+                              fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc,
                             }}>
                               {s.name}
                             </span>
@@ -467,7 +467,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                           {fusion.onlyTheirs.map((s) => (
                             <span key={`only-${s.name}`} style={{
                               padding: '3px 9px', borderRadius: 999, background: `${uc}12`, border: `1px solid ${uc}44`,
-                              fontFamily: FONT.mono, fontSize: 9.5, color: uc,
+                              fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc,
                             }}>
                               {s.name} · {s.theirsPct}/100
                             </span>

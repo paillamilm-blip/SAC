@@ -61,7 +61,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%', width: '100%', padding: 24, background: C.bg,
   },
   card: {
-    width: '100%', maxWidth: 340, textAlign: 'center', padding: '28px 22px',
+    width: '100%', maxWidth: 340, textAlign: 'center', padding: '24px 20px',
     borderRadius: 16, border: `1px solid ${tint(C.gold, 35)}`,
     background: `linear-gradient(145deg, ${C.surface}, ${C.overlay})`,
     backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
@@ -89,7 +89,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   btnPrimary: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: `linear-gradient(90deg, ${C.cyan}, #008b9e)`, border: 'none',
+    background: `linear-gradient(90deg, ${C.cyan}, ${C.tealDeep})`, border: 'none',
     color: C.bg, fontFamily: RAJ, fontWeight: 700, fontSize: 13,
     boxShadow: `0 0 15px ${tint(C.cyan, 35)}`,
   },

@@ -16,7 +16,7 @@ import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { GemeloReveal } from './GemeloReveal';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
-import { C, FONT, RADIUS, SIZE } from '@/theme';
+import { C, FONT, RADIUS, SIZE, ELEVATED } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 
@@ -240,7 +240,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           {...enter(2)}
           whileHover={reduceMotion ? undefined : { scale: 1.01 }}
           whileTap={reduceMotion ? undefined : { scale: 0.99 }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '28px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${cvReadOk ? `${uc}aa` : `${uc}55`}`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)', boxShadow: cvReadOk ? `0 0 0 1px ${uc}33, 0 8px 28px ${uc}22` : 'none' }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${cvReadOk ? `${uc}aa` : `${uc}55`}`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)', boxShadow: cvReadOk ? `0 0 0 1px ${uc}33, ${ELEVATED.cta(`${uc}22`)}` : 'none' }}
         >
           <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />

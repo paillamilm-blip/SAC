@@ -60,6 +60,12 @@ export const C = {
   // genérica de Tailwind. Se promueven a token porque se repetían en 3 archivos.
   ice:          '#8bd4ff',
   iris:         '#8a88f0',
+  // El extremo oscuro del degradado silver→teal de los botones grandes (reto del
+  // día, reintento del ErrorBoundary). Vivía como hex suelto en dos archivos.
+  tealDeep:     '#008b9e',
+  // Naranja de la racha: el único cálido entre el ámbar y el rojo. StreakBanner
+  // lo escribía tres veces (un hex y dos rgba casi iguales).
+  flame:        '#ff6432',
 } as const;
 
 export function statusColor(status: string, options?: { master?: boolean; depth?: number }): string {

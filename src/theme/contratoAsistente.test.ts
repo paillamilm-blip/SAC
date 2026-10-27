@@ -1,6 +1,6 @@
 // theme/contratoAsistente.test.ts
 // El estándar asistente (DESIGN.md) es una promesa, así que se vela como el
-// contrato del mapa: texto crudo leído desde el disco. Tres afirmaciones:
+// contrato del mapa: texto crudo leído desde el disco. Cinco afirmaciones:
 //   1. Los cianes muertos del prototipo donante (5cc8ff y el saturado 00f5ff,
 //      escritos también en forma rgb) no reaparecen fuera del mapa neuronal,
 //      que es la única excepción documentada y se pinta con su paleta fija.
@@ -9,8 +9,11 @@
 //      el 2026-10-27; si alguien lo reescribe, este test lo echa).
 //   3. El vidrio se pide, no se copia: un alfa de blanco crudo solo vive en
 //      theme/ y en la hoja de variables. Lo demás pasa por C.glass / C.glass2
-//      / tint(). La DEUDA_VIDRIO es una lista que solo puede achicarse: son
-//      los canvas de credencial que L2 va a unificar en un único dibujante.
+//      / tint().
+//   4. La credencial tiene UN dibujante (L2): el pasaporte gemelo duplicado
+//      se fue y el lienzo 2D de la tarjeta vive en un solo módulo.
+//   5. La paleta concreta del PNG descargable pertenece al tema, no a un
+//      componente: el canvas no lee var(), pero tampoco se reinventa por hoja.
 //
 // OJO CRLF: el checkout viene con \r\n (core.autocrlf); se quita antes de barrer.
 import { describe, it, expect } from 'vitest';
@@ -36,15 +39,16 @@ const bajo = (r: string): string => r.replace(/\\/g, '/').replace(/^src\//, '');
 
 const ARCHIVOS = caminar('src').filter((r) => TEXTO.test(r) && !esMapa(r) && !/\.test\.tsx?$/.test(r));
 
-// Los tres canvas que L2 va a fundir en un único dibujante de credenciales.
-// Mientras existan dos dibujantes, su vidrio se pinta con valor crudo: la lista
-// solo puede achicarse, nunca crecer.
-const DEUDA_VIDRIO = [
-  'features/gemelo/components/CredencialModal.tsx',
-  'features/gemelo/components/PasaporteGemelo.tsx',
-  'features/gemelo/components/RedSocial.tsx',
-];
+// La lista que reservaba el vidrio crudo de los canvas de credencial se cerró
+// en L2 (2026-10-27): ahora hay UN solo dibujante y su paleta vive en el tema,
+// así que no queda ninguna excepción que vigilar. Se quedó vacía a propósito —
+// si alguien reabre el permiso, la prueba 3 vuelve a fallar en el acto.
+const DEUDA_VIDRIO: string[] = [];
 const CRUDA = /rgba\(\s*255\s*,\s*255\s*,\s*255\s*,\s*0\.0[0-9]/;
+
+// El lienzo 2D y la paleta del PNG descargable tienen un solo dueño.
+const UN_DIBUJANTE = 'features/gemelo/services/credencialCanvas.ts';
+const NAVY_PNG = new RegExp(`#04${'122a'}`, 'i');
 
 describe('contrato asistente — una sola forma de hacer cada cosa', () => {
   it('los cianes del prototipo no existen fuera del mapa', () => {
@@ -81,14 +85,23 @@ describe('contrato asistente — una sola forma de hacer cada cosa', () => {
     expect(sucios).toEqual([]);
   });
 
-  it('la deuda de vidrio de los canvas no crece', () => {
-    const vivas = DEUDA_VIDRIO.filter((ruta) => {
-      try {
-        return /rgba\(\s*255\s*,\s*255\s*,\s*255/.test(sinCR(readFileSync(`src/${ruta}`, 'utf8')));
-      } catch {
-        return false;
-      }
-    });
-    expect(vivas.every((r) => DEUDA_VIDRIO.includes(r))).toBe(true);
+  it('la credencial la dibuja UN solo módulo', () => {
+    // Dos dibujantes eran dos copias de la misma tarjeta con la misma
+    // tipografía y alfas levemente distintos (0.35 vs 0.45, 0.8 vs 0.85). El
+    // lienzo 2D de la credencial vive en un archivo; ningún componente pinta.
+    const dibujantes = ARCHIVOS
+      .map(bajo)
+      .filter((ruta) => /getContext\(\s*['"]2d['"]\s*\)/.test(sinCR(readFileSync(`src/${ruta}`, 'utf8'))));
+    expect(dibujantes).toEqual([UN_DIBUJANTE]);
+  });
+
+  it('la paleta del PNG descargable no se reescribe en un componente', () => {
+    // El canvas no lee var() ni color-mix(), así que su paleta es concreta.
+    // Concreta quiere decir UN lugar (theme/), no un hex suelto por componente.
+    const sucios = ARCHIVOS
+      .map(bajo)
+      .filter((ruta) => !ruta.startsWith('theme/'))
+      .filter((ruta) => NAVY_PNG.test(sinCR(readFileSync(`src/${ruta}`, 'utf8'))));
+    expect(sucios).toEqual([]);
   });
 });

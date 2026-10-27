@@ -110,7 +110,7 @@ const S: Record<string, React.CSSProperties> = {
     margin: '0 0 12px',
     padding: '10px 14px',
     borderRadius: 12,
-    background: `linear-gradient(135deg, rgba(255,100,50,0.08), ${tint(C.gold, 6)})`,
+    background: `linear-gradient(135deg, ${tint(C.flame, 8)}, ${tint(C.gold, 6)})`,
     border: `1px solid ${tint(C.gold, 25)}`,
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -130,7 +130,7 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 8,
   },
-  fire: { fontSize: 20, filter: 'drop-shadow(0 0 6px rgba(255,100,50,0.6))' },
+  fire: { fontSize: 20, filter: 'drop-shadow(0 0 6px ${tint(C.flame, 60)})' },
   fireOff: { fontSize: 13, opacity: 0.5 },
   streakNum: {
     fontFamily: FONT.mono,
@@ -186,7 +186,7 @@ const S: Record<string, React.CSSProperties> = {
   progressFill: {
     height: '100%',
     borderRadius: 2,
-    background: `linear-gradient(90deg, #ff6432, ${C.gold}, ${C.green})`,
+    background: `linear-gradient(90deg, ${C.flame}, ${C.gold}, ${C.green})`,
     transition: 'width 0.5s',
   },
   tiers: {

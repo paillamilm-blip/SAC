@@ -377,7 +377,7 @@ export function AcademiaTab() {
               </span>
               <button onClick={() => window.dispatchEvent(new Event('omicron:request-auth'))} style={{
                 padding: '8px 12px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
-                background: uc, border: 'none', color: '#05070d',
+                background: uc, border: 'none', color: C.onAccent,
                 fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xs,
               }}>Crear cuenta</button>
             </div>
@@ -484,7 +484,7 @@ export function AcademiaTab() {
                   return (
                     <div key={c.id} style={{ position: 'relative', minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: left ? 'flex-start' : 'flex-end' }}>
                       <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 6px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
-                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: '2px solid #060a12', boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? 'corePulse 1.8s ease-in-out infinite' : undefined }} />
+                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: `2px solid ${C.bg}`, boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? 'corePulse 1.8s ease-in-out infinite' : undefined }} />
                       <button onClick={() => openCourse(c)} className="oc-card oc-pressable oc-rise" style={{
                         width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
                         borderRadius: 14, padding: 11,
@@ -567,7 +567,7 @@ export function AcademiaTab() {
                     <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
                     {!done ? (
                       <button onClick={() => completeLesson(l.id)} style={{
-                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: '#04110a',
+                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.onAccent,
                         background: C.cyan, border: 'none', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontWeight: 700,
                         display: 'inline-flex', alignItems: 'center', gap: 8,
                       }}><CheckCircle2 size={14} /> MARCAR LEÍDA</button>
