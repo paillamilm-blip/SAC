@@ -22,6 +22,8 @@ colors:
   surface: "rgba(12,16,30,0.86)"
   surface-light: "rgba(22,28,48,0.9)"
   overlay: "rgba(2,3,10,0.98)"
+  header-glass: "rgba(9,12,22,0.55)"
+  sticky-glass: "rgba(6,8,16,0.96)"
   glass: "rgba(255,255,255,0.045)"
   glass-raised: "rgba(255,255,255,0.08)"
   line: "rgba(150,180,255,0.14)"
@@ -45,6 +47,10 @@ typography:
     fontSize: "20px"
     fontWeight: 700
     letterSpacing: "-0.3px"
+  card-title:
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 700
   stat:
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
     fontSize: "20px"
@@ -205,6 +211,7 @@ Ese `18%` vertical es intencional: pone el punto de luz detrás del orbe.
 - **El orbe nunca es gris.** `color={C.cyan}` en un `GeodesicOrb` es un bug — `C.cyan` es el gris de marca. Va `color={uc}` o `color={getUserColor()}`.
 - **Estado se lee por color, no solo por texto.** Pero el color nunca es el único portador: siempre hay label.
 - **Los estados `:focus`/`:hover`** se resuelven con la variable CSS `--omi-accent`, no con clases Tailwind.
+- **Vidrio fijo ≠ vidrio sticky.** `header-glass` (0.55) es para la barra superior, que no tiene contenido pasando por debajo. Una barra `position: sticky` sobre una lista que scrollea usa `sticky-glass` (0.96) con el mismo blur: con menos alfa, en el teléfono el texto de abajo se lee *a través* del título (medido en Aprendizaje: a 0.55 y a 0.86 la cola se filtraba; a 0.96 desaparece).
 
 ## Typography
 
@@ -314,6 +321,8 @@ Texto en `FONT_STYLE.input` (sans, 15px). Fondo de vidrio, borde `BORDER.default
 ### Navigation
 
 Header fijo (`BASE.header`): `padding: '13px 16px'`, fondo `rgba(9,12,22,0.55)`, blur 20px, borde inferior `rgba(150,180,255,0.12)`, `zIndex: 2`. Avatar arriba a la derecha; al tocarlo abre `CredencialModal`.
+
+**Barra de asistente (sticky, dentro de una pestaña):** una sola fila de 47px — título `card-title` (17px; 20px recién desde 900px), el contador a la derecha en `SIZE.sm` con `tabular-nums`, y el progreso como **línea inferior** de la barra (riel de 2px, `left:0/right:0`, lleno con `scaleX()` en el color del usuario), no como un bloque más en la pila vertical. Fondo `sticky-glass` + blur 20px, `margin: 0 -16px` para llegar de borde a borde y `box-shadow: 0 1px 0` para la línea de `BASE.header` sin gastar altura. Regla de fondo: en el teléfono la altura es la moneda — una barra de dos filas con aviso largo adentro medía 139px sobre 353px visibles (39% de la pantalla).
 
 ### GeodesicOrb (componente firma)
 

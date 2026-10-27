@@ -124,3 +124,33 @@ Supabase**: el código está escrito, testeado y commiteado, pero el backend des
 6. RLS cruzado: dos cuentas, cada una ve solo sus filas.
 7. Pase de QA Q1-Q10 del Plan A, y recién ahí el gate de la Fase 1 (realtime <3 s, 10/10).
 8. `superpowers:finishing-a-development-branch` sobre la rama `fase-6-recorte-datos`.
+
+## 7 · Pase visual del andamio (2026-10-27, después de B4)
+
+Petición del dueño: que la pestaña **se vea y se sienta como un asistente de bolsillo**. Se mejoró el
+andamio (`aprendizaje.css` + `AprendizajeTab.tsx`); `mapa.css`, la geometría y la coreografía de 4 actos
+siguen siendo el port 1:1 del donante.
+
+**Métrica de salida (cumplida):** 0 hallazgos del detector `impeccable` en la superficie (empezó en 13),
+0 pares texto/fondo bajo 4,5:1 en el andamio, 438 tests en verde (typecheck y lint limpios; el único
+warning de eslint es `isSpeaking` en `OrbShell.tsx`, ajeno a esta superficie), y el contrato del mapa sin
+tocar.
+
+| Qué cambio | Antes | Después | Cómo se midió |
+| --- | --- | --- | --- |
+| Barra sticky del workspace | 139px sobre 353 visibles (39% de la pantalla), dos filas con el aviso adentro | **47px**, una fila: título + contador + el progreso como **línea inferior** | `getBoundingClientRect().height` en el dev server |
+| Sangrado del contenido por detrás | `rgba(9,12,22,0.55)` y hasta `0.86`: la cola se leía a través del título | `sticky-glass` `rgba(6,8,16,0.96)` + blur 20px | captura con la cola scrolleada bajo la barra (0.86 todavía sangraba) |
+| Aviso de muestra | tarjeta de 116px con borde, vidrio y sombra | chip (la etiqueta honesta, siempre visible) + nota de 39px sin card | el mapa entra al primer viewport: `top` 289 → 210 |
+| Fila de la cola | el estado sólo se leía en el badge | **lomo de 2px por estado**: acento del usuario = pendiente, teal = reconocida, oro = dominada, guiones = descartada | `getComputedStyle(item,'::before')` → `rgb(125,211,252)` sobre una `detectada` |
+| Foco, activo, riel | gris de marca | `--omi-accent` = `useUserColor()` (el mapa queda afuera: su paleta es fija por D5) | test de montaje + lectura en vivo |
+| Chevron, severidad, "Guardando…" | carácter unicode / texto plano / nada | chevron dibujado en CSS, severidad con color **y** palabra escrita, punto que respira con override de `prefers-reduced-motion` | `aria-expanded`, `data-severidad`, `aria-busy` |
+
+**Desviaciones aceptadas a propósito (no son deuda nueva):**
+- `mapa.css` conserva los valores fuera de escala del donante (17/14/12px, radio 10, `#1a1408`, `#2a313b`,
+  easing con rebote). Es un port 1:1; tocarlo rompe la comparación con el fixture dorado.
+- El cian prohibido (`rgba(92,200,255,…)`) sigue vivo en `src/index.css` —incluido `:focus-visible` en la
+  línea 125— y en `src/styles/responsive.css`. Es global: limpiarlo toca todas las superficies y necesita
+  el OK del dueño (riesgo R6).
+- La rama ≥900px (dos columnas) no se pudo observar en el navegador embebido: su viewport máximo es
+  490×417. Las reglas están escritas y parsean, pero **no tienen captura de verificación**.
+

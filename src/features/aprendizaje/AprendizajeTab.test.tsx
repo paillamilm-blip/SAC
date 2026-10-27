@@ -19,6 +19,10 @@ vi.mock('@/infrastructure/supabase/client', () => ({
   supabaseAnonKey: 'anon-test-key',
 }));
 
+// useUserColor tira de ColorPicker → spatialAudio, que necesita matchMedia. La
+// pestaña no es dueña del color: sólo lo baja al andamio como variable CSS.
+vi.mock('@/shared/hooks/useUserColor', () => ({ useUserColor: () => '#7dd3fc' }));
+
 import AprendizajeTab from './AprendizajeTab';
 
 const PUENTE_KEY = 'omicron.brechas.puente';
@@ -59,6 +63,35 @@ describe('la pestaña existe y pinta el workspace', () => {
     expect(screen.getByRole('complementary', { name: /cola de revisión/i })).toBeTruthy();
     // Con puente vacío cae a la muestra de 8: el header dice "N de 8 reconocidas".
     expect(screen.getByText(/de 8 reconocidas/i)).toBeTruthy();
+  });
+
+  it('el andamio pinta con el color del usuario y el progreso se ve, no sólo se lee', () => {
+    render(<AprendizajeTab />);
+    const ws = document.querySelector('.aprendizaje-workspace') as HTMLElement;
+    // Foco, riel y estado activo salen de esta variable; el mapa NO la usa.
+    expect(ws.style.getPropertyValue('--omi-accent')).toBe('#7dd3fc');
+    expect(ws.style.getPropertyValue('--omi-accent-soft')).toBe('#7dd3fc33');
+    // 3 de 8 reconocidas → el riel ocupa 0,375 (se anima transform, no width).
+    const rail = ws.querySelector('.aprendizaje-rail i') as HTMLElement;
+    expect(rail.style.getPropertyValue('--p')).toBe('0.375');
+    expect(ws.querySelector('.aprendizaje-rail')?.getAttribute('aria-hidden')).toBe('true');
+    // La severidad manda el color, y siempre está escrita con letras.
+    fireEvent.click(screen.getByRole('button', { name: /Comunicación escrita breve/i }));
+    const sev = ws.querySelector('.cola-severidad') as HTMLElement;
+    expect(sev.dataset.severidad).toMatch(/alta|media|baja/);
+    expect(sev.textContent).toMatch(/Impacto/);
+  });
+
+  it('la barra es UNA fila: el progreso es su línea inferior y la muestra no la parte', () => {
+    render(<AprendizajeTab />);
+    const header = document.querySelector('.aprendizaje-header') as HTMLElement;
+    // El riel es la línea inferior de la barra, no un bloque más en la pila.
+    expect(header.querySelector('.aprendizaje-rail')).not.toBeNull();
+    // El chip mide ~26px y obligaba a la barra a dos líneas (139px sobre 353 visibles):
+    // vive en el flujo, debajo del header, y la honestidad sigue estando a la vista.
+    const chip = document.querySelector('.aprendizaje-chip') as HTMLElement;
+    expect(chip.textContent).toBe(AVISO_MUESTRA);
+    expect(header.contains(chip)).toBe(false);
   });
 });
 

@@ -1,58 +1,89 @@
 /* features/aprendizaje/aprendizaje.css
-   B4 · layout del workspace de aprendizaje y su cola. CERO hex literales: todo
-   sale de los tokens globales de index.css (--surface/--line/--ink/--mut/--teal/
-   --red/--gold/--purple/--bg/--glass). El mapa (mapa.css) y su coreografía NO se
-   tocan acá.
+   B4 · layout del workspace de aprendizaje y su cola. CERO valores inventados:
+   cada tamaño sale de SIZE (theme/typography.ts), cada radio de RADIUS, cada
+   sombra de SHADOW y cada curva de las variables --ease- y --timing- (index.css).
+   Los rgba
+   sueltos que están acá son los valores documentados de C.glass2 / BORDER.* /
+   BASE.header, no números magicos.
+   El mapa (mapa.css) y su coreografía NO se tocan acá.
    Invariante visual (brief §3): 2 columnas desde 900px (mapa centro, cola derecha),
    apilado mobile-first por debajo; header sticky; objetivo < 2 viewports. */
 
 .aprendizaje-workspace {
+  /* El acento es el color del usuario (regla del sistema: foco y estado activo).
+     El mapa abajo se pinta SIEMPRE con su paleta fija; esto manda en el andamio.
+     Lo sobreescribe el style inline de AprendizajeTab con useUserColor(). */
+  --omi-accent: var(--silver);
+  --omi-accent-soft: rgba(160, 174, 192, 0.2);
   color: var(--ink);
-  padding: 0 14px;
+  padding: 0 16px;
 }
 
-/* ── header sticky con progreso (como el del donante) ─────────────────────── */
+/* ── barra de asistente (sticky) ────────────────────────────────────────────
+   En un teléfono la altura es la moneda: esta barra es UNA fila y llega de
+   borde a borde. El vidrio tiene que ser casi opaco: la barra FIJA del sistema
+   (BASE.header, 0.55) no tiene contenido pasando por debajo; sticky sí, y con
+   0.55 / 0.86 la cola se leía a través del título. */
 .aprendizaje-header {
   position: sticky;
   top: 0;
   z-index: 3;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: baseline;
   gap: 12px;
-  padding: 12px 4px;
-  margin-bottom: 8px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  padding: 10px 16px 11px;
+  margin: 0 -16px 12px;
+  background: rgba(6, 8, 16, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(150, 180, 255, 0.12); /* la línea de BASE.header, sin ocupar altura */
 }
 
 .aprendizaje-cabecera-texto {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 10px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .aprendizaje-titulo {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px; /* SIZE.lg · en el bolsillo manda la fila, no el cartel */
   font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+  .aprendizaje-titulo {
+    font-size: 20px; /* SIZE.xl · títulos de sección, con aire de sobra */
+  }
 }
 
 .aprendizaje-badge {
-  font-size: 12px;
-  font-weight: 600;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 11px; /* SIZE.xs · chips */
+  letter-spacing: 0.4px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid var(--gold);
+  border: 1px solid rgba(255, 176, 46, 0.3); /* BORDER.gold */
+  background: rgba(255, 176, 46, 0.14); /* C.goldFaint: el fondo, no sólo el borde */
   color: var(--gold);
 }
 
+/* Va en el flujo, no en la barra: es una etiqueta larga y en el header partía
+   la fila en dos, que es justo lo que se come el espacio vertical del teléfono. */
+.aprendizaje-chip {
+  display: inline-flex;
+  margin-bottom: 6px;
+}
+
 .aprendizaje-progreso {
-  margin: 0;
-  font-size: 14px;
-  color: var(--mut);
+  margin: 0 auto 0 0;
+  font-size: 13px; /* SIZE.sm */
+  color: var(--silver);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .aprendizaje-progreso strong {
@@ -60,29 +91,57 @@
   font-weight: 700;
 }
 
+/* El progreso también se ve: la barra de estado del asistente, como línea
+   inferior de la cabecera. No es un bloque más en la pila vertical. */
+.aprendizaje-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.aprendizaje-rail i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--omi-accent);
+  /* La fracción llega por --p desde la pestaña. Se anima transform, no width:
+     el riel no provoca reflujo de layout mientras cambia el progreso. */
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  transition: transform var(--timing-enter) var(--ease-default);
+}
+
 /* ── aviso de muestra y error ─────────────────────────────────────────────── */
+/* La honestidad no necesita una tarjeta: el chip de arriba ya dice que es
+   muestra. Acá va la línea corta y plateada, para que el mapa entre en el
+   primer viewport (en el bolsillo, cada bloque con borde es un scroll más). */
 .aprendizaje-aviso {
-  margin: 10px 0;
-  padding: 12px 14px;
-  font-size: 13.5px;
-  color: var(--mut);
-  background: var(--glass);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  margin: 0 0 16px;
+  max-width: 62ch;
+  font-size: 13px; /* SIZE.sm */
+  line-height: 1.5;
+  color: var(--silver);
 }
 
 .aprendizaje-aviso strong {
   color: var(--gold);
+  font-weight: 600;
 }
 
 .aprendizaje-error {
-  margin: 10px 0;
-  padding: 10px 14px;
-  font-size: 13.5px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--red);
-  background: var(--glass);
-  border: 1px solid var(--red);
-  border-radius: 10px;
+  background: rgba(255, 92, 122, 0.14); /* C.redFaint: el error se ve, no sólo se lee */
+  border: 1px solid rgba(255, 92, 122, 0.3);
+  border-radius: 12px;
 }
 
 /* ── grilla de dos columnas ───────────────────────────────────────────────── */
@@ -106,23 +165,81 @@
 }
 
 .cola-titulo {
-  margin: 0 0 10px;
-  font-size: 15px;
+  margin: 0 0 12px;
+  font-size: 17px; /* SIZE.lg · títulos de card */
   font-weight: 700;
   color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cola-titulo b {
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: var(--silver);
 }
 
 .cola-vacia {
-  color: var(--mut);
-  font-size: 13.5px;
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--silver);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
 }
 
 .cola-item {
+  position: relative;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  margin-bottom: 8px;
+  border-radius: 16px; /* RADIUS.lg · la tarjeta de la cola */
+  margin-bottom: 12px;
   background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2); /* SHADOW.sm */
   overflow: hidden;
+  transition: border-color var(--timing-normal) var(--ease-default),
+    box-shadow var(--timing-normal) var(--ease-default);
+}
+
+@media (hover: hover) {
+  .cola-item:hover {
+    border-color: rgba(150, 180, 255, 0.28);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35); /* SHADOW.md */
+  }
+}
+
+/* El lomo de la fila es el estado: en el color del usuario están las que el
+   asistente todavía espera tu respuesta. El texto del badge sigue dizendo
+   cuál es, así que el color nunca es la única señal. */
+.cola-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--omi-accent);
+}
+
+.cola-item[data-estado='confirmada']::before {
+  background: var(--teal);
+}
+
+.cola-item[data-estado='dominada']::before {
+  background: var(--gold);
+}
+
+/* Descartada: lomo vacío y guiones, la misma señal que su badge. */
+.cola-item[data-estado='rechazada']::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line) 0 3px,
+    transparent 3px 6px
+  );
 }
 
 .cola-toggle {
@@ -130,14 +247,26 @@
   min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 14px;
   background: transparent;
   border: 0;
   color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: background var(--timing-fast) var(--ease-default);
+}
+
+@media (hover: hover) {
+  .cola-toggle:hover {
+    background: var(--glass);
+  }
+}
+
+.cola-toggle:focus-visible {
+  outline: 2px solid var(--omi-accent);
+  outline-offset: -2px;
 }
 
 .cola-punto {
@@ -145,88 +274,144 @@
   height: 12px;
   border-radius: 50%;
   flex: none;
+  background: var(--punto, var(--silver));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--punto, var(--silver)) 35%, transparent);
 }
 
 .cola-nombre {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: 15px; /* SIZE.md · body principal */
   font-weight: 600;
+  line-height: 1.35;
 }
 
-/* El estado se lee por TEXTO, nunca sólo por color (Invariante de a11y). */
+/* Chevron dibujado con CSS (guión de 1.5px, el mismo grosor de los bordes). */
+.cola-chev {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--silver);
+  border-bottom: 1.5px solid var(--silver);
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform var(--timing-normal) var(--ease-default),
+    border-color var(--timing-fast) var(--ease-default);
+}
+
+.cola-toggle[aria-expanded='true'] .cola-chev {
+  transform: rotate(-135deg) translate(-1px, -1px);
+  border-color: var(--omi-accent);
+}
+
+/* El estado se lee por TEXTO, nunca sólo por color (Invariante de a11y).
+   Plateado sobre superficie oscura = 8,49:1; --mut (4,17:1) no pasa el mínimo. */
 .cola-badge {
   flex: none;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 11px;
-  font-weight: 600;
+  letter-spacing: 0.4px;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--mut);
+  border: 1px solid rgba(150, 180, 255, 0.14);
+  color: var(--silver);
 }
+
 .cola-badge[data-estado='confirmada'] {
   color: var(--teal);
-  border-color: var(--teal);
+  border-color: rgba(63, 208, 201, 0.3);
+  background: rgba(63, 208, 201, 0.14);
 }
+
 .cola-badge[data-estado='dominada'] {
   color: var(--gold);
-  border-color: var(--gold);
+  border-color: rgba(255, 176, 46, 0.3);
+  background: rgba(255, 176, 46, 0.14);
 }
+
+/* Descartada: sigue legible (8,49:1) y se distingue por trazo, no por opacidad. */
 .cola-badge[data-estado='rechazada'] {
-  color: var(--mut);
-  opacity: 0.7;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.04);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
 .cola-cuerpo {
-  padding: 4px 12px 12px;
-  border-top: 1px solid var(--line);
-  font-size: 13.5px;
-  color: var(--mut);
+  padding: 4px 14px 14px;
+  border-top: 1px solid rgba(150, 180, 255, 0.1);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--silver);
 }
 
+/* Impacto: la severidad manda el color, y la palabra siempre está escrita. */
 .cola-severidad {
-  margin: 8px 0 6px;
-  font-size: 12px;
-  font-weight: 600;
+  margin: 12px 0 8px;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   color: var(--red);
-  letter-spacing: 0.02em;
+}
+
+.cola-severidad[data-severidad='media'] {
+  color: var(--gold);
+}
+
+.cola-severidad[data-severidad='baja'] {
+  color: var(--silver);
+}
+
+.cola-severidad i {
+  font-style: normal;
+  letter-spacing: 0.4px;
+  color: var(--silver);
 }
 
 .cola-evidencia {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .cola-label {
   display: block;
-  font-size: 11px;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 9px; /* SIZE.xxs · FONT_STYLE.label */
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--mut);
-  margin-bottom: 2px;
+  letter-spacing: 1.4px;
+  color: var(--silver);
+  margin-bottom: 4px;
 }
 
 .cola-importa {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .cola-aprender {
-  margin: 0 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin: 0 0 14px;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(150, 180, 255, 0.1);
 }
 
 .cola-aprender dt {
-  font-size: 11px;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--mut);
+  letter-spacing: 1.4px;
+  color: var(--silver);
 }
 
 .cola-aprender dd {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .cola-acciones {
@@ -239,24 +424,28 @@
 .boton {
   min-height: 44px;
   min-width: 44px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 9px 16px;
+  border-radius: 12px; /* RADIUS.md */
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--glass);
   color: var(--ink);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
   cursor: pointer;
+  transition: background var(--timing-fast) var(--ease-default),
+    border-color var(--timing-fast) var(--ease-default),
+    color var(--timing-fast) var(--ease-default);
+}
+
+@media (hover: hover) {
+  .aprendizaje-cola .boton:hover:not([aria-pressed]):not(:disabled) {
+    background: rgba(255, 255, 255, 0.08); /* C.glass2 */
+  }
 }
 
 .boton:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--omi-accent);
   outline-offset: 2px;
-}
-
-.cola-toggle:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: -2px;
 }
 
 .boton:disabled {
@@ -265,18 +454,31 @@
 }
 
 .boton-ok[aria-pressed] {
-  border-color: var(--teal);
-  color: var(--teal);
+  border-color: var(--omi-accent);
+  color: var(--omi-accent);
+  background: var(--omi-accent-soft);
+  opacity: 1;
 }
 
 .boton-bad[aria-pressed] {
-  border-color: var(--mut);
-  color: var(--mut);
+  border-color: var(--line);
+  border-style: dashed;
+  color: var(--silver);
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 1;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
 .boton-logro {
-  border-color: var(--gold);
+  border-color: rgba(255, 176, 46, 0.3);
   color: var(--gold);
+}
+
+@media (hover: hover) {
+  .aprendizaje-cola .boton-logro:hover:not(:disabled) {
+    background: rgba(255, 176, 46, 0.14);
+  }
 }
 
 .cola-confirma {
@@ -285,20 +487,53 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--gold);
-  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 176, 46, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 176, 46, 0.14);
   color: var(--ink);
   font-size: 13px;
+  line-height: 1.5;
 }
 
 .cola-nota {
-  color: var(--mut);
-  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--silver);
+  font-size: 13px;
+}
+
+/* Guardando: el acento respira mientras la escritura está en vuelo. */
+.cola-nota::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--omi-accent);
+  animation: cola-pulso 1.1s var(--ease-default) infinite;
+}
+
+@keyframes cola-pulso {
+  0%, 100% { opacity: 0.35; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* El reset global de motion deja el punto en su fotograma final (tenue y
+   chico). Acá se queda duro y visible: el estado igual se comunica. */
+@media (prefers-reduced-motion: reduce) {
+  .cola-nota::before {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .cola-nota-logro {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 176, 46, 0.14);
   color: var(--gold);
   font-size: 13px;
   font-weight: 600;

@@ -14,10 +14,11 @@
 //    anterior: cero optimismo huérfano.
 //  - Vocabulario: Pendiente / Reconocida / Dominada / Descartada. Nunca
 //    "Verificada", nunca "ADN", nunca jerga de scores.
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import MapaCapacidades, { type ModoMapa } from '@/features/mapa/MapaCapacidades';
 import { puenteBrechasInvitado } from '@/features/gemelo/services/aprendizaje';
 import { transicionValida, type EstadoBrecha } from '@/features/gemelo/services/brechas';
+import { useUserColor } from '@/shared/hooks/useUserColor';
 import { MAPA_CAT } from '@/theme/tokens';
 import {
   aBrechaDeMapa,
@@ -61,6 +62,10 @@ export default function AprendizajeTab() {
   const [abiertaId, setAbiertaId] = useState<string | null>(null);
 
   const reconocidas = brechas.filter((b) => b.estado === 'confirmada' || b.estado === 'dominada').length;
+  // El acento del andamio es el color del usuario (foco, riel, estado activo).
+  // El mapa NO lo usa: su paleta es fija por regla D5 del dueño.
+  const uc = useUserColor();
+  const p = brechas.length ? (reconocidas / brechas.length) * 100 : 0;
 
   const pulsar = (id: string) => {
     setRecienId(id);
@@ -108,27 +113,33 @@ export default function AprendizajeTab() {
   );
 
   return (
-    <div className="aprendizaje-workspace">
+    <div
+      className="aprendizaje-workspace"
+      style={{ '--omi-accent': uc, '--omi-accent-soft': `${uc}33` } as CSSProperties}
+    >
       <header className="aprendizaje-header">
         <div className="aprendizaje-cabecera-texto">
           <h2 className="aprendizaje-titulo">Mapa de aprendizaje</h2>
-          {fuente.simulado && (
-            <span className="aprendizaje-badge" data-tipo="muestra">
-              {AVISO_MUESTRA}
-            </span>
-          )}
         </div>
         <p className="aprendizaje-progreso" aria-live="polite">
           <strong>
             {reconocidas} de {brechas.length} reconocidas
           </strong>
         </p>
+        <span className="aprendizaje-rail" aria-hidden="true">
+          <i style={{ '--p': String(p / 100) } as CSSProperties} />
+        </span>
       </header>
 
       {fuente.simulado && (
+        <span className="aprendizaje-badge aprendizaje-chip" data-tipo="muestra">
+          {AVISO_MUESTRA}
+        </span>
+      )}
+
+      {fuente.simulado && (
         <p className="aprendizaje-aviso">
-          Este mapa es una <strong>muestra fija</strong>, no surge de tu CV. La estructura, las categorías y los botones
-          son los del producto real: cuando el motor esté conectado, este mismo lugar muestra tu análisis.
+          Es una <strong>muestra fija</strong>: no sale de tu CV. Con el motor conectado, acá aparece tu análisis.
         </p>
       )}
 
@@ -150,7 +161,8 @@ export default function AprendizajeTab() {
 
         <aside className="aprendizaje-cola" aria-label="Cola de revisión de brechas">
           <h3 className="cola-titulo">
-            Cola de revisión · {brechas.filter((b) => b.estado === 'detectada').length} pendientes
+            Cola de revisión{' '}
+            <b>{brechas.filter((b) => b.estado === 'detectada').length} pendientes</b>
           </h3>
 
           {filas.length === 0 && (
@@ -171,16 +183,19 @@ export default function AprendizajeTab() {
                   aria-expanded={abierta}
                   onClick={() => setAbiertaId(abierta ? null : b.id)}
                 >
-                  <span className="cola-punto" style={{ backgroundColor: MAPA_CAT[b.categoria] }} aria-hidden="true" />
+                  <span className="cola-punto" style={{ '--punto': MAPA_CAT[b.categoria] } as CSSProperties} aria-hidden="true" />
                   <span className="cola-nombre">{b.titulo}</span>
                   <span className="cola-badge" data-estado={b.estado}>
                     {ETIQUETA_ESTADO[b.estado]}
                   </span>
+                  <span className="cola-chev" aria-hidden="true" />
                 </button>
 
                 {abierta && (
                   <div className="cola-cuerpo">
-                    <p className="cola-severidad">Impacto {b.severidad}</p>
+                    <p className="cola-severidad" data-severidad={b.severidad}>
+                      Impacto <i>{b.severidad}</i>
+                    </p>
                     <div className="cola-evidencia">
                       <span className="cola-label">Evidencia en el CV</span>
                       {b.evidencia}
@@ -201,7 +216,7 @@ export default function AprendizajeTab() {
                       </div>
                     </dl>
 
-                    <div className="cola-acciones">
+                    <div className="cola-acciones" aria-busy={guardando === b.id}>
                       {puedeConfirmar && (
                         <button
                           type="button"
