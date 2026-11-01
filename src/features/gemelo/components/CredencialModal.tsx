@@ -618,7 +618,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               la app baja al usuario a invitado (no navegamos manualmente). La
               transición entre estados usa AnimatePresence con fade/scale sutil,
               y se vuelve instantánea bajo reduce-motion. */}
-          <div style={{ marginTop: 12, minHeight: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <div style={{ marginTop: 12, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <AnimatePresence mode="wait" initial={false}>
               {!confirmingLogout ? (
                 <motion.button
@@ -630,7 +630,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                   transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
                   aria-label="Cerrar sesión"
                   style={{
-                    minHeight: 34, padding: '7px 12px', borderRadius: RADIUS.md,
+                    minHeight: 44, padding: '7px 12px', borderRadius: RADIUS.md,
                     cursor: 'pointer',
                     background: `${C.red}14`,
                     border: `1px solid ${C.red}44`,
@@ -654,7 +654,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                     onClick={() => { void supabase.auth.signOut(); }}
                     aria-label="Confirmar cerrar sesión"
                     style={{
-                      minHeight: 34, padding: '7px 12px', borderRadius: RADIUS.md,
+                      minHeight: 44, padding: '7px 12px', borderRadius: RADIUS.md,
                       cursor: 'pointer',
                       background: `${C.red}26`,
                       border: `1px solid ${C.red}`,
@@ -669,7 +669,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                     onClick={() => setConfirmingLogout(false)}
                     aria-label="Cancelar cierre de sesión"
                     style={{
-                      minHeight: 34, padding: '7px 8px', borderRadius: RADIUS.md,
+                      minHeight: 44, padding: '7px 8px', borderRadius: RADIUS.md,
                       cursor: 'pointer',
                       background: 'transparent', border: 'none',
                       color: C.mut,
