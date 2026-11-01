@@ -223,10 +223,17 @@ objetos medidos · cuatro estados con un solo dueño · CI trío verde.
 | Credencial: objetivos < 44 px | 8 (pestañas 43, compartir 43, descargar 45, pie 34) | minHeight 44 | medido en `CredencialModal` con `getBoundingClientRect` |
 | Tests | 35 archivos / 443 | 35 archivos / **444** | `npx vitest --run` · typecheck 0 errores · lint 0/0 |
 
-**Lo que NO se terminó de medir (honesto):** los 44 px se verificaron en la credencial y en el shell que
-estaba montado en ese momento; no en las 12 superficies. El despliegue real de `analizar-cv` no se puede
+**Lo que NO se terminó de medir (honesto):** el despliegue real de `analizar-cv` no se puede
 comprobar sin sesión: la pasarela `verify_jwt` responde 401 antes de ejecutar el código, así que la
 ausencia de `x-omicron-build` en un curl anónimo no prueba nada.
+
+**Cierre de los 44 px (2026-11-01, `a25bea0`):** quedaron 4 objetivos de 34 px en el pie de la
+credencial (`Cerrar sesión`, su confirmación, `Cancelar` y el contenedor). Con eso corregido, la
+medición en vivo con `getBoundingClientRect` sobre **los 14 botones montados** (shell de invitado +
+credencial abierta + pestañas + acciones de aprendizaje) devolvió `44 × 44 … 46 × 371`: **cero
+objetivos < 44 px** y **cero nodos de texto con glifos**. Sigue siendo una muestra del árbol montado,
+no un barrido de las 12 superficies: las que requieren sesión propia (red viva, simulador avanzado)
+no se abrieron.
 
 **Lección 8 (la que dejó este loop):** un barrido delegado necesita verificación propia. Cinco agentes
 paralelos murieron a mitad por límite de créditos y dejaron el árbol compilando por accidente: tres
