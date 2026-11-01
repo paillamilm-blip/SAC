@@ -13,6 +13,7 @@ import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
 import { oc, OmicronHeader, OmicronLoading, OmicronEmpty } from '@/shared/components/OmicronChrome';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
+import { Icon } from '@/shared/components/icons';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { useToast } from '@/shared/components/Toast';
 
@@ -92,7 +93,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
         <div style={{ flex: 1, minHeight: 200, maxHeight: '54vh', overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {msgs.length === 0 && (
             <div style={{ textAlign: 'center', padding: '10px 0', fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, lineHeight: 1.5 }}>
-              👋 Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: C.ink }}>{lesson.title}</strong>.
+              <Icon role="idea" size={15} style={{ display: 'inline-block', verticalAlign: -3, marginRight: 6, color: C.gold }} />Soy tu tutor. Pregúntame lo que no entiendas de <strong style={{ color: C.ink }}>{lesson.title}</strong>.
             </div>
           )}
           {msgs.map((m, i) => {
@@ -396,7 +397,7 @@ export function AcademiaTab() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 15, color: C.ink }}>Coach IA · ¿Qué estudio ahora?</div>
                 <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, marginTop: 2, lineHeight: 1.35 }}>
-                  Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal. 🧭
+                  Analiza tu Gemelo, tu CV y tus habilidades, y te dice tu brecha y el curso ideal.
                 </div>
               </div>
               <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
@@ -454,7 +455,7 @@ export function AcademiaTab() {
                   </div>
                 );
               })()}
-              <div style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: uc, marginBottom: 12 }}>◆ NÚCLEO DE APRENDIZAJE</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: uc, marginBottom: 12 }}><Icon role="aprendizaje" size={11} /> NÚCLEO DE APRENDIZAJE</div>
 
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicrom unificado) */}
               <div style={{ position: 'relative', width: 110, height: 110, margin: '0 auto 6px' }}
@@ -601,7 +602,7 @@ export function AcademiaTab() {
             <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, lineHeight: 1.4 }}>
               Aprueba con {course.passing_score}% para validar {course.node_id && nodes.get(course.node_id)
                 ? <strong style={{ color: C.gold }}>la habilidad "{nodes.get(course.node_id)!.title}"</strong>
-                : <strong style={{ color: C.cyan }}>el nodo</strong>} en tu Árbol y subir tu <strong style={{ color: C.cyan }}>Fundamento</strong> del Gemelo Digital. 🧬
+                : <strong style={{ color: C.cyan }}>el nodo</strong>} en tu Árbol y subir tu <strong style={{ color: C.cyan }}>Fundamento</strong> del Gemelo Digital.
             </p>
             <button onClick={startQuiz} disabled={!allDone} style={{
               width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: allDone ? 'pointer' : 'not-allowed',
@@ -648,7 +649,7 @@ export function AcademiaTab() {
             </div>
             <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginTop: 12, maxWidth: 280, marginInline: 'auto', lineHeight: 1.5 }}>
               {result.passed
-                ? '🔓 Nodo validado en tu árbol. Tu Fundamento (Gemelo Digital) subió. ¡Bien hecho!'
+                ? <><Icon role="desbloqueado" size={14} style={{ display: 'inline-block', verticalAlign: -2, marginRight: 6 }} />Nodo validado en tu árbol. Tu Fundamento (Gemelo Digital) subió. ¡Bien hecho!</>
                 : `Necesitas ${course?.passing_score}% para aprobar. Repasa las lecciones e inténtalo de nuevo.`}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', marginTop: 20 }}>

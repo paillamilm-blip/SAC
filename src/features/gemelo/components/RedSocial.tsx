@@ -15,14 +15,17 @@ import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
 import { C, FONT, RADIUS, SIZE } from '@/theme';
+import { Icon, type IconRole } from '@/shared/components/icons';
 import type { GemeloDigital } from '@/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-function rango(rep: number) {
-  if (rep >= 80) return { label: 'SENIOR', emoji: '🏆', color: C.green };
-  if (rep >= 70) return { label: 'AVANZADO', emoji: '⚡', color: C.cyan };
-  if (rep >= 50) return { label: 'INTERMEDIO', emoji: '🔷', color: C.gold };
-  return { label: 'EN FORMACIÓN', emoji: '🌱', color: C.purple };
+// El rango se dibuja con el trazo del sistema: antes cada nivel llevaba un
+// emoji, y el emoji se pinta con la paleta del sistema operativo del usuario.
+function rango(rep: number): { label: string; icon: IconRole; color: string } {
+  if (rep >= 80) return { label: 'SENIOR', icon: 'senior', color: C.green };
+  if (rep >= 70) return { label: 'AVANZADO', icon: 'avanzado', color: C.cyan };
+  if (rep >= 50) return { label: 'INTERMEDIO', icon: 'intermedio', color: C.gold };
+  return { label: 'EN FORMACIÓN', icon: 'novato', color: C.purple };
 }
 
 function profileLink(username: string) {
@@ -378,10 +381,12 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
               </span>
               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>/100</span>
               <span style={{
-                padding: '3px 9px', borderRadius: 999, background: `${r.color}18`, border: `1px solid ${r.color}44`,
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '3px 9px', borderRadius: RADIUS.pill, background: `${r.color}18`, border: `1px solid ${r.color}44`,
                 fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: 1,
               }}>
-                {r.emoji} {r.label}
+                <Icon role={r.icon} size={11} color={r.color} />
+                {r.label}
               </span>
             </div>
             <ProgressRadar gemelo={gemelo} size="sm" showHeader={false} showScores={false} showAlert={false} showFooter={false} />

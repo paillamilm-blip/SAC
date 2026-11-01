@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, Shield, ArrowLeft, Mail } from 'lucide-react';
+import { Icon } from '@/shared/components/icons';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { persistOnboardingProfile } from '@/shared/services/onboardingSync';
@@ -23,6 +24,11 @@ const USERNAME_MIN_LENGTH = 3;
 const USERNAME_MAX_LENGTH = 24;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// CTA de invitado: la misma puerta ("entrar sin cuenta") vive en dos superficies
+// —este overlay y el loader de App.tsx—, así que se redacta ACÁ una sola vez y
+// la otra pantalla importa la constante. Lo cambia una vez, lo cambian las dos.
+export const GUEST_CTA_LABEL = 'Explorar sin cuenta';
 
 // Curva ease-out estándar de la app para la entrada y los micro-taps.
 // Con prefers-reduced-motion la entrada cae a un fade sin desplazamiento y
@@ -539,7 +545,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
 
         {/* ── Badge Pioneer (dorado: acento de marca, no del usuario) ── */}
         <div style={S.pioneer}>
-          <span style={{ fontSize: SIZE.lg }}>🏆</span>
+          <Icon role="pionero" size={SIZE.lg} color={C.gold} />
           <span style={{ fontWeight: 600 }}>Etapa Fundacional activa — beneficio Pioneer</span>
         </div>
 
@@ -552,7 +558,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
             transition={TAP_TRANSITION}
             style={{ ...S.ghost, border: `1px solid ${uc}33` }}
           >
-            Explorar sin cuenta →
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{GUEST_CTA_LABEL} <Icon role="siguiente" size={12} /></span>
           </motion.button>
         )}
       </div>

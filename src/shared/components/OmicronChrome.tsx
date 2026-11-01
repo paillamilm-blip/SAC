@@ -13,7 +13,7 @@
 //   2. Todo valor sale de theme/ (C, SIZE, RADIUS, SP, BLUR, SHADOW, EASE).
 // ═══════════════════════════════════════════════════════════════════════
 import { ReactNode, CSSProperties } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { Icon } from './icons';
 import { C, FONT, SIZE, RADIUS, SP, BLUR, SHADOW, EASE, TIMING, ANIM, ACCENT, tint } from '@/theme';
 
 export const oc: Record<string, CSSProperties> = {
@@ -50,7 +50,7 @@ export function OmicronHeader({ title, subtitle, icon, onBack, action, accent = 
     <div style={S.header}>
       {onBack && (
         <button onClick={onBack} aria-label="Volver" style={S.back}>
-          <ArrowLeft size={18} />
+          <Icon role="volver" size={18} />
         </button>
       )}
       {icon && (
@@ -281,8 +281,10 @@ export function SectionTitle({ children, icon, right, color = ACCENT }: { childr
 
 
 // ═══════════════════════════════════════════════════════════════════════
-// ESTADOS · cargando y vacío. Son primitivas del andamio, no un segundo
-// lenguaje visual: hablan en segunda persona y el CTA mide 44 px.
+// ESTADOS · los cuatro (vacío, cargando, error, listo). Son primitivas del
+// andamio, no un segundo lenguaje visual: hablan en segunda persona y el CTA
+// mide 44 px. Error y listo vivían redactadas a mano en cada pantalla, con
+// cuatro frases distintas para decir lo mismo; acá se dicen una vez.
 // ═══════════════════════════════════════════════════════════════════════
 
 interface OmicronLoadingProps {
@@ -309,6 +311,77 @@ export function OmicronLoading({ message = 'Un momento, lo estoy preparando…',
       <p style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.cyan, letterSpacing: 1.2, textTransform: 'uppercase', margin: 0 }}>
         {message}
       </p>
+    </div>
+  );
+}
+
+interface OmicronErrorProps {
+  /** Qué falló, en palabras del asistente. Nunca un código ni un stack. */
+  cause: string;
+  title?: string;
+  /** La salida: lo único que el usuario puede hacer ahora. */
+  ctaLabel?: string;
+  onCta?: () => void;
+}
+
+// El error nombra la causa y ofrece una salida. Si no hay salida posible no se
+// muestra el botón: un "OK" que no mueve nada es ruido, no recuperación.
+export function OmicronError({ cause, title = 'No pude hacerlo ahora', ctaLabel, onCta }: OmicronErrorProps) {
+  return (
+    <div role="alert" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: `${SP[10]}px ${SP[6]}px`, gap: SP[1] }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: '50%', marginBottom: SP[3],
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: `1px solid ${tint(C.red, 40)}`, color: C.red, background: tint(C.red, 6),
+      }}>
+        <Icon role="error" size={24} />
+      </div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: -0.2 }}>{title}</div>
+      <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.6, color: C.mut, margin: `${SP[1]}px 0 0`, maxWidth: 280 }}>{cause}</p>
+      {ctaLabel && onCta && (
+        <button onClick={onCta} style={{
+          marginTop: SP[4], minHeight: 44, padding: `0 ${SP[5]}px`, borderRadius: RADIUS.md,
+          border: `1px solid ${tint(C.red, 34)}`, cursor: 'pointer',
+          background: tint(C.red, 12), color: C.red,
+          fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
+        }}>{ctaLabel}</button>
+      )}
+    </div>
+  );
+}
+
+interface OmicronDoneProps {
+  title: string;
+  /** Qué sigue después del éxito: la confirmación nunca deja la pantalla en el aire. */
+  detail?: string;
+  ctaLabel?: string;
+  onCta?: () => void;
+}
+
+// La confirmación va en teal (el OK del sistema), no en el acento del usuario:
+// el acento dice "esto es tuyo", el teal dice "esto pasó".
+export function OmicronDone({ title, detail, ctaLabel, onCta }: OmicronDoneProps) {
+  return (
+    <div role="status" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: `${SP[10]}px ${SP[6]}px`, gap: SP[1] }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: '50%', marginBottom: SP[3],
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: `1px solid ${C.greenDim}`, color: C.green, background: C.greenFaint,
+        animation: ANIM.float,
+      }}>
+        <Icon role="exito" size={24} />
+      </div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: -0.2 }}>{title}</div>
+      {detail && <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.6, color: C.mut, margin: `${SP[1]}px 0 0`, maxWidth: 280 }}>{detail}</p>}
+      {ctaLabel && onCta && (
+        <button onClick={onCta} style={{
+          marginTop: SP[4], minHeight: 44, padding: `0 ${SP[5]}px`, borderRadius: RADIUS.md,
+          border: 'none', cursor: 'pointer', color: C.onAccent,
+          background: `linear-gradient(135deg, ${C.green}, ${tint(C.green, 67)})`,
+          boxShadow: `0 0 18px ${tint(C.green, 33)}`,
+          fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
+        }}>{ctaLabel}</button>
+      )}
     </div>
   );
 }

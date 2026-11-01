@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
 import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
+import { Icon, type IconRole } from '@/shared/components/icons';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
 import { TextReveal } from '@/shared/motion/TextReveal';
@@ -99,12 +100,12 @@ const hasMicSupport = () => typeof window !== 'undefined' && !!(
   (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
 );
 
-const SUGGESTIONS = [
-  { label: 'Desarrollador web', emoji: '💻' },
-  { label: 'Diseñadora UX', emoji: '🎨' },
-  { label: 'Ingeniero industrial', emoji: '⚙️' },
-  { label: 'Estudiante', emoji: '📚' },
-  { label: 'Freelancer', emoji: '🚀' },
+const SUGGESTIONS: { label: string; icon: IconRole }[] = [
+  { label: 'Desarrollador web', icon: 'prof-desarrollo' },
+  { label: 'Diseñadora UX', icon: 'prof-diseno' },
+  { label: 'Ingeniero industrial', icon: 'prof-industria' },
+  { label: 'Estudiante', icon: 'prof-estudiante' },
+  { label: 'Freelancer', icon: 'prof-freelance' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -385,7 +386,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                     border: `1.5px solid ${chosenColor}55`, background: C.glass,
                     color: chosenColor, display: 'grid', placeItems: 'center', fontSize: 20,
                   }}>
-                    🎤
+                    <Icon role="microfono" size={16} label="Grabar tu voz" />
                   </MagneticButton>
                 )}
                 <input
@@ -407,7 +408,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   color: input.trim() ? '#000' : C.mut, display: 'grid', placeItems: 'center', fontSize: SIZE.lg,
                   boxShadow: input.trim() ? `0 4px 16px ${chosenColor}44` : 'none',
                 }}>
-                  ➤
+                  <Icon role="enviar" size={16} label="Enviarle tu pregunta a Ómicrom" />
                 </MagneticButton>
               </form>
 
@@ -417,7 +418,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   variants={{ hidden: {}, visible: { transition: { delayChildren: 0.6, staggerChildren: 0.07 } } }}
                   style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
                 >
-                  {SUGGESTIONS.map(({ label, emoji }) => (
+                  {SUGGESTIONS.map(({ label, icon }) => (
                     <motion.button key={label}
                       variants={{ hidden: { opacity: 0, y: 12, scale: 0.92 }, visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } } }}
                       whileTap={{ scale: 0.94 }}
@@ -430,7 +431,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                         WebkitTapHighlightColor: 'transparent',
                       }}
                     >
-                      <span>{emoji}</span> {label}
+                      <Icon role={icon} size={14} /> {label}
                     </motion.button>
                   ))}
                 </motion.div>

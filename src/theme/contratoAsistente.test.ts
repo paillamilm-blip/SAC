@@ -50,6 +50,38 @@ const CRUDA = /rgba\(\s*255\s*,\s*255\s*,\s*255\s*,\s*0\.0[0-9]/;
 const UN_DIBUJANTE = 'features/gemelo/services/credencialCanvas.ts';
 const NAVY_PNG = new RegExp(`#04${'122a'}`, 'i');
 
+// ── Afirmación 6: ningún carácter hace de icono ───────────────────────────
+// Un emoji o una flecha unicode depende de la fuente del sistema operativo del
+// visitante, no hereda el acento del usuario y trae la paleta de la plataforma:
+// es color y trazo fuera del sistema a la vez. El dibujo vive en
+// shared/components/icons.tsx y el grosor en la regla `svg.lucide` de index.css.
+//
+// El patrón se construye con code points y no se escribe literal: este archivo
+// también se barre, y un glifo acá sería el hallazgo número uno.
+const GLIFOS = new RegExp(
+  `[${[
+    '\\u{1F000}-\\u{1FAFF}', // bloques de emoji
+    '\\u{2190}-\\u{21FF}',   // flechas
+    '\\u{2600}-\\u{27BF}',   // misceláneas y dingbats
+    '\\u{2B00}-\\u{2BFF}',   // flechas y estrellas grandes
+    '\\u{25A0}-\\u{25FF}',   // figuras geométricas
+  ].join('')}]`,
+  'u',
+);
+
+// Un glifo dentro de un comentario no llega a la pantalla. Los de bloque se
+// quitan primero y se rellenan con espacios: así las líneas siguen numerando
+// donde estaban y el reporte sirve para ir directo al sitio.
+const COMENTARIO = /^\s*(?:\/\/|\*|\/\*)/;
+const sinBloques = (s: string): string => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+
+// Excepción documentada: este módulo RECIBE estos caracteres como entrada del
+// usuario (la emoción medida por la Edge Function). La app nunca los emite.
+const ENTRADA_DE_USUARIO = ['features/omicron/services/emotion.ts'];
+
+// Ratchet: archivos que todavía deben migrar. Se vacía, no se rellena.
+const DEUDA_GLIFOS: string[] = [];
+
 describe('contrato asistente — una sola forma de hacer cada cosa', () => {
   it('los cianes del prototipo no existen fuera del mapa', () => {
     // Los patrones se construyen, no se escriben: este archivo también se barre.
@@ -102,6 +134,22 @@ describe('contrato asistente — una sola forma de hacer cada cosa', () => {
       .map(bajo)
       .filter((ruta) => !ruta.startsWith('theme/'))
       .filter((ruta) => NAVY_PNG.test(sinCR(readFileSync(`src/${ruta}`, 'utf8'))));
+    expect(sucios).toEqual([]);
+  });
+
+  it('ningún carácter hace de icono en la pantalla', () => {
+    // Se reporta archivo y línea: "0 glifos" sin coordenadas no es un criterio
+    // que alguien pueda cerrar.
+    const sucios: string[] = [];
+    for (const ruta of ARCHIVOS.map(bajo)) {
+      if (ENTRADA_DE_USUARIO.includes(ruta) || DEUDA_GLIFOS.includes(ruta)) continue;
+      const lineas = sinBloques(sinCR(readFileSync(`src/${ruta}`, 'utf8'))).split('\n');
+      lineas.forEach((linea, i) => {
+        if (COMENTARIO.test(linea)) return;
+        const visible = linea.replace(/\/\/.*$/, '');
+        if (GLIFOS.test(visible)) sucios.push(`${ruta}:${i + 1}`);
+      });
+    }
     expect(sucios).toEqual([]);
   });
 });

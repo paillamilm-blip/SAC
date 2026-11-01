@@ -37,6 +37,7 @@
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { C, FONT, tint } from '@/theme';
+import { Icon, type IconRole } from '@/shared/components/icons';
 import { wordPrefixes } from '../utils/typewriter';
 import { thinkingPulseLevel, revealPulseLevel } from '../utils/orbPulse';
 
@@ -56,7 +57,8 @@ function emitOrbPulse(level: number): void {
 
 export interface ProactiveAction {
   label: string;
-  emoji?: string;
+  /** Rol dibujado por shared/components/icons.tsx; nunca un carácter. */
+  icon?: IconRole;
   primary?: boolean;
   onClick: () => void;
 }
@@ -184,7 +186,9 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
       {/* Header */}
       <div style={S.header}>
         <span style={{ ...S.tag, color: accent.tag }}>ÓMICROM</span>
-        <button onClick={handleDismiss} style={S.closeBtn}>✕</button>
+        <button onClick={handleDismiss} aria-label="Cerrar el mensaje" style={S.closeBtn}>
+          <Icon role="cerrar" size={15} />
+        </button>
       </div>
 
       {/* Message */}
@@ -212,7 +216,7 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
                 ? { ...S.btnPrimary, background: accent.btnBg, boxShadow: accent.btnShadow }
                 : S.btnGhost}
             >
-              {action.emoji && <span>{action.emoji}</span>}
+              {action.icon && <Icon role={action.icon} size={14} color={action.primary ? C.onAccent : undefined} />}
               {action.label}
             </button>
           ))}

@@ -9,6 +9,7 @@ import { useApp } from '@/store/AppContext';
 import { nodeGuidance } from '@/shared/utils/guidance';
 import { TextReveal } from '@/shared/motion';
 import { C, FONT, SIZE } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 import type { TabId, GemeloDigital } from '@/types';
 
 interface GemeloGuidanceProps {
@@ -51,7 +52,7 @@ export function GemeloGuidance({ tab }: GemeloGuidanceProps) {
         gap: 8,
       }}
     >
-      <span style={{ fontSize: 13, flexShrink: 0 }}>💡</span>
+      <Icon role="idea" size={14} style={{ flexShrink: 0 }} />
       <span style={{ opacity: 0.9 }}><TextReveal text={guidance} speed={22} cursor={false} /></span>
     </div>
   );

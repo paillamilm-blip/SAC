@@ -26,10 +26,10 @@ const ACHIEVEMENT_TEMPLATES: Record<AchievementType, (name: string, detail?: str
   skill_validated: (name, detail) => `${name} certificó ${detail ?? 'una skill'}`,
   lesson_completed: (name, detail) => `${name} completó una lección de ${detail ?? 'la Academia'}`,
   course_completed: (name, detail) => `${name} completó ${detail ?? 'un curso'}`,
-  level_up: (name, detail) => `🏆 ${name} ascendió a ${detail ?? 'un nuevo nivel'}`,
+  level_up: (name, detail) => `${name} ascendió a ${detail ?? 'un nuevo nivel'}`,
   service_published: (name, detail) => `${name} publicó: ${detail ?? 'un nuevo servicio'}`,
   contract_completed: (name) => `${name} completó un contrato exitosamente`,
-  streak: (name, detail) => `🔥 ${name} lleva ${detail ?? '?'} días seguidos`,
+  streak: (name, detail) => `${name} lleva ${detail ?? '?'} días seguidos`,
   connection: (name, detail) => `${name} se conectó con ${detail ?? 'alguien'}`,
   challenge_completed: (name) => `${name} completó su reto diario`,
 };

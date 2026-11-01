@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { C, FONT, tint, SIZE } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 import { useApp } from '@/store/AppContext';
 import { supabase } from '@/infrastructure/supabase/client';
 
@@ -69,8 +70,9 @@ export function DashboardVivo() {
         <div style={S.statValue}>{data.reputation.toFixed(1)}</div>
         <div style={S.statLabel}>Reputación</div>
         {data.repDelta !== 0 && (
-          <div style={{ ...S.delta, color: data.repDelta > 0 ? C.green : C.red }}>
-            {data.repDelta > 0 ? '↑' : '↓'}{Math.abs(data.repDelta).toFixed(1)}
+          <div style={{ ...S.delta, display: 'flex', alignItems: 'center', gap: 2, color: data.repDelta > 0 ? C.green : C.red }}>
+            <Icon role={data.repDelta > 0 ? 'subio' : 'bajó'} size={12} />
+            {Math.abs(data.repDelta).toFixed(1)}
           </div>
         )}
       </div>
@@ -80,8 +82,8 @@ export function DashboardVivo() {
         <div style={S.statValue}>#{data.ranking}</div>
         <div style={S.statLabel}>Ranking</div>
         {data.rankDelta !== 0 && (
-          <div style={{ ...S.delta, color: data.rankDelta > 0 ? C.green : C.red }}>
-            {data.rankDelta > 0 ? `↑${data.rankDelta}` : `↓${Math.abs(data.rankDelta)}`}
+          <div style={{ ...S.delta, display: 'flex', alignItems: 'center', gap: 2, color: data.rankDelta > 0 ? C.green : C.red }}>
+            <Icon role={data.rankDelta > 0 ? 'subio' : 'bajó'} size={12} />{Math.abs(data.rankDelta)}
           </div>
         )}
       </div>

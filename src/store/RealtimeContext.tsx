@@ -48,7 +48,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       // Hitos de racha (3/7/14/30): solo se anuncia el cruce, no cada día.
       const tierCrossed = [3, 7, 14, 30].find(t => prev.streak < t && cur.streak >= t);
       if (tierCrossed) {
-        net.broadcast(`🔥 ${profile.username} lleva ${tierCrossed} días seguidos`, 'action');
+        net.broadcast(`${profile.username} lleva ${tierCrossed} días seguidos`, 'action');
       }
       if (cur.level > prev.level) {
         net.broadcast(`${profile.username} evolucionó a ${profile.node_type}`, 'level');

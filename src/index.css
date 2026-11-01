@@ -143,6 +143,15 @@ button, [role="button"], a {
   font-variant-numeric: tabular-nums;
 }
 
+/* Un solo trazo para TODOS los iconos del sistema. lucide-react pinta
+   stroke-width="2" como atributo de presentación; una regla CSS lo gana sin
+   reescribir los ~200 llamados directos. El grosor es 1.75 (no 2): sobre fondo
+   casi negro y a 12-16 px, el trazo de 2 se ve manchado y desproporcionado
+   junto al texto de 15 px. Cambiar el peso de la línea es cambiar una línea. */
+svg.lucide {
+  stroke-width: 1.75;
+}
+
 /* ═══════════════════════════════════════════════════════════
    MOBILE FIXES
    ═══════════════════════════════════════════════════════════ */

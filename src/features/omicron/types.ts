@@ -7,12 +7,14 @@
 // dependencias de three/@react-three: es un contrato de datos puro.
 // =====================================================================
 import type { TabId } from '@/types';
+import type { IconRole } from '@/shared/components/icons';
 
 export interface OrbNode {
   id: string;
   label: string;
   tab: TabId;
-  icon: string;
+  /** Rol resuelto por shared/components/icons.tsx. Nunca un carácter. */
+  icon: IconRole;
   level?: number;
   nextStep?: string;
 }

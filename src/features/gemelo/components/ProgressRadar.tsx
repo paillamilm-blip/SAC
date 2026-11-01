@@ -6,6 +6,7 @@ import { C, inkAt, tint } from '@/theme';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
 import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
+import { Icon } from '@/shared/components/icons';
 import { levelBandFor } from '@/features/omicron/utils/nodeUnlock';
 
 interface ProgressRadarProps {
@@ -155,7 +156,7 @@ export function ProgressRadar({
             className="px-4 py-2 rounded-xl border-2 text-center"
             style={{ borderColor }}
           >
-            <p className="text-sm font-bold">{badge.emoji} {levelBand}</p>
+            <p className="text-sm font-bold flex items-center gap-2"><Icon role={badge.icon} size={14} color={borderColor} /> {levelBand}</p>
           </div>
         </div>
       )}

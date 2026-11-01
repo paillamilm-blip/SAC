@@ -9,6 +9,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
 import { C, FONT, RADIUS, tint } from '@/theme';
+import { Icon as OmicronIcon } from '@/shared/components/icons';
 
 interface Pending {
   id: string; user_id: string; username: string; cred_type: string; title: string;
@@ -77,13 +78,15 @@ export function CredentialReview() {
           PANEL DE VALIDADOR · DOCENTE
         </span>
       </div>
-      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginBottom: 12 }}>
-        {items.length} credencial(es) por validar
-      </div>
+      {items.length > 0 && (
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginBottom: 12 }}>
+          {items.length === 1 ? '1 credencial por validar' : `${items.length} credenciales por validar`}
+        </div>
+      )}
 
       {loaded && items.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '14px 0', fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>
-          ✅ No hay credenciales pendientes.
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center', padding: '14px 0', fontFamily: FONT.mono, fontSize: 11, color: C.green }}>
+          <OmicronIcon role="exito" size={13} /> No hay credenciales pendientes.
         </div>
       )}
 

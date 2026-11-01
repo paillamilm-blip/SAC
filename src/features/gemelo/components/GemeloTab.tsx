@@ -27,6 +27,8 @@ import { PushPermissionBanner } from '@/shared/components/PushPermissionBanner';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { bandDisplayFor } from '@/features/omicron/utils/nodeUnlock';
 import { RedVivaHome } from '@/features/redviva/components/RedVivaHome';
+import { OmicronEmpty } from '@/shared/components/OmicronChrome';
+import { Icon } from '@/shared/components/icons';
 
 // ── Ejes del Gemelo. El color del eje "Ejecución" se sustituye por el color del usuario en runtime. ──
 const AXIS_META = [
@@ -112,18 +114,15 @@ export function GemeloTab() {
 
   if (!profile) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, padding: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 48 }}>⬡</div>
-        <h2 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, color: C.ink }}>Tu Gemelo Digital</h2>
-        <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.mut, maxWidth: 280 }}>
-          Crea tu cuenta o inicia sesión para activar tu Gemelo Digital y subir tu CV.
-        </p>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
-          style={{ marginTop: 8, padding: '12px 24px', borderRadius: 12, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 16px ${uc}44` }}
-        >
-          Crear cuenta / Iniciar sesión
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
+        <OmicronEmpty
+          icon={<Icon role="gemelo" size={28} />}
+          title="Tu Gemelo Digital"
+          hint="Crea tu cuenta o inicia sesión para activar tu Gemelo Digital y subir tu CV."
+          ctaLabel="Crear cuenta / Iniciar sesión"
+          onCta={() => window.dispatchEvent(new CustomEvent('omicron:request-auth'))}
+          accent={uc}
+        />
       </div>
     );
   }

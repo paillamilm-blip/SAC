@@ -478,7 +478,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                 onClick={() => goTab(i as TabIndex)}
                 style={{
                   flex: 1, position: 'relative', cursor: 'pointer',
-                  padding: '8px 4px 10px',
+                  padding: '8px 4px 10px', minHeight: 44,
                   background: 'transparent', border: 'none',
                   fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.6,
                   color: active ? C.ink : C.mut,
@@ -556,7 +556,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             onClick={() => username && setShowShare(true)}
             disabled={!username}
             style={{
-              width: '100%', padding: '13px', borderRadius: RADIUS.lg,
+              width: '100%', minHeight: 44, padding: '13px', borderRadius: RADIUS.lg,
               cursor: username ? 'pointer' : 'not-allowed',
               background: username ? uc : C.glass,
               border: username ? 'none' : `1px solid ${C.line}`,
@@ -594,7 +594,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           <button
             onClick={() => onUpdateCV?.()}
             style={{
-              marginTop: 12, padding: '7px 12px', borderRadius: RADIUS.md,
+              marginTop: 12, minHeight: 44, padding: '7px 12px', borderRadius: RADIUS.md,
               cursor: 'pointer',
               background: 'transparent',
               border: `1px solid ${C.line}`,

@@ -15,6 +15,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Zap, TrendingUp, Shield, Target, Clock, ChevronRight, Sparkles } from 'lucide-react';
 import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
@@ -419,7 +420,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                       </div>
                       <AxisValue to={val} color={isWeak ? C.red : info?.color || C.cyan} delayMs={i * 70} />
                       <span style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
-                      {isWeak && <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, marginTop: 4 }}>← tu punto ciego</div>}
+                      {isWeak && <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.red, marginTop: 4 }}><Icon role="anterior" size={11} /> tu punto ciego</div>}
                     </div>
                   );
                 })}
@@ -574,10 +575,10 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                   <div style={{ padding: 12, borderRadius: RADIUS.lg, background: `${C.green}08`, border: `1px solid ${C.green}33` }}>
                     <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>Con cuenta</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink }}>
-                      <span>✓ Tu perfil queda guardado para siempre</span>
-                      <span>✓ Cada prueba que aprobás sube tu reputación (0-100)</span>
-                      <span>✓ Tu Red Viva muestra qué tenés probado y qué no</span>
-                      <span>✓ Recibes pasos concretos para mejorar cada semana</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Tu perfil queda guardado para siempre</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Cada prueba que aprobás sube tu reputación (0-100)</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Tu Red Viva muestra qué tenés probado y qué no</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Recibes pasos concretos para mejorar cada semana</span>
                     </div>
                   </div>
                 </div>
@@ -588,11 +589,15 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                 onClick={onActivate}
                 whileTap={isAuthenticated && (persisting || persisted) ? undefined : { scale: 0.97 }}
                 disabled={isAuthenticated && (persisting || persisted)}
-                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: isAuthenticated && (persisting || persisted) ? 'default' : 'pointer', opacity: isAuthenticated && (persisting || persisted) ? 0.7 : 1, boxShadow: `0 4px 24px ${uc}44`, marginBottom: 12 }}
+                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: isAuthenticated && (persisting || persisted) ? 'default' : 'pointer', opacity: isAuthenticated && (persisting || persisted) ? 0.7 : 1, boxShadow: `0 4px 24px ${uc}44`, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 {isAuthenticated
-                  ? (persisted ? '✓ Guardado' : persisting ? 'Guardando…' : '🧬 Guardar mi Gemelo Digital')
-                  : '🧬 Activar mi Gemelo Digital'}
+                  ? (persisted
+                      ? (<><Icon role="exito" size={15} /> Guardado</>)
+                      : persisting
+                        ? 'Guardando…'
+                        : (<><Icon role="nodo" size={15} /> Guardar mi Gemelo Digital</>))
+                  : (<><Icon role="nodo" size={15} /> Activar mi Gemelo Digital</>)}
               </motion.button>
               <p style={{ textAlign: 'center', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, margin: '0 0 16px' }}>
                 {isAuthenticated ? 'Se guarda en tu perfil permanentemente' : '30 segundos — sin tarjeta de crédito'}

@@ -11,6 +11,7 @@ import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { C, FONT, RADIUS, SIZE, tint } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 type CredType = 'DEGREE' | 'DIPLOMA' | 'CERTIFICATE_QR' | 'CERTIFICATE_DOC' | 'EXPERIENCE';
@@ -233,7 +234,7 @@ export function CredentialsPanel() {
           {/* Campos condicionales */}
           {meta.needsUrl && (
             <>
-              <label style={labelStyle}>Link de verificación (del QR) 🟢 auto-verifica</label>
+              <label style={{ ...labelStyle, display: 'inline-flex', alignItems: 'center', gap: 5 }}>Link de verificación (del QR) <Icon role="exito" size={12} color={C.green} /> auto-verifica</label>
               <input style={{ ...inputStyle, marginBottom: 10 }} value={form.verification_url}
                 onChange={e => setForm({ ...form, verification_url: e.target.value })}
                 placeholder="https://verificar.emisor.com/abc123" />
@@ -293,8 +294,9 @@ export function CredentialsPanel() {
           </div>
 
           {meta.needsUrl && (
-            <p style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 8, letterSpacing: 0.2 }}>
-              🟢 Las credenciales con QR/link se aprueban al instante. Las demás quedan pendientes de revisión.
+            <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 8, letterSpacing: 0.2 }}>
+              <Icon role="exito" size={12} color={C.green} style={{ marginTop: 2, flexShrink: 0 }} />
+              Las credenciales con QR/link se aprueban al instante. Las demás quedan pendientes de revisión.
             </p>
           )}
         </div>

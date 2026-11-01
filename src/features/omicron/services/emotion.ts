@@ -74,6 +74,8 @@ export function detectEmotion(text: string): EmotionSignal {
   if (timeSinceLast < 1000) scores.frustrated += 0.2;                   // Muy rápido = frustrado
 
   // ── Señal: emojis ─────────────────────────────────────────────────
+  // Excepción L3 documentada: estos emojis son ENTRADA del usuario (lo que
+  // tipeó), nunca SALIDA de la app. Acá leerlos es el objetivo — no los borres.
   if (/😊|🎉|🚀|💪|✨|🔥|❤️/.test(t)) scores.motivated += 0.3;
   if (/😢|😤|😡|💀|😭|🤬/.test(t)) scores.frustrated += 0.4;
   if (/🤔|❓|🫤/.test(t)) scores.confused += 0.3;

@@ -3,7 +3,8 @@
 // reutilizable. Dos modos:
 //   • 'ordenes' (default): comportamiento actual, INTACTO — voz/texto navegan y
 //     responden. La barra en reposo respira (cp-breathe) con halo del color del
-//     usuario, mic 44×44 (🎤), input con el placeholder EXACTO, enviar 44×44 (➤).
+//     usuario, mic 44×44 (icono 'microfono'), input con el placeholder EXACTO,
+//     enviar 44×44 (icono 'enviar').
 //   • 'lectura': añade ARRIBA una burbuja donde Ómicrom LEE la red (texto que le
 //     pasa el shell desde resumenRed()/textoEstado(), sin jerga) + una lucecita
 //     chiquita de PRESENCIA (punto en el color del usuario, cp-breathe) que se
@@ -17,6 +18,7 @@
 
 import { useReducedMotion } from 'framer-motion';
 import { C, FONT, tint } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 
 /** Placeholder EXACTO en reposo (home) y en fullscreen. No cambiar los textos. */
 export const OMICRON_BAR_PLACEHOLDER_RESTING = '¿Qué quieres hacer hoy? Habla o escríbeme…';
@@ -164,7 +166,7 @@ export function OmicronBar({
             animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
           }}
         >
-          🎤
+          <Icon role="microfono" size={16} />
         </button>
 
         {/* Text input */}
@@ -208,7 +210,7 @@ export function OmicronBar({
             transition: 'background 0.15s ease, color 0.15s ease',
           }}
         >
-          ➤
+          <Icon role="enviar" size={16} />
         </button>
       </form>
     </>

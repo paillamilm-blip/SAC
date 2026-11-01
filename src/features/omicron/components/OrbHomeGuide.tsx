@@ -26,6 +26,7 @@ import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { hapticLight } from '@/shared/utils/haptics';
 import { C, FONT, RADIUS, SIZE, SP, tint } from '@/theme';
+import { Icon } from '@/shared/components/icons';
 import { buildHomeActions, splitGreeting } from '../utils/orbHomeGuide';
 
 // Unión discriminada por `slot`: cada ranura declara solo lo que usa, así el
@@ -199,7 +200,7 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
                 lineHeight: 1,
               }}
             >
-              ✕
+              <Icon role="cerrar" size={16} />
             </button>
           </div>
 

@@ -13,6 +13,7 @@ import {
   markChallengeCompleted,
 } from '@/features/academia/services/dailyChallenge';
 import { applyStreakMultiplier } from './StreakBanner';
+import { Icon } from '@/shared/components/icons';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useRealtime } from '@/store/RealtimeContext';
 import { useApp } from '@/store/AppContext';
@@ -76,13 +77,13 @@ export function DailyChallengeCard({ onNavigate }: Props) {
   if (completed && !justCompleted) {
     return (
       <div style={S.cardDone}>
-        <span style={S.checkEmoji}>✅</span>
+        <Icon role="exito" size={SIZE.lg} color={C.green} style={{ flexShrink: 0 }} />
         <div>
           <div style={S.doneTitle}>Reto completado</div>
           <div style={S.doneSubtitle}>Vuelve mañana para el siguiente</div>
         </div>
         {cStreak > 1 && (
-          <span style={S.cStreak}>🎯 {cStreak} retos seguidos</span>
+          <span style={S.cStreak}><Icon role="meta" size={11} /> {cStreak} retos seguidos</span>
         )}
       </div>
     );
@@ -92,10 +93,10 @@ export function DailyChallengeCard({ onNavigate }: Props) {
     const pe = parseInt(localStorage.getItem('omicron_last_challenge_pe') ?? '0');
     return (
       <div style={S.cardCelebrate}>
-        <div style={S.celebrateEmoji}>🎉</div>
+        <div style={S.celebrateEmoji}><Icon role="descubrir" size={30} color={C.gold} /></div>
         <div style={S.celebrateTitle}>¡Reto completado!</div>
         <div style={S.celebratePe}>+{pe} PE ganados</div>
-        {cStreak > 1 && <div style={S.celebrateStreak}>🎯 {cStreak} retos seguidos</div>}
+        {cStreak > 1 && <div style={S.celebrateStreak}><Icon role="meta" size={11} /> {cStreak} retos seguidos</div>}
       </div>
     );
   }
@@ -103,7 +104,7 @@ export function DailyChallengeCard({ onNavigate }: Props) {
   return (
     <div style={S.card}>
       <div style={S.header}>
-        <span style={S.emoji}>{challenge.icon}</span>
+        <Icon role={challenge.icon} size={SIZE.xl} color={uc} style={{ flexShrink: 0 }} />
         <div style={S.headerText}>
           <span style={{ ...S.label, color: uc }}>RETO DEL DÍA</span>
           <span style={S.time}>{challenge.duration}</span>
@@ -136,7 +137,6 @@ const S: Record<string, React.CSSProperties> = {
     gap: 8,
     marginBottom: 10,
   },
-  emoji: { fontSize: SIZE.xl },
   headerText: { flex: 1, display: 'flex', flexDirection: 'column' as const },
   label: { fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: 1.5, textTransform: 'uppercase' as const },
   time: { fontFamily: FONT.mono, fontSize: 9, color: C.mut },
@@ -175,11 +175,13 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 8,
   },
-  checkEmoji: { fontSize: SIZE.lg },
   doneTitle: { fontFamily: FONT.mono, fontSize: 11, color: C.green },
   doneSubtitle: { fontFamily: FONT.mono, fontSize: 9, color: C.mut },
   cStreak: {
     marginLeft: 'auto',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
     fontFamily: FONT.mono,
     fontSize: 9,
     color: C.gold,
@@ -195,8 +197,8 @@ const S: Record<string, React.CSSProperties> = {
     border: `1px solid ${tint(C.gold, 30)}`,
     textAlign: 'center' as const,
   },
-  celebrateEmoji: { fontSize: 32, marginBottom: 6 },
+  celebrateEmoji: { display: 'flex', justifyContent: 'center', marginBottom: 6 },
   celebrateTitle: { fontFamily: FONT.display, fontSize: SIZE.md, fontWeight: 700, color: C.ink },
   celebratePe: { fontFamily: FONT.mono, fontSize: 13, color: C.green, marginTop: 4 },
-  celebrateStreak: { fontFamily: FONT.mono, fontSize: 11, color: C.gold, marginTop: 6 },
+  celebrateStreak: { fontFamily: FONT.mono, fontSize: 11, color: C.gold, marginTop: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 },
 };

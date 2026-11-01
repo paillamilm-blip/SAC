@@ -63,7 +63,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
   document.head.appendChild(style);
 
   const txt = document.createElement('span');
-  txt.textContent = '✨ Nueva versión de Ómicrom disponible';
+  txt.textContent = 'Hay una nueva versión de Ómicrom. Tocá para actualizarla.';
   txt.style.cssText = 'font-size:13px;font-weight:600';
 
   const btn = document.createElement('button');

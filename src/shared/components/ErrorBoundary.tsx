@@ -1,8 +1,9 @@
 // components/shared/ErrorBoundary.tsx
 // Captura errores de render de cualquier pestaña/módulo y muestra un panel
 // holográfico en vez de dejar la app en pantalla blanca.
-import { C, tint, SIZE } from '@/theme';
+import { C, tint } from '@/theme';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Icon } from '@/shared/components/icons';
 
 interface Props {
   children: ReactNode;
@@ -36,9 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
       <div style={styles.wrap}>
         <div style={styles.card}>
           <div style={styles.iconRing}>
-            <span style={styles.icon}>⚠</span>
+            <Icon role="error" size={24} color={C.gold} />
           </div>
-          <div style={styles.title}>FALLO EN EL MÓDULO</div>
+          <div style={styles.title}>No pude mostrar este módulo</div>
           {this.props.section && <div style={styles.section}>{this.props.section}</div>}
           <p style={styles.msg}>{this.state.message}</p>
           <div style={styles.btnRow}>
@@ -74,7 +75,6 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: `0 0 18px ${tint(C.gold, 35)}`,
     animation: 'amberBreathe 2.8s ease-in-out infinite',
   },
-  icon: { fontSize: SIZE.xxl, color: C.gold },
   title: { fontFamily: MONO, fontSize: 13, letterSpacing: 2, color: C.gold, fontWeight: 700 },
   section: { fontFamily: MONO, fontSize: 11, letterSpacing: 1, color: tint(C.gold, 60), marginTop: 4, textTransform: 'uppercase' },
   msg: {

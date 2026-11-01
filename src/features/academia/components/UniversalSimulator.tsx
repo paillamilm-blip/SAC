@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import {C, FONT, tint, SIZE} from '@/theme';
+import { Icon } from '@/shared/components/icons';
 import { useApp } from '@/store/AppContext';
 import type { SkillTreeNode } from '@/types';
 
@@ -220,7 +221,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
               </div>
               <p style={{ margin: 0, fontFamily: DISP, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.6 }}>{reto.contexto}</p>
               {reto.pista_adaptativa && (
-                <p style={{ margin: '10px 0 0', fontFamily: MONO, fontSize: 11, color: C.gold, lineHeight: 1.5 }}>💡 {reto.pista_adaptativa}</p>
+                <p style={{ margin: '10px 0 0', fontFamily: MONO, fontSize: 11, color: C.gold, lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 6 }}><Icon role="idea" size={13} style={{ marginTop: 2, flexShrink: 0 }} /> {reto.pista_adaptativa}</p>
               )}
             </div>
 
@@ -248,7 +249,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
 
             {/* Caso práctico */}
             <div style={{ ...cardS, borderColor: C.goldFaint }}>
-              <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>⬡ CASO PRÁCTICO</p>
+              <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}><Icon role="curso" size={11} /> CASO PRÁCTICO</p>
               <p style={{ margin: '0 0 10px', fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{reto.caso_practico.enunciado}</p>
               <textarea value={casoRespuesta} onChange={e => setCasoRespuesta(e.target.value)}
                 placeholder="Desarrolla tu solución con criterio técnico..."
@@ -266,7 +267,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>DEFENSA · LA IA TE REPREGUNTA</span>
               </div>
               <p style={{ margin: '0 0 12px', fontFamily: DISP, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>{defensaPregunta}</p>
-              {pista && <p style={{ margin: '0 0 12px', fontFamily: MONO, fontSize: 11, color: C.gold }}>💡 Pista: {pista}</p>}
+              {pista && <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 12px', fontFamily: MONO, fontSize: 11, color: C.gold }}><Icon role="idea" size={12} /> Pista: {pista}</p>}
               <textarea value={defensaRespuesta} onChange={e => setDefensaRespuesta(e.target.value)}
                 placeholder="Responde con tus palabras — la IA evalúa comprensión real, no memorización..."
                 style={textareaS} autoFocus />
@@ -338,7 +339,7 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
 
       {/* 4 ejes del Gemelo */}
       <div style={cardS}>
-        <p style={{ margin: '0 0 12px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>🧬 TUS 4 EJES EN ESTE RETO</p>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 12px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}><Icon role="nodo" size={11} /> TUS 4 EJES EN ESTE RETO</p>
         {(['ejecucion', 'calidad', 'trascendencia', 'fundamento'] as const).map(k => {
           const v = resultado.ejes[k];
           return (
@@ -347,7 +348,7 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
                 <span>{EJE_LABELS[k]}</span><span style={{ color: C.cyan }}>{v}/100</span>
               </div>
               <div style={{ height: 6, background: C.glass2, borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${v}%`, background: `linear-gradient(90deg, ${C.gold}, ${C.cyan})`, borderRadius: 4, transition: 'width 0.6s ease' }} />
+                <div style={{ height: '100%', width: '100%', transform: `scaleX(${v / 100})`, transformOrigin: 'left', background: `linear-gradient(90deg, ${C.gold}, ${C.cyan})`, borderRadius: 4, transition: 'transform 0.6s ease' }} />
               </div>
             </div>
           );
@@ -357,19 +358,19 @@ function ResultPanel({ resultado, difficulty, elapsed }: { resultado: ResultadoD
       {/* Feedback */}
       {resultado.resumen && (
         <div style={cardS}>
-          <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}>📜 RESUMEN</p>
+          <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.cyan }}><Icon role="registro" size={11} /> RESUMEN</p>
           <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.resumen}</p>
         </div>
       )}
       {resultado.feedback && (
         <div style={{ ...cardS, borderColor: `${C.gold}55`, background: C.goldFaint }}>
-          <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}>💡 PARA MEJORAR</p>
+          <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.gold }}><Icon role="idea" size={11} /> PARA MEJORAR</p>
           <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.feedback}</p>
         </div>
       )}
       {resultado.siguiente_paso && (
         <div style={{ ...cardS, borderColor: `${C.green}44`, background: C.greenFaint }}>
-          <p style={{ margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.green }}>🎯 TU SIGUIENTE PASO</p>
+          <p style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: C.green }}><Icon role="meta" size={11} /> TU SIGUIENTE PASO</p>
           <p style={{ margin: 0, fontFamily: DISP, fontSize: 13, color: C.ink, lineHeight: 1.6 }}>{resultado.siguiente_paso}</p>
         </div>
       )}

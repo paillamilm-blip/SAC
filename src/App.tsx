@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
-import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
+import { AuthOverlay, GUEST_CTA_LABEL } from '@/features/auth/components/AuthOverlay';
+import { Icon } from '@/shared/components/icons';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
 import { supabase } from '@/infrastructure/supabase/client';
 import { NoAccess } from '@/features/auth/components/NoAccess';
@@ -181,8 +182,8 @@ function AppShell() {
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}
             >
               <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
-              <button onClick={() => setForceGuest(true)} style={{ marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: SIZE.xxs, cursor: 'pointer' }}>
-                Entrar sin cuenta →
+              <button onClick={() => setForceGuest(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: SIZE.xxs, cursor: 'pointer' }}>
+                {GUEST_CTA_LABEL} <Icon role="siguiente" size={12} />
               </button>
             </motion.div>
           </motion.div>

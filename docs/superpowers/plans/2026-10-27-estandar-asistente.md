@@ -203,3 +203,32 @@ geometría: `7px` 7×, `900px` 3×, tamaños de lienzo).
 El **handoff de producción** sigue siendo del usuario (migraciones 10011→10012→10013, borrar las 6 Edge
 Functions muertas, secrets, desplegar `analizar-cv`, curl de invitado, RLS cruzada, QA Q1-Q10). Nada de
 eso se automatiza desde acá: son sus clics en el dashboard.
+
+---
+
+## 5 · L3 cerrado (2026-11-01)
+
+**Criterio de salida medido:** 0 glifos unicode/emoji haciendo de icono fuera del mapa · 44 px en los
+objetos medidos · cuatro estados con un solo dueño · CI trío verde.
+
+| Qué | Antes | Después | Cómo se sabe |
+|---|---|---|---|
+| Glifos UI (emoji + flechas + figuras) | 168 líneas en ~25 archivos | **0** | afirmación 6 de `contratoAsistente.test.ts`, con `DEUDA_GLIFOS` vacío |
+| Diccionario rol → trazo | no existía | `src/shared/components/icons.tsx` (`IconRole`) | un archivo nuevo |
+| Grosor de línea | `2` de fábrica en ~200 llamados | **1.75** en todos | regla `svg.lucide` en `index.css`; medido en el navegador: `strokeWidth: "1.75px"` |
+| Estados del andamio | vacío + cargando | vacío + cargando + **error** + **listo** | `OmicronError` / `OmicronDone` en `OmicronChrome.tsx` |
+| Estado llevado por un carácter | `msg.startsWith('✓')` decidía si el CV se leyó | bandera real `cvReadOk` en `useGemeloActivation` | `ConvalidaOmicron.tsx` |
+| Ícono del orbe por índice | 20 figuras según orden de aparición | estado real (`declarada` / `en-curso` / `probada`) | `skillIconFor` en `OrbShell.tsx` |
+| Puerta de invitado redactada dos veces | "Entrar sin cuenta →" y "Explorar sin cuenta →" | una constante, dos pantallas | `GUEST_CTA_LABEL` |
+| Credencial: objetivos < 44 px | 8 (pestañas 43, compartir 43, descargar 45, pie 34) | minHeight 44 | medido en `CredencialModal` con `getBoundingClientRect` |
+| Tests | 35 archivos / 443 | 35 archivos / **444** | `npx vitest --run` · typecheck 0 errores · lint 0/0 |
+
+**Lo que NO se terminó de medir (honesto):** los 44 px se verificaron en la credencial y en el shell que
+estaba montado en ese momento; no en las 12 superficies. El despliegue real de `analizar-cv` no se puede
+comprobar sin sesión: la pasarela `verify_jwt` responde 401 antes de ejecutar el código, así que la
+ausencia de `x-omicron-build` en un curl anónimo no prueba nada.
+
+**Lección 8 (la que dejó este loop):** un barrido delegado necesita verificación propia. Cinco agentes
+paralelos murieron a mitad por límite de créditos y dejaron el árbol compilando por accidente: tres
+`Icon` importados sin usar, dos `SIZE`/`Icon` usados sin importar, y nueve archivos sin empezar. El
+guard que mide el criterio (no el reporte del agente) es lo único que dijo la verdad.

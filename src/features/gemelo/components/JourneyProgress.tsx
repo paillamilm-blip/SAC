@@ -9,11 +9,12 @@
 import { useMemo } from 'react';
 import { C, FONT, tint, SIZE } from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
+import { Icon, type IconRole } from '@/shared/components/icons';
 
 interface JourneyStep {
   id: string;
   label: string;
-  emoji: string;
+  icon: IconRole;
   completed: boolean;
   action?: string;
 }
@@ -38,10 +39,10 @@ export function JourneyProgress({ profile, onNavigate }: Props) {
     const hasPe = (profile.pe_points ?? 0) >= 50;
 
     return [
-      { id: 'profile', label: 'Crear perfil', emoji: '⬡', completed: true }, // Si ve esto, ya tiene perfil
-      { id: 'cv', label: 'Subir CV', emoji: '📄', completed: hasCv, action: 'perfil' },
-      { id: 'leccion', label: 'Primera lección', emoji: '◈', completed: hasLesson, action: 'academia' },
-      { id: 'skill', label: 'Validar 1 skill', emoji: '🎯', completed: hasPe, action: 'maxskill' },
+      { id: 'profile', label: 'Crear perfil', icon: 'gemelo', completed: true }, // Si ve esto, ya tiene perfil
+      { id: 'cv', label: 'Subir CV', icon: 'cv', completed: hasCv, action: 'perfil' },
+      { id: 'leccion', label: 'Primera lección', icon: 'academia', completed: hasLesson, action: 'academia' },
+      { id: 'skill', label: 'Validar 1 skill', icon: 'meta', completed: hasPe, action: 'maxskill' },
     ];
   }, [profile]);
 
@@ -78,7 +79,7 @@ export function JourneyProgress({ profile, onNavigate }: Props) {
               cursor: step.completed ? 'default' : 'pointer',
             }}
           >
-            <span style={{ fontSize: SIZE.sm }}>{step.completed ? '✅' : step.emoji}</span>
+            <span style={{ fontSize: SIZE.sm }}>{step.completed ? <Icon role="probada" size={13} /> : <Icon role={step.icon} size={13} />}</span>
             <span style={{
               ...S.stepLabel,
               textDecoration: step.completed ? 'line-through' : 'none',

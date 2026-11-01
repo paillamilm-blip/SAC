@@ -3,6 +3,7 @@
 
 import { supabase } from '@/infrastructure/supabase/client';
 import type { Profile, GemeloDigital } from '@/types';
+import type { IconRole } from '@/shared/components/icons';
 
 /**
  * Calcula el Gemelo Digital a partir del perfil.
@@ -171,17 +172,22 @@ export function calculateMatchScore(profile: Profile, jobSkills?: string[]): num
 
 /**
  * BADGE según reputación.
+ *
+ * `color` es un nombre de banda (no un hex) porque el único consumidor que
+ * pinta el borde lo traduce con su propia tabla; `icon` es un rol dibujado por
+ * shared/components/icons.tsx. Antes venía un emoji, que se pinta con la
+ * paleta del sistema operativo del visitante.
  */
 export function getReputationBadge(score: number): {
   label: string;
   color: string;
-  emoji: string;
+  icon: IconRole;
 } {
-  if (score >= 90) return { label: 'Elite',       color: 'gold',    emoji: '👑' };
-  if (score >= 80) return { label: 'Senior',      color: 'emerald', emoji: '⭐' };
-  if (score >= 70) return { label: 'Avanzado',    color: 'blue',    emoji: '📈' };
-  if (score >= 50) return { label: 'Intermedio',  color: 'amber',   emoji: '🔄' };
-  return               { label: 'Novato',       color: 'slate',   emoji: '🌱' };
+  if (score >= 90) return { label: 'Elite',       color: 'gold',    icon: 'elite' };
+  if (score >= 80) return { label: 'Senior',      color: 'emerald', icon: 'senior' };
+  if (score >= 70) return { label: 'Avanzado',    color: 'blue',    icon: 'avanzado' };
+  if (score >= 50) return { label: 'Intermedio',  color: 'amber',   icon: 'intermedio' };
+  return               { label: 'Novato',       color: 'slate',   icon: 'novato' };
 }
 
 /**

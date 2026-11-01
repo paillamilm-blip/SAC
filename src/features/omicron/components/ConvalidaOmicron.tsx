@@ -35,7 +35,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
 
   const {
     phase, currentStep, dossier,
-    cvText, setCvText, cvFileName, msg, pushes, lastError,
+    cvText, setCvText, cvFileName, cvReadOk, msg, pushes, lastError,
     hasExistingCV, profile,
     persisting, persisted,
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
@@ -49,12 +49,6 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
 
   // Detect error state
   const isError = phase === 'upload' && lastError !== null;
-
-  // Lectura exitosa REAL: el hook fija cvFileName Y msg que empieza con "✓".
-  // Un archivo ilegible/corto TAMBIÉN fija cvFileName pero msg NO empieza con
-  // "✓" (dice "No pude leer/extraer..."), así que exigimos ambas condiciones
-  // para no mostrar un falso "documento leído".
-  const cvReadOk = !!cvFileName && msg.startsWith('✓');
 
   // Retry with cooldown
   const handleRetry = () => {

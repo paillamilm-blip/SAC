@@ -8,6 +8,7 @@ import { useRedViva } from '@/features/redviva/hooks/useRedViva';
 import { textoLecturaOmicron } from '@/features/omicron/services/omicronLectura';
 import type { NodoRed } from '@/features/redviva/services/redViva';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
+import { Icon } from '@/shared/components/icons';
 // NOTE ("Matar el Escritorio" Inc 2): ProactiveCards y OrbContextLabel se
 // DESMONTARON del shell para consolidar el Home en UNA sola voz ambiental
 // (OrbEstadoDelDia). Sus archivos permanecen en el repo (reversible), pero
@@ -78,10 +79,10 @@ const CredencialModal = lazy(() => import('@/features/gemelo/components/Credenci
 // ('aprendizaje'); el default de navegación sigue siendo 'perfil', así que
 // el alta del mapa no secuestra el onboarding del Gemelo.
 const HUB_NODES: OrbNode[] = [
-  { id: 'inicio',       label: 'Mi Gemelo',    tab: 'perfil',      icon: '⬡' },
-  { id: 'academia',     label: 'Academia',     tab: 'academia',    icon: '◈' },
-  { id: 'habilidades',  label: 'Habilidades',  tab: 'maxskill',    icon: '◎' },
-  { id: 'aprendizaje',  label: 'Aprendizaje',  tab: 'aprendizaje', icon: '⬢' },
+  { id: 'inicio',       label: 'Mi Gemelo',    tab: 'perfil',      icon: 'gemelo' },
+  { id: 'academia',     label: 'Academia',     tab: 'academia',    icon: 'academia' },
+  { id: 'habilidades',  label: 'Habilidades',  tab: 'maxskill',    icon: 'habilidades' },
+  { id: 'aprendizaje',  label: 'Aprendizaje',  tab: 'aprendizaje', icon: 'aprendizaje' },
 ];
 
 // Todo nodo de la Red Viva es UNA HABILIDAD TUYA: se acciona probándola, y eso
@@ -98,14 +99,18 @@ const ORB_MAX = 300;
 
 // ── Default invitation nodes (when user has no skills yet) ───────────
 const INVITATION_NODES: OrbNode[] = [
-  { id: 'inv-cv',       label: 'Sube tu CV',        tab: 'perfil',   icon: '📄' },
-  { id: 'inv-skills',   label: 'Descubre skills',   tab: 'maxskill', icon: '✦' },
-  { id: 'inv-curso',    label: 'Primer curso',      tab: 'academia', icon: '📚' },
-  { id: 'inv-valida',   label: 'Valida expertise',  tab: 'maxskill', icon: '🏆' },
+  { id: 'inv-cv',       label: 'Sube tu CV',        tab: 'perfil',   icon: 'cv' },
+  { id: 'inv-skills',   label: 'Descubre skills',   tab: 'maxskill', icon: 'descubrir' },
+  { id: 'inv-curso',    label: 'Primer curso',      tab: 'academia', icon: 'curso' },
+  { id: 'inv-valida',   label: 'Valida expertise',  tab: 'maxskill', icon: 'validar' },
 ];
 
-// ── Icon generator for skill nodes (first letter + geometric shape) ──
-const SKILL_ICONS = ['◉', '◈', '◇', '◆', '○', '●', '◎', '⬡', '⬢', '△', '▽', '▣', '▢', '⊡', '⊛', '✦', '✧', '⊿', '⊞', '◧'];
+// El ícono de un nodo de skill comunica su estado real, no su orden de aparición.
+// Antes cada skill recibía una figura geométrica por índice (`SKILL_ICONS[i % 20]`):
+// veinte trazos distintos que no significaban nada y que nunca se veían juntos.
+// Ahora hay tres lecturas, y son las tres que el nodo de verdad puede tener.
+const skillIconFor = (level: number): OrbNode['icon'] =>
+  level >= 0.8 ? 'probada' : level >= 0.5 ? 'en-curso' : 'declarada';
 
 /**
  * Builds knowledge nodes dynamically from the user's real skills.
@@ -164,7 +169,7 @@ function buildSkillNodes(
       id: `skill-${i}-${skill.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20)}`,
       label: skill.length > 22 ? skill.slice(0, 20) + '…' : skill,
       tab: categorizeSkill(skill),
-      icon: SKILL_ICONS[i % SKILL_ICONS.length],
+      icon: skillIconFor(level),
       level,
       nextStep: synergy > 0
         ? `Sinergia activa (+${Math.round(synergy * 100)}%) · dominio ${Math.round(level * 100)}%`
@@ -191,7 +196,7 @@ function TabLoader() {
       <div style={{ width: 64, height: 64 }}>
         <OmicronPlaceholder2D size={64} color={getUserColor()} />
       </div>
-      <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Cargando...</p>
+      <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Un momento, lo estoy preparando…</p>
     </div>
   );
 }
@@ -440,7 +445,7 @@ export function OrbShell() {
         id: `preview-${i}-${skill.toLowerCase().replace(/\s+/g, '-')}`,
         label: skill,
         tab: 'maxskill' as const,
-        icon: '✦',
+        icon: 'descubrir',
         level: 0.5,
         nextStep: 'Detectado en tu perfil',
       }));
@@ -537,7 +542,7 @@ export function OrbShell() {
       setProactiveActions([
         {
           label: 'Reintentar',
-          emoji: '↻',
+          icon: 'reintentar',
           primary: true,
           onClick: () => handleTextInputRef.current?.(original),
         },
@@ -844,8 +849,8 @@ export function OrbShell() {
       if (event) {
         setResponseMsg(event.message);
         setProactiveActions([
-          { label: 'Aprender hoy', emoji: '◈', primary: true, onClick: () => { setActiveTab('academia'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'academia'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
-          { label: 'Mi perfil', emoji: '📈', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
+          { label: 'Aprender hoy', icon: 'academia', primary: true, onClick: () => { setActiveTab('academia'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'academia'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
+          { label: 'Mi perfil', icon: 'tendencia', onClick: () => { setActiveTab('perfil'); const n = dynamicOrbNodes.find((nd: OrbNode) => nd.id === 'inicio'); if (n) { setSelectedNode(n); setState('fullscreen'); } } },
         ]);
         // Voz proactiva: hablar si el audio ya está desbloqueado (el usuario ya tocó)
         if (isAudioUnlocked()) {
@@ -865,7 +870,7 @@ export function OrbShell() {
           const msg = `${saludo}, ${name}. ${question.question}`;
           setResponseMsg(msg);
           setProactiveActions([
-            { label: 'Responder', emoji: '✅', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
+            { label: 'Responder', icon: 'editar', primary: true, onClick: () => { /* focus input */ setResponseMsg(null); } },
             { label: 'Después', onClick: () => setResponseMsg(null) },
           ]);
           // Voz proactiva si el audio está desbloqueado
@@ -879,8 +884,8 @@ export function OrbShell() {
             : `${saludo}, ${name}. Tu Gemelo está al día. Toca un nodo o pregúntame lo que quieras — estoy aquí para ayudarte.`;
           setResponseMsg(msg);
           setProactiveActions(top ? [
-            { label: 'Sí, vamos', emoji: '✅', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
-            { label: 'Otra cosa', emoji: '🔄', onClick: () => setResponseMsg(null) },
+            { label: 'Sí, vamos', icon: 'exito', primary: true, onClick: () => { handleTextInput(top.why.includes('CV') ? 'quiero subir mi cv' : 'dame un consejo'); setResponseMsg(null); } },
+            { label: 'Otra cosa', icon: 'reintentar', onClick: () => setResponseMsg(null) },
           ] : []);
           // Voz proactiva si el audio está desbloqueado
           if (isAudioUnlocked()) speakLocal(msg.length > 200 ? msg.slice(0, 200) : msg);
@@ -1214,7 +1219,7 @@ export function OrbShell() {
 
             {/* Node header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <span style={{ fontSize: SIZE.xxl }}>{selectedNode.icon}</span>
+              <Icon role={selectedNode.icon} size={SIZE.xxl} color={orbColor} />
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
                   {selectedNode.label}
@@ -1238,8 +1243,9 @@ export function OrbShell() {
               background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.glass})`,
               border: `1px solid ${C.cyanFaint}`,
             }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
-                ⬡ Cómo mejorar
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+                <Icon role="idea" size={12} />
+                Cómo mejorar
               </div>
               <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.5, color: C.ink }}>
                 {guidance}
@@ -1276,8 +1282,9 @@ export function OrbShell() {
                   border: `1px solid ${orbColor}44`,
                 }}
               >
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
-                  ⚡ Sinergia activa
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
+                  <Icon role="sinergia" size={12} />
+                  Sinergia activa
                 </div>
                 {/* QUÉ */}
                 <p style={{ margin: '0 0 4px', fontFamily: FONT.display, fontSize: SIZE.sm, fontWeight: 700, color: C.ink }}>
@@ -1309,13 +1316,16 @@ export function OrbShell() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
-              Abrir {selectedNode.label} →
+              Abrir {selectedNode.label}
+              <Icon role="siguiente" size={14} />
             </button>
 
             {/* Swipe hint */}
             {canSwipe && (
-              <p style={{ textAlign: 'center', margin: '10px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, letterSpacing: 1 }}>
-                ← DESLIZA PARA CAMBIAR DE NODO →
+              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '10px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, letterSpacing: 1, textTransform: 'uppercase' }}>
+                <Icon role="anterior" size={11} />
+                desliza para cambiar de nodo
+                <Icon role="siguiente" size={11} />
               </p>
             )}
           </div>
@@ -1361,16 +1371,14 @@ export function OrbShell() {
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
-              fontSize: SIZE.md,
-              fontWeight: 700,
               transition: 'transform 0.15s ease, background 0.15s ease',
             }}
           >
-            ←
+            <Icon role="anterior" size={18} />
           </button>
           {selectedNode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: SIZE.lg }}>{selectedNode.icon}</span>
+              <Icon role={selectedNode.icon} size={SIZE.lg} color={orbColor} />
               <span style={{
                 fontFamily: FONT.display,
                 fontSize: 15,
@@ -1647,9 +1655,9 @@ export function OrbShell() {
         <ErrorBoundary section="ConvalidaCV">
           <Suspense fallback={
             <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
-              <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: SIZE.lg }}>✕</button>
+              <button onClick={() => setShowConvalida(false)} aria-label="Cerrar" style={{ position: 'absolute', top: 16, right: 20, width: 44, height: 44, borderRadius: 12, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon role="cerrar" size={18} /></button>
               <OmicronPlaceholder2D size={80} color={getUserColor()} />
-              <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Cargando módulo CV…</p>
+              <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Abriendo tu módulo de CV…</p>
             </div>
           }>
             <ConvalidaOmicron onClose={() => setShowConvalida(false)} />

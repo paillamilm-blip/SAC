@@ -16,6 +16,7 @@
 //    "Verificada", nunca "ADN", nunca jerga de scores.
 import { useMemo, useState, type CSSProperties } from 'react';
 import MapaCapacidades, { type ModoMapa } from '@/features/mapa/MapaCapacidades';
+import { Icon } from '@/shared/components/icons';
 import { puenteBrechasInvitado } from '@/features/gemelo/services/aprendizaje';
 import { transicionValida, type EstadoBrecha } from '@/features/gemelo/services/brechas';
 import { useUserColor } from '@/shared/hooks/useUserColor';
@@ -230,7 +231,7 @@ export default function AprendizajeTab() {
                       )}
                       {!puedeConfirmar && (b.estado === 'confirmada') && (
                         <button type="button" className="boton boton-ok" aria-pressed disabled>
-                          Es real ✓
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Es real <Icon role="probada" size={12} /></span>
                         </button>
                       )}
 
@@ -247,7 +248,7 @@ export default function AprendizajeTab() {
                       )}
                       {!puedeRechazar && b.estado === 'rechazada' && (
                         <button type="button" className="boton boton-bad" aria-pressed disabled>
-                          Descartada ✓
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Descartada <Icon role="probada" size={12} /></span>
                         </button>
                       )}
 

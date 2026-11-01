@@ -95,6 +95,10 @@ export function useGemeloActivation() {
   const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
   const [cvText, setCvText] = useState('');
   const [cvFileName, setCvFileName] = useState('');
+  // Estado, no texto: si el documento se logró leer o no lo decide esta
+  // bandera. Antes la pantalla lo averiguaba con msg.startsWith('✓'), o sea
+  // un carácter unicode era el portador de verdad del flujo.
+  const [cvReadOk, setCvReadOk] = useState(false);
   const [msg, setMsg] = useState('Sube tu CV y Ómicrom activa todo automáticamente.');
   const [pushes, setPushes] = useState<Push[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -330,15 +334,18 @@ export function useGemeloActivation() {
       console.info(`[Omicron] CV extracted: ${text.length} chars. Preview: "${text.slice(0, 200)}…"`);
       if (text.length >= 30) {
         setCvText(text);
+        setCvReadOk(true);
         const preview = text.slice(0, 60).replace(/\s+/g, ' ').trim();
-        setMsg(`✓ "${file.name}" leído (${text.length} caracteres). Toca "Activar Gemelo Completo".`);
+        setMsg(`"${file.name}" leído (${text.length} caracteres). Toca "Activar Gemelo Completo".`);
         toast(`CV leído: "${preview}…"`, 'success');
       } else {
+        setCvReadOk(false);
         setMsg(`No pude extraer texto del archivo (solo ${text.length} caracteres). Pega tu experiencia abajo.`);
         toast('El archivo no tiene texto legible. Prueba pegando tu experiencia.', 'error');
       }
     } catch (err) {
       console.warn('[Omicron] CV file read failed:', err);
+      setCvReadOk(false);
       setMsg('No pude leer el archivo. Pega tu experiencia abajo.');
       toast('Error leyendo el archivo. Intenta con otro formato.', 'error');
     }
@@ -525,7 +532,7 @@ export function useGemeloActivation() {
   return {
     // State
     phase, currentStep, completedSteps, dossier, ai,
-    cvText, setCvText, cvFileName, msg, pushes,
+    cvText, setCvText, cvFileName, cvReadOk, msg, pushes,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,
     pendingPersist, persisted, persisting, persistError,
