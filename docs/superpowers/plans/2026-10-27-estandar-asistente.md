@@ -199,6 +199,9 @@ Después: L4 (gesto firma único, dedupe de `spin`/`cp-spin` y de las copias de 
 y `theme/`) y el cierre de la cola de `px` mágicos que dejó L2 (46 valores, de los cuales la mayoría son
 geometría: `7px` 7×, `900px` 3×, tamaños de lienzo).
 
+> **L4 quedó cerrado en §6 (2026-11-01).** El loop que sigue es la cola de `px` de geometría, y la verificación
+> de frames que §6 dejó abierta: medir `< 16 ms/frame` en las pestañas pesadas con la app visible.
+
 
 El **handoff de producción** sigue siendo del usuario (migraciones 10011→10012→10013, borrar las 6 Edge
 Functions muertas, secrets, desplegar `analizar-cv`, curl de invitado, RLS cruzada, QA Q1-Q10). Nada de
@@ -239,3 +242,42 @@ no se abrieron.
 paralelos murieron a mitad por límite de créditos y dejaron el árbol compilando por accidente: tres
 `Icon` importados sin usar, dos `SIZE`/`Icon` usados sin importar, y nueve archivos sin empezar. El
 guard que mide el criterio (no el reporte del agente) es lo único que dijo la verdad.
+
+---
+
+## 6 · L4 cerrado (2026-11-01)
+
+**Criterio de salida medido:** una familia de animación declarada en un solo sitio · `prefers-reduced-motion`
+respetado por el sistema y no por acuerdo de cada pantalla · cero trabajo de layout por frame.
+
+| Qué | Antes (`ef9a17a`) | Después (`072596c`) | Cómo se sabe |
+|---|---|---|---|
+| Declaraciones de `@keyframes` fuera del mapa | 38, en 12 archivos | **16, todas en `index.css`** | `git grep` en el commit anterior vs. `grep -c` hoy; afirmación 1 de `contratoMovimiento.test.ts` |
+| Archivos que inyectan CSS en runtime | 11 | 4 (ninguno declara ya un gesto: son reglas de su propia superficie) | `grep -rl "createElement('style')"` |
+| Gestos con nombre propio de componente | `radarStroke`, `emotionFloat`, `busFlow`, `corePulse`, `omicron-thinking-pulse`, 4 × `livePulse*`, `cola-pulso`, `ocRise`, `cp-*` | **0** | el mismo guard |
+| La barra viva | 4 keyframes propios | `omi-pulse` + `omi-shimmer` con la **amplitud** como parámetro (`--omi-pulso-alto/bajo`) | `LivePulseBar.tsx` |
+| Reducir movimiento | 7 gateos manuales repartidos | `MotionConfig reducedMotion="user"` en la raíz + una regla global en `index.css` + reposo explícito de los loops | `App.tsx` · `index.css` |
+| Propiedades de layout animadas | 5 barras que animaban `width`/`height` | `transform: scaleX()`; **1 excepción documentada** (`GeodesicOrb`, el halo del orbe) | afirmación 3, con `DEUDA_ANCHO` achicado a un archivo |
+| Gira / aparece sinónimos | `spin`, `cp-spin`, `redSpin`, `orbita`… y 9 entradas distintas | `omi-spin` (con `ANIM.orbita` y su reverso) y `omi-rise` | afirmación 4: todo nombre pedido existe y ninguna cadena fuera de CSS se cuelga |
+| Tests | 35 archivos / 443 | 36 archivos / **448** | `npx vitest --run` · typecheck 0 · lint 0 errores / 0 advertencias |
+
+**La firma elegida: la respiración.** `omi-breathe` a 3 s es el gesto de todo lo que está vivo (la barra,
+el orbe, la barra de estado, el radar del Gemelo). Cuando el asistente trabaja, el mismo gesto sube a 1,2 s
+(`omi-pulse`); cuando confirma, ocurre una sola vez (`ANIM.flash`). La variación entre superficies es tempo y
+amplitud, nunca forma.
+
+**Medición en el navegador (lo que se pudo medir):** con la superficie visible, la ventana de montaje del orbe
+devolvió 158 frames con **p50 = 16,70 ms** (60 fps clavados) y p95 = 33,3 ms en medio del pico de entrada.
+Inventario en vivo de `document.getAnimations()`: **16 animaciones corriendo, 16 de la familia** (`omi-float` ×8
+en las partículas de emoción, `omi-breathe` ×4, la barra en reposo con `omi-pulse` + `omi-shimmer`, `omi-rise` de
+entrada) y cero consolas en rojo. La segunda lectura de frames no se tomó: la pestaña del navegador embebido
+quedó oculta (`visibilityState: "hidden"`) y `requestAnimationFrame` no dispara sin superficie visible. **Queda
+como verificación del dueño**: abrir el panel del navegador con la app en `http://localhost:5173` y repetir la
+medición en las pestañas pesadas (mapa, simulador). El criterio estructural —ningún frame recalcula layout— sí
+está garantizado por la afirmación 3 del guard, que es lo que empuja el costo por encima de 16 ms.
+
+**Lección 9 (la que dejó este loop):** un guard que filtra por convención de nombre mide el estilo, no la regla.
+La primera versión del contrato buscaba solo `@keyframes omi-*` y dio verde mientras la barra viva seguía
+inyectando cuatro gestos propios con nombre de fantasía. Fue el cambio de ese filtro a *cualquier* keyframe lo
+que encontró también `cola-pulso` en `aprendizaje.css`. Un contrato se escribe sobre la propiedad que importa
+(dónde se declara), no sobre el prefijo que nos gusta.
