@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
-import { C, FONT, RADIUS, tint, SIZE, ELEVATED } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE, ELEVATED, ANIM } from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
@@ -481,7 +481,7 @@ export function MaxSkillTab() {
               disabled={coachLoading}
             >
               {coachLoading ? (
-                <><Loader2 size={15} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> Analizando...</>
+                <><Loader2 size={15} style={{ animation: ANIM.spin }} /> Analizando...</>
               ) : (
                 <><Sparkles size={15} /> {coachAdvice ? 'Pedir otro consejo' : 'Pedir consejo de mejora'}</>
               )}

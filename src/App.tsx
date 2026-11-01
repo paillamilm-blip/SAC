@@ -1,7 +1,7 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
 import { AppProvider, useApp } from './store/AppContext';
@@ -202,16 +202,20 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppProvider>
-        <ToastProvider>
-          <RealtimeProvider>
-            <EmotionBridge>
-              <ConnectionBanner />
-              <AppShell />
-            </EmotionBridge>
-          </RealtimeProvider>
-        </ToastProvider>
-      </AppProvider>
+      {/* reducedMotion="user": la preferencia del sistema manda sobre TODA la
+          animación de framer-motion, sin que cada pantalla tenga que gatearla. */}
+      <MotionConfig reducedMotion="user">
+        <AppProvider>
+          <ToastProvider>
+            <RealtimeProvider>
+              <EmotionBridge>
+                <ConnectionBanner />
+                <AppShell />
+              </EmotionBridge>
+            </RealtimeProvider>
+          </ToastProvider>
+        </AppProvider>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

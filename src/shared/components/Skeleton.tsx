@@ -4,7 +4,7 @@
 // Emil Kowalski: "Un skeleton se siente más rápido que un spinner."
 // ═══════════════════════════════════════════════════════════════════════
 
-import { C } from '@/theme';
+import { C, ANIM } from '@/theme';
 
 interface Props {
   width?: string | number;
@@ -21,7 +21,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 6, style 
       borderRadius,
       background: `linear-gradient(90deg, ${C.glass} 25%, ${C.glass2} 50%, ${C.glass} 75%)`,
       backgroundSize: '200% 100%',
-      animation: 'shimmer 1.5s ease-in-out infinite',
+      animation: ANIM.shimmer,
       ...style,
     }} />
   );
@@ -44,12 +44,6 @@ export function SkeletonList({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
     </>
   );
 }

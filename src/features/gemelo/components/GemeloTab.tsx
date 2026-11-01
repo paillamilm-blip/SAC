@@ -14,7 +14,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { C, FONT, tint, SIZE, ANIM } from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
 import { GlowCard, SmoothNumber, MagneticButton } from '@/shared/motion';
@@ -288,7 +288,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
           <div aria-hidden="true" style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
             border: `1px solid ${SKILL_COLORS[2]}33`,
-            animation: 'cp-spin 25s linear infinite',
+            animation: ANIM.orbita,
           }}>
             <div style={{ position: 'absolute', top: -5, left: '50%', transform: 'translateX(-50%)', width: 10, height: 10, borderRadius: '50%', background: SKILL_COLORS[2], boxShadow: `0 0 8px ${SKILL_COLORS[2]}` }} />
           </div>
@@ -297,7 +297,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
           <div aria-hidden="true" style={{
             position: 'absolute', inset: 30, borderRadius: '50%',
             border: `1.5px solid ${SKILL_COLORS[1]}44`,
-            animation: 'cp-spin 18s linear infinite reverse',
+            animation: ANIM.orbitaContraria,
           }}>
             <div style={{ position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)', width: 12, height: 12, borderRadius: '50%', background: SKILL_COLORS[1], boxShadow: `0 0 10px ${SKILL_COLORS[1]}` }} />
           </div>

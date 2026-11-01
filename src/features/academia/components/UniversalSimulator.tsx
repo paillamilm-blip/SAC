@@ -11,7 +11,7 @@ import {
   ArrowRight, Send, RotateCcw, Clock, Trophy, Target,
 } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
-import {C, FONT, tint, SIZE} from '@/theme';
+import {C, FONT, tint, SIZE, ANIM} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 import { useApp } from '@/store/AppContext';
 import type { SkillTreeNode } from '@/types';
@@ -195,7 +195,7 @@ export function UniversalSimulator({ node, onClose, onSuccess }: Props) {
         {/* LOADING */}
         {(phase === 'loading' || phase === 'evaluando') && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, minHeight: 280 }}>
-            <Loader2 size={30} style={{ color: C.cyan, animation: 'cp-spin 1s linear infinite' }} />
+            <Loader2 size={30} style={{ color: C.cyan, animation: ANIM.spin }} />
             <p style={{ fontFamily: MONO, fontSize: SIZE.xs, color: C.mut, letterSpacing: 1, textAlign: 'center' }}>
               {phase === 'evaluando' ? 'Evaluando tu desempeño con IA...' : 'Generando reto adaptativo...'}
             </p>

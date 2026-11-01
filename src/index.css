@@ -237,7 +237,10 @@ body::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   KEYFRAMES (deduplicated)
+   LA FAMILIA DE MOVIMIENTO
+   Los gestos de la app se declaran acá y en ningún otro lado.
+   theme/animations.ts (ANIM) es la única forma de pedirlos.
+   El gesto firma es omi-breathe: el asistente está vivo.
    ═══════════════════════════════════════════════════════════ */
 @keyframes gridPan {
   0%   { background-position: 0 0; }
@@ -247,42 +250,85 @@ body::after {
   0%, 100% { background-position: 0% 0%; }
   50%      { background-position: 100% 100%; }
 }
-@keyframes msgEnter {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes bannerDrop {
-  from { transform: translate(-50%, -100%); opacity: 0; }
-  to   { transform: translate(-50%, 0);     opacity: 1; }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes cp-spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes cp-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--silver); }
-  50%      { opacity: 0.3; box-shadow: none; }
-}
-@keyframes cp-breathe {
-  0%, 100% { opacity: 0.55; filter: brightness(1); }
-  50%      { opacity: 1;    filter: brightness(1.55); }
-}
-@keyframes cp-scanline {
-  0%   { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-@keyframes dash {
-  to { stroke-dashoffset: -40; }
-}
-@keyframes lockPulse {
-  0%, 100% { opacity: 0.45; }
-  50%      { opacity: 0.85; }
-}
 @keyframes amberBreathe {
   0%, 100% { box-shadow: 0 0 14px rgba(245,158,11,0.45); }
   50%      { box-shadow: 0 0 26px rgba(245,158,11,0.7); }
+}
+
+/* Entradas — 8 px hacia arriba y opacidad, en todas las superficies */
+@keyframes omi-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Las que cuelgan del borde se centran con translateX(-50%): el keyframe tiene
+   que conservar ese desplazamiento o el aviso salta al centrarse. */
+@keyframes omi-rise-fixed {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes omi-drop {
+  from { opacity: 0; transform: translate(-50%, -100%); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+/* Solo opacidad: para lo que ocupa la pantalla (scrim, revelaciones), donde
+   desplazar el elemento se vería como un salto. */
+@keyframes omi-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* La lámina que llega al centro de la pantalla (previsualización del orbe). */
+@keyframes omi-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* El gesto firma (reposo 3 s) y su versión de trabajo (1,2 s) */
+@keyframes omi-breathe {
+  0%, 100% { opacity: 0.55; filter: brightness(1); }
+  50%      { opacity: 1;    filter: brightness(1.55); }
+}
+/* El latido de la familia. La amplitud es un parámetro, no un keyframe nuevo:
+   la barra viva respira más tenue que un punto de presencia, con el mismo gesto. */
+@keyframes omi-pulse {
+  0%, 100% { opacity: var(--omi-pulso-alto, 1); }
+  50%      { opacity: var(--omi-pulso-bajo, 0.35); }
+}
+
+@keyframes omi-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes omi-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes omi-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* El conector de Academia: las rayas avanzan sobre su propio trazado. */
+@keyframes omi-dash {
+  to { background-position: 0 12px; }
+}
+
+/* El latido: un nodo vivo de la Red y el núcleo del cargador respiran con el
+   mismo gesto, cada uno a su tempo. Declarados acá y no en el componente: los
+   gestos de la familia se escriben una sola vez (contrato de movimiento). */
+@keyframes omi-latido {
+  0%, 100% { opacity: 0.42; transform: scale(1); }
+  50%      { opacity: 0.95; transform: scale(1.14); }
+}
+/* El halo del cargador necesita un rango de opacidad más tenue que el núcleo,
+   por eso es el único gesto con valores propios. */
+@keyframes omi-ph-ring { 0%,100% { opacity:0.15; transform:scale(1); } 50% { opacity:0.45; transform:scale(1.12); } }
+.omi-latido { animation: omi-latido 2.1s cubic-bezier(0.32,0.72,0,1) infinite; transform-origin:center; transform-box:fill-box; }
+.omi-ph-core { animation: omi-latido 1.6s cubic-bezier(0.4,0,0.2,1) infinite; transform-origin:center; transform-box:fill-box; }
+.omi-ph-ring { animation: omi-ph-ring 1.6s cubic-bezier(0.4,0,0.2,1) infinite; transform-origin:center; transform-box:fill-box; }
+@media (prefers-reduced-motion: reduce) {
+  /* Congelados en su estado visible: con la regla global la animación dura
+     0,001 ms y caería en el fotograma tenue, así que se fija el reposo acá. */
+  .omi-latido { animation:none; opacity:0.8; }
+  .omi-ph-core { animation:none; opacity:0.9; }
+  .omi-ph-ring { animation:none; opacity:0.35; }
 }
 
 /* ═══════════════════════════════════════════════════════════

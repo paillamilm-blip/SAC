@@ -86,7 +86,7 @@ export function StreakBanner() {
             </div>
           )}
           <div style={S.progress}>
-            <div style={{ ...S.progressFill, width: `${Math.min(100, (streak / 30) * 100)}%` }} />
+            <div style={{ ...S.progressFill, transform: `scaleX(${Math.min(1, streak / 30)})` }} />
           </div>
           <div style={S.tiers}>
             <span style={{ color: streak >= 3 ? C.green : C.mut }}>3d x1.25</span>
@@ -184,9 +184,11 @@ const S: Record<string, React.CSSProperties> = {
   },
   progressFill: {
     height: '100%',
+    width: '100%',
+    transformOrigin: 'left',
     borderRadius: 2,
     background: `linear-gradient(90deg, ${C.flame}, ${C.gold}, ${C.green})`,
-    transition: 'width 0.5s',
+    transition: 'transform 0.5s ease',
   },
   tiers: {
     display: 'flex',

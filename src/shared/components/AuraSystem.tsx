@@ -14,7 +14,7 @@
 // Updates in real-time as axes change (SmoothNumber-like transition).
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
-import { C } from '@/theme';
+import { C, ANIM } from '@/theme';
 
 export interface AuraAxes {
   execution: number;      // 0-100
@@ -136,7 +136,7 @@ export function AuraRing({ axes, size = 52, thickness = 2.5, animate = true, chi
           WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
           WebkitMaskComposite: 'xor',
           maskComposite: 'exclude',
-          animation: animate ? 'auraRotate 8s linear infinite' : undefined,
+          animation: animate ? ANIM.spin : undefined,
           opacity: 0.6 + aura.intensity * 0.4,
         }}
       />
@@ -186,19 +186,3 @@ export function AuraBackground({ axes, style }: AuraBackgroundProps) {
     />
   );
 }
-
-// Inject aura rotation keyframe (lazy — only runs when module is imported client-side)
-function injectAuraStyles(): void {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById('aura-css')) return;
-  const s = document.createElement('style');
-  s.id = 'aura-css';
-  s.textContent = `
-    @keyframes auraRotate { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) {
-      [style*="auraRotate"] { animation: none !important; }
-    }
-  `;
-  document.head.appendChild(s);
-}
-injectAuraStyles();

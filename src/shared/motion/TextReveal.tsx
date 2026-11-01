@@ -7,6 +7,7 @@
 // Impeccable: shows full text instantly in reduced motion.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, type CSSProperties } from 'react';
+import { ANIM } from '@/theme';
 import { useReducedMotion } from './useReducedMotion';
 
 interface Props {
@@ -89,7 +90,7 @@ export function TextReveal({
             background: 'currentColor',
             marginLeft: 1,
             opacity: 0.7,
-            animation: 'cp-breathe 1s ease-in-out infinite',
+            animation: ANIM.pulse,
             verticalAlign: 'text-bottom',
           }}
           aria-hidden="true"

@@ -36,7 +36,7 @@
 
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { C, FONT, tint } from '@/theme';
+import { ANIM, C, FONT, tint } from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import { wordPrefixes } from '../utils/typewriter';
 import { thinkingPulseLevel, revealPulseLevel } from '../utils/orbPulse';
@@ -194,11 +194,16 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
       {/* Message */}
       <p style={S.message}>
         {shown}
+        {/* La elipsis "pensando" late con el pulso de la familia. Bajo
+            prefers-reduced-motion queda estática: no hay loop que la apague. */}
         {thinking && (
           <span
-            className={reduceMotion ? undefined : 'omicron-thinking-dots'}
             aria-hidden="true"
-            style={{ marginLeft: 2 }}
+            style={{
+              marginLeft: 2,
+              display: 'inline-block',
+              animation: reduceMotion ? undefined : ANIM.pulse,
+            }}
           >
             …
           </span>
@@ -223,21 +228,7 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
         </div>
       )}
 
-      {/* Animación de la elipsis "pensando". Bajo prefers-reduced-motion se
-          apaga por completo (queda la elipsis estática, sin pulso ni loop). */}
-      <style>{`
-        .omicron-thinking-dots {
-          display: inline-block;
-          animation: omicron-thinking-pulse 1.2s ease-in-out infinite;
-        }
-        @keyframes omicron-thinking-pulse {
-          0%, 100% { opacity: 0.35; }
-          50%      { opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .omicron-thinking-dots { animation: none; opacity: 1; }
-        }
-      `}</style>
+      {/* Animación de la elipsis "pensando": ANIM.pulse, pedido al tema. */}
     </div>
   );
 }

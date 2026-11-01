@@ -20,7 +20,7 @@
 // The vertex positions are pre-computed from a subdivided icosahedron
 // projected onto a 2D circle (front-hemisphere visible).
 // ═══════════════════════════════════════════════════════════════════════
-import { C } from '@/theme';
+import { C, ANIM } from '@/theme';
 import { useMemo, type CSSProperties } from 'react';
 
 interface Props {
@@ -126,7 +126,7 @@ export function GeodesicOrb({
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
-          animation: spinning > 0 ? `cp-spin ${spinning}s linear infinite` : undefined,
+          animation: spinning > 0 ? `omi-spin ${spinning}s linear infinite` : undefined,
         }}
       >
         {/* SVG wireframe */}
@@ -167,7 +167,10 @@ export function GeodesicOrb({
           borderRadius: '50%',
           background: `radial-gradient(circle, ${color}${glowOpacity}, ${color}44, transparent 70%)`,
           boxShadow: `0 0 ${30 * intensity}px ${color}${glowOpacity}, 0 0 ${60 * intensity}px ${color}44`,
-          animation: breathing ? 'cp-breathe 3s ease-in-out infinite' : undefined,
+          animation: breathing ? ANIM.breathe : undefined,
+          // Excepción documentada: el núcleo cambia de tamaño solo cuando varía
+          // el conteo de nodos (una vez por sesión), no en cada frame. Escalarlo
+          // con transform deformaría el halo y su sombra, que es la identidad del orbe.
           transition: 'width 0.8s ease, height 0.8s ease, box-shadow 0.8s ease',
         }}
       />

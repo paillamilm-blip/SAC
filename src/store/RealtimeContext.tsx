@@ -5,7 +5,6 @@
 // de la red: así el "todo está conectado" se vuelve multiusuario de verdad.
 import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { useApp } from './AppContext';
-import { injectKeyframes } from '../theme';
 import { useRealtimeNetwork, type RealtimeNetwork } from '../hooks/useRealtimeNetwork';
 
 const RealtimeContext = createContext<RealtimeNetwork | null>(null);
@@ -26,10 +25,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     node_type: profile?.node_type ?? 'Nodo Operativo',
     node_level: profile?.node_level ?? 1,
   });
-
-  useEffect(() => {
-    injectKeyframes();
-  }, []);
 
   // Progresión real → evento en vivo para toda la red.
   const prevRef = useRef<{ rep: number; level: number; streak: number } | null>(null);

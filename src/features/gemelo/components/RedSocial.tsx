@@ -14,7 +14,7 @@ import { useApp } from '@/store/AppContext';
 import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
-import { C, FONT, RADIUS, SIZE } from '@/theme';
+import { C, FONT, RADIUS, SIZE, ANIM } from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import type { GemeloDigital } from '@/types';
 
@@ -46,7 +46,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
         position: 'fixed', inset: 0, zIndex: 1000,
         background: C.wash, backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
-        animation: 'redFadeIn 0.2s ease',
+        animation: ANIM.fade,
       }}
     >
       <div
@@ -60,7 +60,6 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       >
         {children}
       </div>
-      <style>{`@keyframes redFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
   );
 }
@@ -202,7 +201,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         {!passportUrl ? (
           <button onClick={generatePassport} disabled={issuing}
             style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            {issuing ? <Loader2 size={16} style={{ animation: 'cp-spin 0.8s linear infinite' }} /> : <ShieldCheck size={16} />}
+            {issuing ? <Loader2 size={16} style={{ animation: ANIM.spin }} /> : <ShieldCheck size={16} />}
             {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
           </button>
         ) : (
@@ -304,9 +303,8 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
       {loading && (
         <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <Loader2 size={26} style={{ color: C.cyan, animation: 'redSpin 0.9s linear infinite' }} />
+          <Loader2 size={26} style={{ color: C.cyan, animation: ANIM.spin }} />
           <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>CARGANDO CREDENCIAL...</span>
-          <style>{`@keyframes redSpin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
 

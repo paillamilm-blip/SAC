@@ -2,7 +2,7 @@
 // Visualización del Gemelo Digital como radar dinámico en tiempo real
 
 import { useMemo } from 'react';
-import { C, inkAt, tint } from '@/theme';
+import { C, inkAt, tint, ANIM } from '@/theme';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
 import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
@@ -170,7 +170,7 @@ export function ProgressRadar({
             padding: 6,
             background: `radial-gradient(circle at 50% 45%, ${tint(C.cyan, 10)}, ${tint(C.surface, 25)} 60%, transparent 75%)`,
             boxShadow: `0 0 40px ${tint(C.cyan, 12)}, inset 0 0 40px ${tint(C.purple, 10)}`,
-            animation: animated ? 'floatY 6s ease-in-out infinite' : undefined,
+            animation: animated ? ANIM.float : undefined,
           }}
         >
         <svg
@@ -209,7 +209,7 @@ export function ProgressRadar({
             strokeWidth="2"
             strokeLinejoin="round"
             filter="url(#radar-glow)"
-            style={animated ? { animation: 'radarStroke 3s ease-in-out infinite' } : undefined}
+            style={animated ? { animation: ANIM.breathe } : undefined}
           />
 
           {/* Puntos de los ejes (nodos neón del poliedro) */}
@@ -237,14 +237,6 @@ export function ProgressRadar({
           )}
         </svg>
         </div>
-
-        {/* ✓ FIX: Keyframe definido en un <style> inline dentro del SVG container */}
-        <style>{`
-          @keyframes radarStroke {
-            0%, 100% { stroke-opacity: 1; stroke-width: 2; }
-            50%       { stroke-opacity: 0.4; stroke-width: 3; }
-          }
-        `}</style>
       </div>
 
       {/* Tabla de Scores */}

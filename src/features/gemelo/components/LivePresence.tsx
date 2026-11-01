@@ -9,7 +9,7 @@ import { useRealtime } from '@/store/RealtimeContext';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { audioPing } from '@/shared/utils/spatialAudio';
 import type { LiveEvent, LiveEventKind } from '@/hooks/useRealtimeNetwork';
-import { C, FONT, SIZE } from '@/theme';
+import { C, FONT, SIZE, ANIM } from '@/theme';
 
 const KIND_STYLE: Record<LiveEventKind, { color: string; tag: string }> = {
   join:   { color: C.cyan,  tag: 'RED EN VIVO' },
@@ -60,7 +60,7 @@ export function LiveNetworkFeed() {
         boxShadow: `0 12px 34px ${C.scrim}, 0 0 22px ${ks.color}22`,
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
-        animation: 'cp-toast-in 0.24s ease both',
+        animation: ANIM.riseFixed,
         pointerEvents: 'none',
       }}
     >
@@ -82,7 +82,7 @@ export function LiveNetworkFeed() {
             borderRadius: '50%',
             background: ks.color,
             boxShadow: `0 0 8px ${ks.color}`,
-            animation: 'cp-breathe 1.4s ease-in-out infinite',
+            animation: ANIM.breathe,
           }}
         />
         {ks.tag} · {onlineCount.toLocaleString()} NODOS

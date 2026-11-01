@@ -5,6 +5,8 @@
 // - Al tocar "Actualizar": ordena al SW activarse y recarga una sola vez.
 // Así el usuario nunca queda pegado en una versión vieja ni tiene que borrar caché.
 
+import { ANIM } from '@/theme';
+
 let registered = false;
 
 export function registerPWA(): void {
@@ -56,11 +58,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
     'background:rgba(10,16,30,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);' +
     'border:1px solid rgba(160,174,192,0.4);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 22px rgba(160,174,192,.25);' +
     "font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;color:#eaf0fb;" +
-    'max-width:calc(100vw - 32px);animation:omiUpIn .3s ease both';
-
-  const style = document.createElement('style');
-  style.textContent = '@keyframes omiUpIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
-  document.head.appendChild(style);
+    `max-width:calc(100vw - 32px);animation:${ANIM.riseFixed}`;
 
   const txt = document.createElement('span');
   txt.textContent = 'Hay una nueva versión de Ómicrom. Tocá para actualizarla.';

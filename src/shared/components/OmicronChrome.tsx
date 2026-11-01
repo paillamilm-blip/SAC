@@ -142,8 +142,7 @@ function injectOcStyles(): void {
     .oc-pressable { cursor: pointer; }
     .oc-pressable:hover { transform: translateY(-2px); border-color: ${C.line} !important; }
     .oc-pressable:active { transform: scale(0.985); }
-    @keyframes ocRise { from { opacity: 0; transform: translateY(${SP[3]}px); } to { opacity: 1; transform: none; } }
-    .oc-rise { animation: ocRise ${TIMING.enter} ${EASE.enter} both; }
+    .oc-rise { animation: ${ANIM.rise}; }
     @media (prefers-reduced-motion: reduce) {
       .oc-card, .oc-pressable { transition: none; }
       .oc-pressable:hover, .oc-pressable:active { transform: none; }

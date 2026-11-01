@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Loader2, TrendingUp, BadgeCheck } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { C, FONT, tint, SIZE, ANIM } from '@/theme';
 
 interface Cred { v: number; u: string; n: string; nt: string; nl: string; rep: number; ej: number[]; cv: number; pe: number; iat: number; }
 const EJES = ['Ejecución', 'Calidad', 'Trascendencia', 'Fundamento'];
@@ -45,7 +45,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
       <div style={{ width: '100%', maxWidth: 420, borderRadius: 18, padding: 22, background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`, border: `1px solid ${C.cyanDim}`, boxShadow: `0 20px 60px ${C.scrim}` }}>
         {state === 'loading' && (
           <div style={{ textAlign: 'center', padding: 40 }}>
-            <Loader2 size={28} style={{ color: C.cyan, animation: 'cp-spin 0.9s linear infinite' }} />
+            <Loader2 size={28} style={{ color: C.cyan, animation: ANIM.spin }} />
             <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1, marginTop: 12 }}>VERIFICANDO FIRMA...</p>
           </div>
         )}

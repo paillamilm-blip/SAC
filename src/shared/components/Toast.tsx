@@ -1,7 +1,7 @@
 // components/shared/Toast.tsx
 // Sistema de notificaciones (toasts) global, holográfico.
 // Uso:  const { toast } = useToast();  toast('Guardado', 'success');
-import { C, SIZE } from '@/theme';
+import { C, SIZE, ANIM } from '@/theme';
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle2, XCircle, Info } from 'lucide-react';
 
@@ -57,7 +57,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px',
     borderRadius: 12, border: '1px solid',
     background: C.surface, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    animation: 'msgEnter 0.28s ease-out',
+    animation: ANIM.rise,
   },
   msg: {
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 600, fontSize: SIZE.sm,

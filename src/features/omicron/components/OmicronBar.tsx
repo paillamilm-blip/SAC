@@ -2,12 +2,12 @@
 // La barra del asistente Ómicrom, extraída de OrbShell.tsx a un componente
 // reutilizable. Dos modos:
 //   • 'ordenes' (default): comportamiento actual, INTACTO — voz/texto navegan y
-//     responden. La barra en reposo respira (cp-breathe) con halo del color del
+//     responden. La barra en reposo respira (omi-breathe) con halo del color del
 //     usuario, mic 44×44 (icono 'microfono'), input con el placeholder EXACTO,
 //     enviar 44×44 (icono 'enviar').
 //   • 'lectura': añade ARRIBA una burbuja donde Ómicrom LEE la red (texto que le
 //     pasa el shell desde resumenRed()/textoEstado(), sin jerga) + una lucecita
-//     chiquita de PRESENCIA (punto en el color del usuario, cp-breathe) que se
+//     chiquita de PRESENCIA (punto en el color del usuario, omi-breathe) que se
 //     detiene bajo prefers-reduced-motion. Marca visible 'Ómicrom' (M final).
 //
 // TODA la lógica (handleTextInput, toggleListening, isListening, inputFocused,
@@ -17,7 +17,7 @@
 // visible usa la marca 'Ómicrom'.
 
 import { useReducedMotion } from 'framer-motion';
-import { C, FONT, tint } from '@/theme';
+import { C, FONT, tint, ANIM } from '@/theme';
 import { Icon } from '@/shared/components/icons';
 
 /** Placeholder EXACTO en reposo (home) y en fullscreen. No cambiar los textos. */
@@ -69,9 +69,9 @@ export function OmicronBar({
   const prefersReducedMotion = useReducedMotion();
   const mostrarLectura = mode === 'lectura' && !!lectura;
   // La lucecita de presencia se detiene bajo prefers-reduced-motion (queda
-  // visible, sin loop). cp-breathe es el único movimiento permanente permitido
+  // visible, sin loop). La respiración es el único movimiento permanente permitido
   // aquí, tal como el 'latiendo' de la Red Viva.
-  const presenceAnimation = prefersReducedMotion ? 'none' : 'cp-breathe 3s ease-in-out infinite';
+  const presenceAnimation = prefersReducedMotion ? 'none' : ANIM.breathe;
 
   return (
     <>
@@ -143,7 +143,7 @@ export function OmicronBar({
             : (!inputText && !hasResponse ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px ${tint(C.black, 28)}` : 'none'),
           transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
           transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          animation: !inputText && !hasResponse && !inputFocused ? 'cp-breathe 3s ease-in-out infinite' : 'none',
+          animation: !inputText && !hasResponse && !inputFocused ? ANIM.breathe : 'none',
         }}
       >
         {/* Mic button */}
@@ -163,7 +163,7 @@ export function OmicronBar({
             placeItems: 'center',
             fontSize: 13,
             flexShrink: 0,
-            animation: isListening ? 'cp-pulse 1.2s ease-in-out infinite' : 'none',
+            animation: isListening ? ANIM.pulse : 'none',
           }}
         >
           <Icon role="microfono" size={16} />

@@ -1,29 +1,13 @@
 // theme/animations.ts
-// Keyframes, timing, easing, and spring presets
-// Filosofía Emil Kowalski (animations.dev):
-// ease-out para entradas, exit más rápido que enter, nunca >1s para UI.
-
-export const KEYFRAMES = `
-@keyframes cp-pulse { 0%,100% { opacity:1; box-shadow:0 0 8px #a0aec0; } 50% { opacity:0.3; box-shadow:none; } }
-@keyframes cp-spin { to { transform: rotate(360deg); } }
-@keyframes cp-scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
-@keyframes cp-node-pop { 0% { opacity:0; transform:scale(0.9); } 100% { opacity:1; transform:scale(1); } }
-@keyframes cp-trail { 0% { stroke-dashoffset:30; } 100% { stroke-dashoffset:0; } }
-@keyframes cp-breathe { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
-@keyframes cp-toast-in { 0% { opacity:0; transform:translateX(-50%) translateY(12px); } 100% { opacity:1; transform:translateX(-50%) translateY(0); } }
-@keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-`;
-
-export const ANIM = {
-  pulse: 'cp-pulse 1.5s ease-in-out infinite',
-  spin: 'cp-spin 0.8s linear infinite',
-  scanline: 'cp-scanline 4s linear infinite',
-  nodePop: 'cp-node-pop 0.25s ease both',
-  trail: 'cp-trail 1.5s linear infinite',
-  breathe: 'cp-breathe 2s ease-in-out infinite',
-  toastIn: 'cp-toast-in 0.2s ease both',
-  float: 'floatY 6s ease-in-out infinite',
-} as const;
+// La familia de movimiento de Ómicrom. Cinco gestos, declarados una sola vez
+// en index.css; nadie más escribe un @keyframes para decir lo mismo.
+//
+// El gesto firma es la RESPIRACIÓN: todo lo que está vivo en la app (la barra,
+// el orbe, el punto de presencia) respira al mismo tempo, 3 s. Cuando el
+// asistente trabaja, el tempo sube a 1,2 s: es el mismo gesto, más rápido.
+//
+// Filosofía Emil Kowalski (animations.dev): ease-out para entradas, exit más
+// rápido que enter, nunca >1 s para UI.
 
 /** Curvas de easing — nunca usar 'ease' ni 'ease-in' para UI */
 export const EASE = {
@@ -32,7 +16,6 @@ export const EASE = {
   exit: 'cubic-bezier(0.55, 0.085, 0.68, 0.53)',
   spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
   bounce: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
-  ios: 'cubic-bezier(0.32, 0.72, 0, 1)',
 } as const;
 
 /** Duraciones — enter siempre más lento que exit */
@@ -43,6 +26,36 @@ export const TIMING = {
   enter: '300ms',
   exit: '200ms',
   slow: '500ms',
+} as const;
+
+/** Los cinco gestos. `rise` es la entrada de toda la app; `breathe` es la firma. */
+export const ANIM = {
+  rise: `omi-rise ${TIMING.enter} ${EASE.default} both`,
+  /** Para lo que se centra con translateX(-50%): avisos y toasts al pie. */
+  riseFixed: `omi-rise-fixed ${TIMING.enter} ${EASE.default} both`,
+  /** El banner de conexión cae desde arriba; es `rise` invertido, misma curva. */
+  drop: `omi-drop ${TIMING.enter} ${EASE.default} both`,
+  /** Solo opacidad, para lo que ocupa toda la pantalla. */
+  fade: `omi-fade ${TIMING.exit} ${EASE.default} both`,
+  /** La lámina que llega al centro de la pantalla. */
+  pop: `omi-pop ${TIMING.normal} ${EASE.default} both`,
+  breathe: 'omi-breathe 3s ease-in-out infinite',
+  pulse: 'omi-pulse 1.2s ease-in-out infinite',
+  /** El gesto de éxito: una respiración que ocurre una sola vez. */
+  flash: 'omi-pulse 0.6s ease both',
+  spin: 'omi-spin 0.8s linear infinite',
+  float: 'omi-float 6s ease-in-out infinite',
+  shimmer: 'omi-shimmer 1.4s linear infinite',
+  /** El conector de Academia: las rayas avanzan, nadie redibuja el trazo. */
+  dash: 'omi-dash 0.7s linear infinite',
+  /** La barra viva: un solo latido declinado en los tempos del asistente. */
+  pulsoLento: 'omi-pulse 4s ease-in-out infinite',
+  pulsoAlerta: 'omi-pulse 1.5s ease-in-out infinite',
+  flujo: 'omi-shimmer 2s linear infinite',
+  flujoLento: 'omi-shimmer 4s linear infinite',
+  /** Los dos anillos del Gemelo: mismo giro, tempos distintos a propósito. */
+  orbita: 'omi-spin 25s linear infinite',
+  orbitaContraria: 'omi-spin 18s linear infinite reverse',
 } as const;
 
 /** Framer Motion spring presets */
@@ -59,13 +72,3 @@ export const EASING = {
   gentle:   [0.25, 0.1, 0.25, 1] as const,
   spring:   [0.34, 1.56, 0.64, 1] as const,
 } as const;
-
-export function injectKeyframes(): void {
-  if (typeof document === 'undefined') return;
-  const id = 'omicron-keyframes';
-  if (document.getElementById(id)) return;
-  const style = document.createElement('style');
-  style.id = id;
-  style.textContent = KEYFRAMES;
-  document.head.appendChild(style);
-}

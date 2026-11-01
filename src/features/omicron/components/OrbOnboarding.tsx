@@ -15,7 +15,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
-import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE, ANIM } from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { ColorPicker, COLOR_OPTIONS, type ColorOption } from '@/shared/components/ColorPicker';
@@ -369,7 +369,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   boxShadow: `0 4px 24px ${tint(C.black, 40)}, 0 0 8px ${chosenColor}11`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 8px ${chosenColor}`, animation: 'cp-breathe 2s ease-in-out infinite' }} />
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 8px ${chosenColor}`, animation: ANIM.breathe }} />
                     <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: chosenColor, textTransform: 'uppercase' }}>ÓMICROM</span>
                   </div>
                   <div style={{ fontFamily: FONT.body, fontSize: 15, color: C.ink, lineHeight: 1.6 }}>
@@ -445,7 +445,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
               style={{ textAlign: 'center', padding: '20px 0' }}
             >
               <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: chosenColor, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: chosenColor, animation: 'cp-breathe 1.2s ease-in-out infinite' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: chosenColor, animation: ANIM.pulse }} />
                 Construyendo tu Gemelo Digital…
               </span>
             </motion.div>

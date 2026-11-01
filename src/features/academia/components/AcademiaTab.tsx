@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { useApp } from '@/store/AppContext';
-import { C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE } from '@/theme';
+import { C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE, ANIM } from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
@@ -30,7 +30,7 @@ const DIFF_LABEL = ['', 'Inicial', 'Básico', 'Intermedio', 'Avanzado', 'Experto
 function Bar({ pct, color }: { pct: number; color: string }) {
   return (
     <div style={{ height: 6, borderRadius: 4, background: C.glass2, overflow: 'hidden' }}>
-      <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${C.cyan})`, boxShadow: GLOW.cyan, borderRadius: 4, transition: 'width 0.5s ease' }} />
+      <div style={{ height: '100%', width: '100%', transform: `scaleX(${pct / 100})`, transformOrigin: 'left', background: `linear-gradient(90deg, ${color}, ${C.cyan})`, boxShadow: GLOW.cyan, borderRadius: 4, transition: 'transform 0.5s ease' }} />
     </div>
   );
 }
@@ -471,7 +471,7 @@ export function AcademiaTab() {
               </div>
 
               <div style={{ position: 'relative', paddingTop: 4 }}>
-                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 18, width: 2, transform: 'translateX(-50%)', backgroundImage: `repeating-linear-gradient(to bottom, ${C.cyan} 0, ${C.cyan} 5px, transparent 5px, transparent 12px)`, backgroundSize: '2px 12px', animation: 'busFlow 0.7s linear infinite', opacity: 0.55 }} />
+                <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 18, width: 2, transform: 'translateX(-50%)', backgroundImage: `repeating-linear-gradient(to bottom, ${C.cyan} 0, ${C.cyan} 5px, transparent 5px, transparent 12px)`, backgroundSize: '2px 12px', animation: ANIM.dash, opacity: 0.55 }} />
 
                 {courses.map((c, i) => {
                   const p = prog.get(c.id);
@@ -485,7 +485,7 @@ export function AcademiaTab() {
                   return (
                     <div key={c.id} style={{ position: 'relative', minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: left ? 'flex-start' : 'flex-end' }}>
                       <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 6px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
-                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: `2px solid ${C.bg}`, boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? 'corePulse 1.8s ease-in-out infinite' : undefined }} />
+                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: `2px solid ${C.bg}`, boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? ANIM.breathe : undefined }} />
                       <button onClick={() => openCourse(c)} className="oc-card oc-pressable oc-rise" style={{
                         width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
                         borderRadius: 14, padding: 11,
@@ -503,11 +503,6 @@ export function AcademiaTab() {
                   );
                 })}
               </div>
-
-              <style>{`
-                @keyframes busFlow { 0% { background-position: 0 0; } 100% { background-position: 0 12px; } }
-                @keyframes corePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
-              `}</style>
             </div>
           )}
         </div>
@@ -564,7 +559,7 @@ export function AcademiaTab() {
                 </button>
 
                 {isOpen && (
-                  <div style={{ padding: '0 14px 14px', animation: 'acaIn 0.3s ease' }}>
+                  <div style={{ padding: '0 14px 14px', animation: ANIM.rise }}>
                     <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
                     {!done ? (
                       <button onClick={() => completeLesson(l.id)} style={{
@@ -615,7 +610,6 @@ export function AcademiaTab() {
           </div>
         </div>
 
-        <style>{`@keyframes acaIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
         {tutor && <TutorModal lesson={{ title: tutor.title, content: tutor.content }} onClose={() => setTutor(null)} />}
       </div>
     );

@@ -191,7 +191,7 @@ export function EmotionParticles() {
               : `rgba(160,174,192, ${0.2 + Math.random() * 0.2})`,
             left: `${10 + Math.random() * 80}%`,
             top: `${10 + Math.random() * 80}%`,
-            animation: `emotionFloat ${4 + Math.random() * 4}s ease-in-out infinite`,
+            animation: `omi-float ${4 + Math.random() * 4}s ease-in-out infinite`,
             animationDelay: `${Math.random() * 3}s`,
             filter: 'blur(0.5px)',
           }}
@@ -199,22 +199,4 @@ export function EmotionParticles() {
       ))}
     </div>
   );
-}
-
-// Inject emotion particle keyframe
-if (typeof document !== 'undefined' && !document.getElementById('emotion-css')) {
-  const s = document.createElement('style');
-  s.id = 'emotion-css';
-  s.textContent = `
-    @keyframes emotionFloat {
-      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
-      25% { transform: translateY(-15px) translateX(5px); opacity: 1; }
-      50% { transform: translateY(-25px) translateX(-3px); opacity: 0.8; }
-      75% { transform: translateY(-12px) translateX(4px); opacity: 0.5; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      [style*="emotionFloat"] { animation: none !important; opacity: 0.3 !important; }
-    }
-  `;
-  document.head.appendChild(s);
 }

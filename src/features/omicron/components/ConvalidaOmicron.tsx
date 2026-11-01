@@ -16,7 +16,7 @@ import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide
 import { useGemeloActivation } from '@/hooks/useGemeloActivation';
 import { GemeloReveal } from './GemeloReveal';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
-import { C, FONT, RADIUS, SIZE, ELEVATED } from '@/theme';
+import { C, FONT, RADIUS, SIZE, ELEVATED, ANIM } from '@/theme';
 import { getUserColor } from '@/shared/components/ColorPicker';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 
@@ -214,7 +214,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
             disabled={retryCooldown}
             whileTap={{ scale: 0.95 }}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: RADIUS.lg, border: `1px solid ${retryCooldown ? C.mut : C.red}44`, background: `${retryCooldown ? C.mut : C.red}14`, color: retryCooldown ? C.mut : C.red, fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, cursor: retryCooldown ? 'default' : 'pointer', minHeight: 44, opacity: retryCooldown ? 0.6 : 1 }}>
-            <RotateCcw size={16} style={retryCooldown ? { animation: 'cp-spin 0.8s linear infinite' } : undefined} />
+            <RotateCcw size={16} style={retryCooldown ? { animation: ANIM.spin } : undefined} />
             {retryCooldown ? 'Esperando…' : retryCount > 0 ? `Reintentar (${retryCount + 1}º intento)` : 'Reintentar'}
           </motion.button>
         </div>

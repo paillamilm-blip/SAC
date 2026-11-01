@@ -22,7 +22,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, EASE, EASING, FONT, TIMING, SIZE } from '@/theme';
+import { C, EASING, FONT, TIMING, SIZE } from '@/theme';
 import type { EstadoNodo, NodoRed, RedVivaModel } from '../services/redViva';
 import { NodoEstadoFormaSvg, type VarianteNodo } from './NodoEstadoMarca';
 
@@ -63,38 +63,12 @@ function prefersReducedMotionNow(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-const CSS_ID = 'omicron-redviva-css';
-
 /** Escala del modelo (círculo unitario) a unidades del viewBox. */
 const K = 100;
 
 /** Radios de los dos carriles, en unidades del viewBox. */
 const RADIO_NUCLEO = 42;
 const RADIO_FRONTERA = 64;
-
-/**
- * Inyecta las animaciones una sola vez. Respeta prefers-reduced-motion: con
- * movimiento reducido, el latido se congela en su estado visible (no desaparece
- * la información, solo deja de moverse).
- */
-function useRedVivaCss(): void {
-  useEffect(() => {
-    if (document.getElementById(CSS_ID)) return;
-    const style = document.createElement('style');
-    style.id = CSS_ID;
-    style.textContent = `
-@keyframes omi-rv-latido {
-  0%, 100% { opacity: 0.42; transform: scale(1); }
-  50%      { opacity: 0.95; transform: scale(1.14); }
-}
-.omi-rv-latido { animation: omi-rv-latido 2.1s ${EASE.default} infinite; transform-origin: center; transform-box: fill-box; }
-@media (prefers-reduced-motion: reduce) {
-  .omi-rv-latido { animation: none; opacity: 0.8; }
-}
-`;
-    document.head.appendChild(style);
-  }, []);
-}
 
 /** Convierte un hex (#rrggbb) a rgba con el alfa pedido. */
 function alpha(hex: string, a: number): string {
@@ -225,7 +199,6 @@ export function RedVivaCanvas({
   size = 320,
   varianteNodo = 'circulo',
 }: RedVivaCanvasProps) {
-  useRedVivaCss();
   const reduceMotion = useReducedMotion();
   // Combina el hook de framer-motion con la lectura directa del media query:
   // basta con que cualquiera indique movimiento reducido para anular el encaje.
@@ -452,7 +425,7 @@ export function RedVivaCanvas({
                   color={base}
                   r={r}
                   variante={varianteNodo}
-                  className={n.estado === 'latiendo' ? 'omi-rv-latido' : undefined}
+                  className={n.estado === 'latiendo' ? 'omi-latido' : undefined}
                 />
               </motion.g>
 

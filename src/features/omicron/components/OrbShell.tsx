@@ -35,7 +35,7 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, EASE, FONT, TIMING, tint, SIZE } from '@/theme';
+import { C, FONT, tint, SIZE, ANIM } from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -928,7 +928,7 @@ export function OrbShell() {
   // El "respiro ocioso" que alimentaba voiceLevel del orbe 3D se retiró: el home
   // ya es la Red Viva 2D y no consume nivel de voz. El único movimiento
   // permanente permitido es el estado real 'latiendo' de un nodo y la lucecita
-  // de presencia de la barra (cp-breathe), ambos gobernados por reduced-motion.
+  // de presencia de la barra (omi-breathe), ambos gobernados por reduced-motion.
 
   // ── Onboarding handler (R3: intent-first routing) ────────────────────
   const handleOnboardingComplete = useCallback((_choice: 'examen' | 'cv' | 'ambos' | 'empleo' | 'aprender' | 'validar' | 'vender' | 'explorar') => {
@@ -1200,7 +1200,7 @@ export function OrbShell() {
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               boxShadow: `0 20px 60px ${C.scrim}, 0 0 30px ${C.cyanFaint}`,
-              animation: 'orbPreviewEnter 0.25s cubic-bezier(0.23,1,0.32,1) both',
+              animation: ANIM.pop,
               touchAction: 'pan-y',
             }}
           >
@@ -1209,9 +1209,10 @@ export function OrbShell() {
               <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginBottom: 14 }}>
                 {hubNodes.map((n: OrbNode, i: number) => (
                   <div key={n.id} style={{
-                    width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3,
+                    width: 16, height: 5, borderRadius: 3,
+                    transform: `scaleX(${i === currentIdx ? 1 : 0.3})`,
                     background: i === currentIdx ? orbColor : `${orbColor}33`,
-                    transition: 'width 0.2s ease, background 0.2s ease',
+                    transition: 'transform 0.2s ease, background 0.2s ease',
                   }} />
                 ))}
               </div>
@@ -1395,7 +1396,7 @@ export function OrbShell() {
             El padding inferior es el aire que necesita la barra del Oráculo, que
             va fija encima de este contenedor: sin él, la última tarjeta de
             cualquier lista quedaba tapada y sin zona clicable. */}
-        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 88px)', animation: prefersReducedMotion ? 'none' : `pageEnter ${TIMING.normal} ${EASE.default} both` }}>
+        <div key={selectedNode?.tab ?? 'none'} style={{ flex: 1, overflow: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 88px)', animation: prefersReducedMotion ? 'none' : ANIM.rise }}>
           <Suspense fallback={<TabLoader />}>
             {selectedNode && renderTab(selectedNode.tab)}
           </Suspense>
@@ -1665,24 +1666,6 @@ export function OrbShell() {
         </ErrorBoundary>
       )}
 
-      {/* ── CSS Animations ──────────────────────────────────────────── */}
-      <style>{`
-        @keyframes orbPreviewEnter {
-          from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
-          to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-        @keyframes pageEnter {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translate(-50%, -8px); }
-          to   { opacity: 1; transform: translate(-50%, 0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-        }
-      `}</style>
     </div>
   );
 }

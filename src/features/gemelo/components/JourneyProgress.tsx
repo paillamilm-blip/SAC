@@ -63,7 +63,7 @@ export function JourneyProgress({ profile, onNavigate }: Props) {
 
       {/* Progress bar */}
       <div style={S.bar}>
-        <div style={{ ...S.barFill, width: `${pct}%`, background: `linear-gradient(90deg, ${C.purple}, ${uc})` }} />
+        <div style={{ ...S.barFill, transform: `scaleX(${pct / 100})`, background: `linear-gradient(90deg, ${C.purple}, ${uc})` }} />
       </div>
 
       {/* Steps */}
@@ -128,9 +128,11 @@ const S: Record<string, React.CSSProperties> = {
   },
   barFill: {
     height: '100%',
+    width: '100%',
+    transformOrigin: 'left',
     borderRadius: 2,
     background: `linear-gradient(90deg, ${C.purple}, ${C.cyan})`,
-    transition: 'width 0.5s ease',
+    transition: 'transform 0.5s ease',
   },
   steps: {
     display: 'flex',

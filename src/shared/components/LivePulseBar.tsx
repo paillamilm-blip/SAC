@@ -16,7 +16,7 @@
 // Respects prefers-reduced-motion (static dim line instead).
 // ═══════════════════════════════════════════════════════════════════════
 import { useEffect, useState, useRef } from 'react';
-import { C } from '@/theme';
+import { ANIM, C } from '@/theme';
 
 export type PulseState = 'calm' | 'active' | 'user' | 'alert' | 'success';
 
@@ -35,50 +35,28 @@ const GRADIENTS: Record<PulseState, string> = {
   success: `linear-gradient(90deg, transparent, ${C.green}, ${C.cyan}, ${C.green}, transparent)`,
 };
 
+// Los cinco estados son dos gestos de la familia (`omi-pulse` y `omi-shimmer`)
+// a tempos distintos. Lo que cambia por estado es la amplitud del latido, y se
+// pide como parámetro (`--omi-pulso-*`), no como un keyframe nuevo por escena.
 const ANIMATIONS: Record<PulseState, string> = {
-  calm:    'livePulseBreath 4s ease-in-out infinite',
-  active:  'livePulseFlow 2s linear infinite',
-  user:    'livePulseFlash 0.6s ease both',
-  alert:   'livePulseAlert 1.5s ease-in-out infinite',
-  success: 'livePulseFlash 0.8s ease both',
+  calm:    `${ANIM.pulsoLento}, ${ANIM.flujoLento}`,
+  active:  ANIM.flujo,
+  user:    ANIM.flash,
+  alert:   ANIM.pulsoAlerta,
+  success: ANIM.flash,
 };
 
-// Inject keyframes once
-function injectStyles(): void {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById('live-pulse-css')) return;
-  const s = document.createElement('style');
-  s.id = 'live-pulse-css';
-  s.textContent = `
-    @keyframes livePulseBreath {
-      0%, 100% { opacity: 0.3; background-size: 200% 100%; background-position: 0% 0%; }
-      50% { opacity: 0.6; background-size: 200% 100%; background-position: 100% 0%; }
-    }
-    @keyframes livePulseFlow {
-      0% { background-position: -200% 0%; }
-      100% { background-position: 200% 0%; }
-    }
-    @keyframes livePulseFlash {
-      0% { opacity: 0.2; }
-      30% { opacity: 1; }
-      100% { opacity: 0.4; }
-    }
-    @keyframes livePulseAlert {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 0.9; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .live-pulse-bar { animation: none !important; opacity: 0.3 !important; }
-    }
-  `;
-  document.head.appendChild(s);
-}
+const PULSO: Record<PulseState, Record<string, string>> = {
+  calm:    { '--omi-pulso-alto': '0.6', '--omi-pulso-bajo': '0.3' },
+  alert:   { '--omi-pulso-alto': '0.9', '--omi-pulso-bajo': '0.4' },
+  active:  {},
+  user:    {},
+  success: {},
+};
 
 export function LivePulseBar({ state = 'calm', returnDelay = 3000 }: Props) {
   const [current, setCurrent] = useState<PulseState>(state);
   const timeoutRef = useRef<number>(0);
-
-  useEffect(() => { injectStyles(); }, []);
 
   useEffect(() => {
     setCurrent(state);
@@ -108,6 +86,7 @@ export function LivePulseBar({ state = 'calm', returnDelay = 3000 }: Props) {
         backgroundImage: GRADIENTS[current],
         backgroundSize: '200% 100%',
         animation: ANIMATIONS[current],
+        ...PULSO[current],
         transition: 'background-image 0.6s ease',
         pointerEvents: 'none',
       }}
