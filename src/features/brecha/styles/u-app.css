@@ -484,3 +484,50 @@
     animation: none;
   }
 }
+
+/* Barra superior: nunca se parte en dos líneas */
+.u-app .brand,
+.u-app .u-enlace-suave,
+.u-app .boton-topbar {
+  white-space: nowrap;
+}
+.u-app .brand-dot {
+  flex: none;
+}
+@media (max-width: 560px) {
+  .u-app .topbar-in {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  .u-app .topbar-right {
+    gap: 4px;
+  }
+  .u-app .u-enlace-suave {
+    font-size: 12.5px;
+  }
+  .u-app .u-banda {
+    width: calc(100% - 32px);
+  }
+  .u-app .wrap {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  /* Historial: la fecha y el conteo pasan a dos líneas en vez de empujar el ancho */
+  .u-app .item-historial {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .u-app .item-historial-main,
+  .u-app .item-historial-sub {
+    max-width: 100%;
+  }
+  .u-app .item-historial-sub {
+    white-space: normal;
+  }
+}
+
+/* Con la barra de pestañas del reporte visible, el asistente se apoya encima de ella */
+.u-app:has(.pestana-bar) .u-fab {
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
