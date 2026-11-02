@@ -1,5 +1,5 @@
 import { OrbShell } from '@/features/omicron/components/OrbShell';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/infrastructure/query/client';
@@ -22,7 +22,10 @@ import { C, FONT } from './theme';
 import { SelfManagedPulseBar } from '@/shared/components/LivePulseBar';
 import { EmotionBridge } from '@/shared/components/EmotionBridge';
 import { omicronAudio } from '@/shared/utils/spatialAudio';
+import { esRutaUnificada } from '@/features/brecha/ui/ruta';
 
+
+const UApp = lazy(() => import('@/features/brecha/ui/UApp'));
 
 function AppShell() {
   const { authStatus, isLoadingProfile } = useApp();
@@ -197,7 +200,14 @@ export default function App() {
           <RealtimeProvider>
             <EmotionBridge>
               <ConnectionBanner />
-              <AppShell />
+              {/* Producto único en /u (vista previa). Todo lo demás sigue siendo la app de siempre. */}
+              {esRutaUnificada(window.location.pathname) ? (
+                <Suspense fallback={null}>
+                  <UApp />
+                </Suspense>
+              ) : (
+                <AppShell />
+              )}
             </EmotionBridge>
           </RealtimeProvider>
         </ToastProvider>

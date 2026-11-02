@@ -1,0 +1,486 @@
+/* Piezas propias del producto único (inicio, asistente, botón flotante).
+   Todo vive bajo .u-app y con prefijo u-; sin @layer a propósito (ver scripts/acotar-css-brecha.py).
+   --accent lo fija UApp con el color elegido por la persona. */
+
+.u-app {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.u-app :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.u-app .u-saltar {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 40;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.u-app .u-saltar:focus {
+  top: 12px;
+}
+
+.u-app .u-enlace-suave {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 10px 6px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.u-app .u-enlace-suave:hover {
+  color: var(--text);
+}
+
+.u-app .u-persona {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 700;
+  color: #0b0d10;
+  background: var(--accent);
+}
+
+.u-app .u-banda {
+  max-width: 1200px;
+  margin: 14px auto 0;
+  width: calc(100% - 48px);
+}
+
+.u-app .wrap {
+  padding-bottom: 120px; /* espacio para el botón flotante */
+}
+.u-app .wrap > * + * {
+  margin-top: 16px;
+}
+
+/* Inicio */
+.u-app .u-siguiente {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--surface)), var(--surface));
+}
+.u-app .u-siguiente-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.u-app .u-siguiente-porque {
+  color: var(--muted);
+  margin: 0 0 16px;
+  max-width: 64ch;
+}
+.u-app .u-siguiente-pie {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.u-app .u-origen {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin: 0;
+}
+.u-app .u-origen[data-origen='analisis'] {
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--info) 40%, var(--line));
+}
+.u-app .u-origen[data-origen='probado'] {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+}
+
+.u-app .u-ciclo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.u-app .u-paso {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.u-app .u-paso[data-estado='ahora'] {
+  border-color: var(--accent);
+}
+.u-app .u-paso[data-estado='pendiente'] {
+  opacity: 0.7;
+}
+.u-app .u-paso-num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.u-app .u-paso[data-estado='hecho'] .u-paso-num {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.u-app .u-paso[data-estado='ahora'] .u-paso-num,
+.u-app .u-paso[data-estado='parcial'] .u-paso-num {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.u-app .u-paso-texto {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+.u-app .u-paso-texto small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.u-app .u-metricas {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 0;
+}
+.u-app .u-metricas dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.u-app .u-metricas dd {
+  margin: 2px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.u-app .u-metricas dd small {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.u-app a.item-historial {
+  min-height: 44px;
+}
+
+/* Botón flotante */
+.u-app .u-fab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  min-height: 52px;
+  padding: 0 20px 0 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.u-app .u-fab:hover {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+}
+.u-app .u-fab-punto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* Chat */
+.u-app .u-chat {
+  position: fixed;
+  z-index: 35;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  width: min(420px, calc(100vw - 36px));
+  height: min(640px, calc(100dvh - 36px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+@media (max-width: 560px) {
+  .u-app .u-chat {
+    inset: auto 0 0 0;
+    width: 100%;
+    height: min(86dvh, 720px);
+    border-radius: 18px 18px 0 0;
+    bottom: 0;
+    right: 0;
+  }
+}
+
+.u-app .u-chat-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.u-app .u-chat-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.u-app .u-chat-id h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.u-app .u-chat-id p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.u-app .u-chat-orbe {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff8, var(--accent) 55%, color-mix(in srgb, var(--accent) 40%, #000));
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.u-app .u-chat-orbe[data-hablando='true'] {
+  animation: u-latido 1.2s ease-in-out infinite;
+}
+@keyframes u-latido {
+  50% {
+    transform: scale(1.14);
+  }
+}
+.u-app .u-chat-cab-acciones {
+  display: flex;
+  gap: 4px;
+}
+
+.u-app .u-icono {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.u-app .u-icono:hover {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+.u-app .u-micro[data-activo='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.u-app .u-chat-ajustes {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-soft);
+}
+.u-app .u-interruptor {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  min-height: 44px;
+}
+.u-app .u-interruptor input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex: none;
+}
+.u-app .u-interruptor small {
+  color: var(--muted);
+}
+
+.u-app .u-chat-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.u-app .u-msg {
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  align-self: flex-start;
+  font-size: 14.5px;
+}
+.u-app .u-msg[data-rol='yo'] {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+.u-app .u-msg-texto {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.u-app .u-msg .u-origen {
+  margin-top: 8px;
+}
+.u-app .u-origen[data-origen='ia'] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.u-app .u-fuentes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.u-app .u-fuentes li {
+  display: grid;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+.u-app .u-fuentes q {
+  color: var(--text);
+}
+.u-app .u-fuentes span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.u-app .u-accion {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+.u-app .u-accion[data-estado='cancelada'] {
+  opacity: 0.65;
+}
+.u-app .u-accion-porque {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.u-app .u-accion-aviso {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--accent);
+}
+.u-app .u-accion-estado {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.u-app .u-accion-botones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.u-app .u-accion-botones .boton {
+  min-height: 44px;
+}
+
+.u-app .u-pensando {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.u-app .u-chat-sugeridas {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 10px;
+  overflow-x: auto;
+}
+.u-app .u-sugerida {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.u-app .u-sugerida:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.u-app .u-chat-entrada {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line-soft);
+}
+.u-app .u-chat-entrada input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* evita el zoom automático en iOS */
+}
+.u-app .u-chat-entrada .boton {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u-app {
+    scroll-behavior: auto;
+  }
+  .u-app .u-chat-orbe[data-hablando='true'] {
+    animation: none;
+  }
+}
