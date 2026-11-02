@@ -4,83 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ómicrom · Inicio (maqueta)</title>
+<link rel="stylesheet" href="tokens.css">
 <style>
-@layer reset, tokens, base, components, utilities;
-
-/* ───────────────────────── reset ───────────────────────── */
-@layer reset {
-  *, *::before, *::after { box-sizing: border-box; }
-  body, h1, h2, h3, p, ul, ol, figure { margin: 0; }
-  ul, ol { padding: 0; list-style: none; }
-  button, input { font: inherit; color: inherit; }
-  button { cursor: pointer; }
-  svg { display: block; }
-}
-
-/* ───────────────────────── tokens ───────────────────────── */
-@layer tokens {
-  :root {
-    color-scheme: dark;
-
-    /* superficies (percepcionales, oklch) */
-    --bg:        oklch(0.165 0.010 255);
-    --surface:   oklch(0.205 0.012 255);
-    --surface-2: oklch(0.240 0.014 255);
-    --line:      oklch(0.310 0.015 255);
-    --line-soft: oklch(0.260 0.013 255);
-
-    /* texto: todos ≥ 4,5:1 sobre --surface */
-    --text:  oklch(0.955 0.005 255);
-    --muted: oklch(0.760 0.018 255);
-    --dim:   oklch(0.680 0.018 255);
-
-    /* marca (fija) y estados */
-    --brand:      oklch(0.820 0.150 82);
-    --brand-ink:  oklch(0.200 0.030 82);
-    --ok:         oklch(0.800 0.160 160);
-    --bad:        oklch(0.720 0.170 25);
-
-    /* color de identidad de la persona (se elige entre 4) */
-    --user: oklch(0.850 0.090 225);              /* hielo */
-
-    /* escalas */
-    --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-pill: 999px;
-    --s1: .25rem; --s2: .5rem; --s3: .75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem; --s7: 3rem;
-    --tap: 2.75rem;               /* 44 px: objetivo táctil */
-    --topbar: 3.75rem;
-    --tabbar: 4.25rem;
-
-    --t-xs:   clamp(.75rem,  .72rem + .1vw, .8125rem);
-    --t-sm:   clamp(.8125rem, .78rem + .12vw, .875rem);
-    --t-base: clamp(.9375rem, .9rem + .15vw, 1rem);
-    --t-lg:   clamp(1.0625rem, 1rem + .3vw, 1.25rem);
-    --t-xl:   clamp(1.5rem, 1.1rem + 1.8vw, 2.25rem);
-  }
-  [data-user="rosa"] { --user: oklch(0.760 0.150 5); }
-  [data-user="oro"]  { --user: oklch(0.840 0.150 90); }
-  [data-user="lima"] { --user: oklch(0.860 0.190 128); }
-}
-
-/* ───────────────────────── base ───────────────────────── */
-@layer base {
-  html { scroll-padding-block: calc(var(--topbar) + var(--s4)) calc(var(--tabbar) + var(--s4)); }
-  body {
-    min-height: 100dvh;
-    background:
-      radial-gradient(60rem 30rem at 85% -10%, color-mix(in oklch, var(--user) 9%, transparent), transparent 70%),
-      var(--bg);
-    color: var(--text);
-    font: var(--t-base)/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    text-wrap: pretty;
-  }
-  a { color: inherit; text-decoration: none; }
-  h1, h2, h3 { text-wrap: balance; line-height: 1.2; letter-spacing: -.015em; }
-  :focus-visible { outline: 3px solid var(--user); outline-offset: 3px; border-radius: 6px; }
-  .num { font-variant-numeric: tabular-nums; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-
 /* ───────────────────────── componentes ───────────────────────── */
 @layer components {
 
@@ -104,6 +29,7 @@
   .topbar-in { height: 100%; max-width: 76rem; margin-inline: auto; padding-inline: var(--s4); display: flex; align-items: center; gap: var(--s4); }
   .brand { display: flex; align-items: center; gap: var(--s2); font-weight: 700; font-size: var(--t-lg); letter-spacing: -.02em; }
   .brand-dot { width: .8rem; height: .8rem; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 4px color-mix(in oklch, var(--brand) 22%, transparent); }
+  .con-chat .asistente, .con-chat .maqueta { display: none; }
   .nav-escritorio { display: none; margin-left: var(--s5); gap: var(--s1); }
   .nav-escritorio a { min-height: var(--tap); display: inline-flex; align-items: center; padding-inline: var(--s4); border-radius: var(--r-pill); color: var(--muted); font-weight: 600; font-size: var(--t-sm); text-decoration: none; }
   .nav-escritorio a[aria-current="page"] { color: var(--text); background: var(--surface-2); }
@@ -122,7 +48,7 @@
 
   /* móvil: el asistente es una barra flotante persistente sobre la navegación;
      así la acción principal se ve sin desplazarse y el asistente acompaña en todas las pantallas */
-  @media (max-width: 55.99rem) {
+  @media (max-width: 47.99rem) {
     .asistente {
       position: fixed; z-index: 25;
       inset-inline: var(--s3);
@@ -134,6 +60,8 @@
       animation: none;
     }
     .asistente .estado-voz, .asistente .sugerencias { display: none; }
+    .asistente::before { content: ""; position: absolute; top: 5px; left: 50%; translate: -50% 0; width: 2.25rem; height: 4px; border-radius: 2px; background: var(--line); }
+    .asistente { padding-top: calc(var(--s2) + 6px); }
     .mic, .campo { height: 3.25rem; min-height: 3.25rem; }
     .mic { width: 3.25rem; }
     .saludo p { display: none; }
@@ -172,6 +100,7 @@
   .onda i:nth-child(1){height:5px}.onda i:nth-child(2){height:11px}.onda i:nth-child(3){height:8px}.onda i:nth-child(4){height:14px}.onda i:nth-child(5){height:6px}
   .sugerencias { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
   .sugerencia { min-height: var(--tap); display: inline-flex; align-items: center; padding-inline: var(--s4); border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: var(--t-sm); font-weight: 550; }
+  .abrir-chat { margin-left: auto; gap: var(--s2); border-color: color-mix(in oklch, var(--user) 40%, var(--line)); color: var(--user); }
   .sugerencia:hover { border-color: color-mix(in oklch, var(--user) 50%, var(--line)); }
 
   /* SIGUIENTE PASO */
@@ -246,7 +175,7 @@
   .tab[aria-current="page"] .tab-ico { background: color-mix(in oklch, var(--user) 20%, transparent); color: var(--user); }
   .tab-ico { width: 3.25rem; height: 1.9rem; border-radius: var(--r-pill); display: grid; place-items: center; }
 
-  @media (min-width: 56rem) {
+  @media (min-width: 48rem) {
     .tabbar { display: none; }
     .nav-escritorio { display: flex; }
     .home { padding-bottom: var(--s7); }
@@ -284,6 +213,7 @@
     <symbol id="i-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.7 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></symbol>
   </defs>
 </svg>
@@ -334,6 +264,7 @@
         <button class="sugerencia" type="button">¿Qué me falta?</button>
         <button class="sugerencia" type="button">Léeme mi diagnóstico</button>
         <button class="sugerencia" type="button">Escanear otro CV</button>
+        <a class="sugerencia abrir-chat" href="chat.html"><svg width="16" height="16"><use href="#i-chat"/></svg>Abrir chat</a>
       </div>
     </section>
 
@@ -342,7 +273,7 @@
       <h3>Demuestra «Análisis de datos con planillas o SQL»</h3>
       <p>Marcaste esta brecha como real. Un examen corto la cierra con prueba y la suma a tu pasaporte.</p>
       <div class="etiquetas">
-        <span class="etiqueta alta">Impacto alto</span>
+        <span class="etiqueta">Impacto medio</span>
         <span class="etiqueta">Habilidad dura</span>
         <span class="etiqueta">Se cierra con prueba</span>
       </div>
@@ -402,10 +333,10 @@
           <!-- raíz -->
           <circle cx="150" cy="105" r="17" fill="var(--brand)"/>
           <!-- categorías -->
-          <circle cx="150" cy="52" r="9" fill="var(--bg)" stroke="oklch(0.75 0.13 250)" stroke-width="2.5"/>
+          <circle cx="150" cy="52" r="9" fill="var(--bg)" stroke="var(--cat-dura)" stroke-width="2.5"/>
           <circle cx="232" cy="105" r="9" fill="var(--bg)" stroke="var(--brand)" stroke-width="2.5"/>
-          <circle cx="150" cy="160" r="9" fill="var(--bg)" stroke="var(--ok)" stroke-width="2.5"/>
-          <circle cx="68" cy="105" r="9" fill="var(--bg)" stroke="oklch(0.72 0.15 305)" stroke-width="2.5"/>
+          <circle cx="150" cy="160" r="9" fill="var(--bg)" stroke="var(--cat-conocimiento)" stroke-width="2.5"/>
+          <circle cx="68" cy="105" r="9" fill="var(--bg)" stroke="var(--cat-credencial)" stroke-width="2.5"/>
           <!-- hojas: probada (relleno + check) -->
           <circle cx="118" cy="24" r="11" fill="var(--user)"/>
           <path d="M112.5 24.5l4 4 7-8" fill="none" stroke="oklch(0.2 0.03 255)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -421,10 +352,10 @@
           </g>
         </svg>
         <ul class="categorias" aria-label="Categorías">
-          <li><i style="--c: oklch(0.75 0.13 250)"></i>Dura</li>
+          <li><i style="--c: var(--cat-dura)"></i>Dura</li>
           <li><i style="--c: var(--brand)"></i>Blanda</li>
           <li><i style="--c: var(--ok)"></i>Conocimiento</li>
-          <li><i style="--c: oklch(0.72 0.15 305)"></i>Credencial</li>
+          <li><i style="--c: var(--cat-credencial)"></i>Credencial</li>
         </ul>
         <ul class="leyenda" aria-label="Estados">
           <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="var(--user)"/><path d="M4.5 8.2l2.4 2.4 4.4-5" fill="none" stroke="oklch(0.2 0.03 255)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Probada · 1</li>
@@ -476,9 +407,10 @@
 </nav>
 
 <script>
-  /* Solo para la maqueta: ?c=rosa|oro|lima cambia el color de identidad. */
-  var c = new URLSearchParams(location.search).get('c');
-  if (c) document.body.dataset.user = c;
+  /* Solo para la maqueta: ?c=rosa|violeta|lima cambia el color de identidad. */
+  var q = new URLSearchParams(location.search);
+  if (q.get('c')) document.body.dataset.user = q.get('c');
+  if (q.has('conchat')) document.body.classList.add('con-chat');
 </script>
 </body>
 </html>
