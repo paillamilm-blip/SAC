@@ -1,6 +1,6 @@
 // supabase/functions/market-match/index.ts — Asesor IA de Contratación de Ómicrom.
 // El comprador describe qué necesita; la IA recomienda el mejor talento del
-// Mercado, CITANDO su evidencia (reputación del Gemelo + competencias validadas
+// Mercado, CITANDO su evidencia (reputación del Gemelo + habilidades validadas
 // por examen). Es el match empresa↔talento basado en confianza cero.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -13,7 +13,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -25,7 +25,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
   return data?.user?.id ?? null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ error: 'El Asesor IA no esta configurado (falta OPENROUTER_KEY).' }, 500);
@@ -79,13 +79,13 @@ Deno.serve(async (req) => {
       const comps = compMap.get(s.seller_id) ?? [];
       return `#${i + 1} · "${s.title}" (${s.category}, ${s.price} tokens) — vendedor @${p?.username ?? '?'} ` +
         `(${p?.node_type ?? 'Nodo'} N${p?.node_level ?? 1}, reputación ${Math.round(p?.reputation_score ?? 0)}/100, ` +
-        `${p?.competencias_validadas ?? 0} competencias validadas` +
+        `${p?.competencias_validadas ?? 0} habilidades validadas` +
         (comps.length ? `: ${comps.slice(0, 6).join(', ')}` : '') + ')';
     }).join('\n');
 
     const sys =
       'Eres el Asesor de Contratacion IA de Omicrom. Ayudas a quien contrata a elegir el mejor talento ' +
-      'del catalogo, priorizando la EVIDENCIA (reputacion del Gemelo + competencias validadas por examen), ' +
+      'del catalogo, priorizando la EVIDENCIA (reputacion del Gemelo + habilidades validadas por examen), ' +
       'no solo el precio. Recomienda 1 a 3 opciones, en orden, y explica en 1 frase POR QUE cada una calza, ' +
       'citando su evidencia concreta. Si ninguna calza bien, dilo con honestidad. Espanol, claro y breve. Sin markdown.';
     const user =
@@ -100,4 +100,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Asesor IA.', detail: String(e) }, 500);
   }
-});
+}));

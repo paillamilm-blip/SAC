@@ -18,12 +18,12 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!STRIPE_SECRET_KEY || !_admin) {
@@ -75,4 +75,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ ok: false, error: 'Error inesperado verificando el pago.', detail: String(e) }, 500);
   }
-});
+}));

@@ -10,32 +10,30 @@
 //
 // Ya no existe la fase "dossier" vieja. GemeloReveal la reemplaza completamente.
 // ═══════════════════════════════════════════════════════════════════════
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Check, Upload, ArrowRight, TrendingUp, Zap, RotateCcw } from 'lucide-react';
-import { useGemeloActivation } from '@/hooks/useGemeloActivation';
+import { useGemeloActivation, fraccionEscaneo, HITOS_ESCANEO } from '@/hooks/useGemeloActivation';
+import { PISO_CV } from '@/features/gemelo/services/cvExtract';
 import { GemeloReveal } from './GemeloReveal';
+import { EscaneoDocumento } from './EscaneoDocumento';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
-import { C, FONT, RADIUS, SIZE, ELEVATED, ANIM } from '@/theme';
-import { getUserColor } from '@/shared/components/ColorPicker';
+import { BLUR, C, FONT, RADIUS, SIZE, ELEVATED, ANIM, LETRA} from '@/theme';
+import { getUserColor } from '@/shared/services/userColor';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 
 // ── Ease-out tuple para el escaneo (mutable, NO `as const`) ──────────────
 // Mismo valor que BEAT_EASE en GemeloReveal.tsx para mantener el lenguaje.
 const SCAN_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-// Número de pasos reales del análisis (currentStep va 0 -> 1 -> 2).
-// Eran 4 hasta la Fase 6C: el cuarto convalidaba "un aporte a la Bóveda",
-// credencial de una función que ya no existe, y el contador nunca terminaba.
-const SCAN_STEPS = 3;
-
 export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   const uc = getUserColor();
   const reduceMotion = useReducedMotion();
 
   const {
-    phase, currentStep, dossier,
+    phase, dossier,
     cvText, setCvText, cvFileName, cvReadOk, msg, pushes, lastError,
+    hitos, segundos,
     hasExistingCV, profile,
     persisting, persisted,
     onCVFile, activateGemeloCompleto, cancelActivation, persistAnalysis,
@@ -43,6 +41,10 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
 
   const [retryCount, setRetryCount] = useState(0);
   const [retryCooldown, setRetryCooldown] = useState(false);
+  // La zona punteada se ve como dropzone desde que existe, pero NO lo era: no
+  // había un solo onDrop en toda la app y soltar el archivo no hacía nada. `sobre`
+  // es el estado que faltaba para que el señuelo se vuelva un gesto real.
+  const [sobre, setSobre] = useState(false);
 
   // Note: No auto-close. User closes manually via the reveal's flow or
   // navigating away. The persist happens automatically in the background.
@@ -82,14 +84,18 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // PHASE: SYNCING — La orbe crece mientras analiza
   // ══════════════════════════════════════════════════════════════════════
   if (phase === 'syncing') {
-    const orbNodes = 5 + Math.round((currentStep / (SCAN_STEPS - 1)) * 12);
+    // El orbe crece con los hitos REALMENTE hechos: es la misma fracción que
+    // ilumina los renglones, así que no hay dos verdades en la pantalla.
+    const avance = fraccionEscaneo(hitos);
+    const hechos = hitos.filter((h) => h.estado === 'hecho').length;
+    const orbNodes = 5 + Math.round(avance * 12);
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', flexDirection: 'column', background: C.bg }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <GeodesicOrb size={40} nodes={orbNodes} color={uc} spinning={18} intensity={0.75} breathing />
-            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: uc }}>ANALIZANDO TU CV</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.anunciada, textTransform: 'uppercase', color: uc }}>ANALIZANDO TU CV</span>
           </div>
           <button
             onClick={cancelActivation}
@@ -99,7 +105,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
               padding: '6px 12px', borderRadius: RADIUS.pill,
               background: `${C.red}14`, border: `1px solid ${C.red}44`,
               color: C.red, fontFamily: FONT.mono, fontSize: SIZE.xxs,
-              cursor: 'pointer', minHeight: 36,
+              cursor: 'pointer', minHeight: 44,
             }}
           >
             <X size={14} />
@@ -107,14 +113,14 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Lectura en curso: mensaje real + riel de progreso por pasos reales */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2, padding: '0 20px' }}>
-          {/* Contador honesto de pasos (currentStep va 0..3) */}
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, textTransform: 'uppercase', color: C.mut }}>
-            Paso {Math.min(currentStep + 1, SCAN_STEPS)} de {SCAN_STEPS}
-          </span>
+        {/* Lectura en curso: la silueta del documento bajo el haz y los hitos que
+            ya ocurrieron. El contador de segundos es lo único que se mueve durante
+            la espera larga, y es medición, no consuelo. */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, position: 'relative', zIndex: 2, padding: '0 20px', overflowY: 'auto' }}>
+          <h2 id="escaneo-titulo" tabIndex={-1} style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.xl, fontWeight: 700, letterSpacing: LETRA.titulo, color: C.ink, textAlign: 'center' }}>
+            Leyendo {cvFileName || 'tu documento'}
+          </h2>
 
-          {/* Mensaje de progreso real (PROGRESS_MESSAGES), cross-fade al avanzar */}
           <AnimatePresence mode="wait">
             <motion.p
               key={msg}
@@ -122,38 +128,17 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
               transition={reduceMotion ? { duration: 0 } : { duration: 0.32, ease: SCAN_EASE }}
-              style={{ textAlign: 'center', margin: '12px 0 0', minHeight: 44, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.5 }}
+              style={{ textAlign: 'center', margin: 0, minHeight: 22, fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.5 }}
             >
               {msg}
             </motion.p>
           </AnimatePresence>
 
-          {/* Riel de escaneo: pasos 0..currentStep leídos (uc), resto pendientes (C.line) */}
-          <div
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={SCAN_STEPS}
-            aria-valuenow={Math.min(currentStep + 1, SCAN_STEPS)}
-            aria-label="Progreso de lectura del CV"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, width: '100%', maxWidth: 260 }}
-          >
-            {Array.from({ length: SCAN_STEPS }, (_, i) => {
-              const read = i <= currentStep;
-              return (
-                <motion.div
-                  key={i}
-                  style={{ flex: 1, height: 4, borderRadius: RADIUS.pill, background: C.line, transformOrigin: 'left center', overflow: 'hidden' }}
-                >
-                  <motion.div
-                    initial={false}
-                    animate={{ scaleX: read ? 1 : 0, opacity: read ? 1 : 0 }}
-                    transition={reduceMotion ? { duration: 0 } : { duration: 0.38, ease: SCAN_EASE }}
-                    style={{ width: '100%', height: '100%', borderRadius: RADIUS.pill, background: uc, transformOrigin: 'left center' }}
-                  />
-                </motion.div>
-              );
-            })}
-          </div>
+          <EscaneoDocumento texto={cvText} hitos={hitos} />
+
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, textTransform: 'uppercase', color: C.mut }}>
+            {hechos} de {HITOS_ESCANEO.length} hitos · {segundos} s
+          </span>
         </div>
 
         {/* Push notifications */}
@@ -164,7 +149,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
                 initial={{ opacity: 0, x: 40, scale: 0.8 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.8 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: RADIUS.pill, background: `${p.color}18`, border: `1px solid ${p.color}44`, backdropFilter: 'blur(8px)' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: RADIUS.pill, background: `${p.color}18`, border: `1px solid ${p.color}44`, backdropFilter: `blur(${BLUR.vaho}px)` }}>
                 <TrendingUp size={12} color={p.color} />
                 <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: p.color, fontWeight: 700 }}>+{p.delta}</span>
                 <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>{p.label}</span>
@@ -179,7 +164,11 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
   // ══════════════════════════════════════════════════════════════════════
   // PHASE: UPLOAD — Subir CV o pegar texto
   // ══════════════════════════════════════════════════════════════════════
-  const canActivate = !!cvText.trim();
+  // El MISMO piso que exige el hook: el botón no se enciende con 8 caracteres. Y
+  // si está apagado por eso, lo dice — un CTA muerto sin motivo es la otra cara
+  // del mismo silencio que había en el recorte del archivo.
+  const caracteres = cvText.trim().length;
+  const canActivate = caracteres >= PISO_CV;
 
   // Coreografía de entrada escalonada (transform/opacity). Con reduceMotion
   // cada elemento renderiza su estado final al instante (initial === animate).
@@ -198,7 +187,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
       <motion.div {...enter(0)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <GeodesicOrb size={40} nodes={5} color={uc} spinning={25} intensity={0.6} breathing />
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 2, textTransform: 'uppercase', color: C.ink }}>ACTIVAR GEMELO</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.anunciada, textTransform: 'uppercase', color: C.ink }}>ACTIVAR GEMELO</span>
         </div>
         <button onClick={onClose} aria-label="Cerrar" style={{ width: 44, height: 44, borderRadius: RADIUS.md, border: `1px solid ${C.line}`, background: C.glass, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
       </motion.div>
@@ -229,12 +218,23 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* Upload area — dropzone con micro-interacciones (transform/opacity) */}
+        {/* Upload area — dropzone REAL: se arrastra y se suelta (onDrop), además
+            del clic. `preventDefault` en dragover es obligatorio: sin él el
+            navegador NAVEGA al archivo y la app se cierra en blanco. */}
         <motion.label
           {...enter(2)}
           whileHover={reduceMotion ? undefined : { scale: 1.01 }}
           whileTap={reduceMotion ? undefined : { scale: 0.99 }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 16px', borderRadius: RADIUS.xl, border: `1.5px dashed ${cvReadOk ? `${uc}aa` : `${uc}55`}`, background: C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: 'blur(14px)', boxShadow: cvReadOk ? `0 0 0 1px ${uc}33, ${ELEVATED.cta(`${uc}22`)}` : 'none' }}
+          onDragOver={(e: DragEvent<HTMLLabelElement>) => { e.preventDefault(); if (!sobre) setSobre(true); }}
+          onDragLeave={() => setSobre(false)}
+          onDrop={(e: DragEvent<HTMLLabelElement>) => {
+            e.preventDefault();
+            setSobre(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) void onCVFile(f);
+          }}
+          data-sobre={sobre ? 'si' : 'no'}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 16px', borderRadius: RADIUS.xl, border: `${sobre ? 2 : 1.5}px ${sobre ? 'solid' : 'dashed'} ${cvReadOk ? `${uc}aa` : `${uc}55`}`, background: sobre ? `${uc}14` : C.glass, cursor: 'pointer', marginBottom: 16, textAlign: 'center', backdropFilter: `blur(${BLUR.cristal}px)`, boxShadow: cvReadOk ? `0 0 0 1px ${uc}33, ${ELEVATED.cta(`${uc}22`)}` : 'none' }}
         >
           <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onCVFile(f); e.currentTarget.value = ''; }} />
@@ -254,7 +254,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
             <Upload size={24} color={uc} />
           )}
           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, color: C.ink }}>{cvFileName || 'Subir CV (PDF · Word · TXT)'}</span>
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Lee cualquier PDF o Word</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Arrastra el archivo aquí, o toca para elegirlo</span>
         </motion.label>
 
         {/* Divider */}
@@ -269,7 +269,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           {...enter(4)}
           value={cvText}
           onChange={(e) => setCvText(e.target.value)}
-          placeholder="Rol actual, años de experiencia, tecnologías, certificaciones, empresas donde trabajaste..."
+          placeholder="Rol actual, años de experiencia, tecnologías, certificaciones, empresas donde trabajaste…"
           style={{ width: '100%', minHeight: 120, borderRadius: RADIUS.md, border: `1px solid ${uc}4d`, background: C.surface, color: C.ink, fontFamily: FONT.body, fontSize: SIZE.sm, padding: 16, outline: 'none', resize: 'vertical' }}
         />
       </div>
@@ -284,8 +284,10 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
         >
           <Zap size={18} /> Activar Gemelo Completo <ArrowRight size={17} />
         </motion.button>
-        <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>
-          Analiza tu CV y convalida título y años — todo automático
+        <p style={{ textAlign: 'center', margin: '8px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: canActivate || caracteres === 0 ? C.mut : C.gold }}>
+          {canActivate || caracteres === 0
+            ? 'Analiza tu CV y convalida título y años — todo automático'
+            : `Con ${caracteres} caracteres no alcanzo a ver un rol: escribe al menos ${PISO_CV}, o sube el CV.`}
         </p>
       </motion.div>
     </div>

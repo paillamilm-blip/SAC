@@ -25,7 +25,7 @@
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { hapticLight } from '@/shared/utils/haptics';
-import { C, FONT, RADIUS, SIZE, SP, tint } from '@/theme';
+import { BLUR, HALO, C, ELEVATED, FONT, RADIUS, SIZE, SP, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 import { buildHomeActions, splitGreeting } from '../utils/orbHomeGuide';
 
@@ -106,9 +106,9 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
                 fontSize: SIZE.lg,
                 lineHeight: 1.3,
                 fontWeight: 600,
-                letterSpacing: -0.2,
+                letterSpacing: LETRA.apretada,
                 color: C.ink,
-                textShadow: `0 0 10px ${userColor}33`,
+                textShadow: `0 0 ${HALO.foco}px ${userColor}33`,
               }}
             >
               {lead}
@@ -158,12 +158,12 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
             margin: '0 auto',
             pointerEvents: 'auto',
             background: C.surface,
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
+            backdropFilter: `blur(${BLUR.cristal}px)`,
+            WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
             border: `1px solid ${userColor}4D`,
             borderRadius: RADIUS.lg,
             padding: '14px 16px',
-            boxShadow: `0 4px 24px ${userColor}1A, 0 8px 32px ${tint(C.black, 40)}`,
+            boxShadow: ELEVATED.tinte('md', `${userColor}1A`),
           }}
         >
           {/* Cabecera: microcopy + cierre */}
@@ -221,7 +221,7 @@ export function OrbHomeGuide(props: OrbHomeGuideProps) {
                   fontFamily: FONT.body,
                   fontWeight: 600,
                   fontSize: SIZE.xs,
-                  letterSpacing: 0.2,
+                  letterSpacing: LETRA.denso,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}

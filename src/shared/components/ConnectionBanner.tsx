@@ -2,7 +2,7 @@
 // Aviso global de estado de conexión. Útil en móvil con señal inestable
 // (complementa la PWA): muestra una barra cuando se pierde internet y un
 // "reconectado" breve al recuperarlo.
-import { C, tint, SIZE, ANIM } from '@/theme';
+import { C, tint, SIZE, ANIM, ANCHO, LETRA } from '@/theme';
 import { useEffect, useState } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
 
@@ -52,10 +52,10 @@ export function ConnectionBanner() {
 const S: Record<string, React.CSSProperties> = {
   bar: {
     position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-    width: 'min(100%, 430px)', zIndex: 90,
+    width: `min(100%, ${ANCHO.bolsillo}px)`, zIndex: 90,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     padding: '6px 12px',
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: SIZE.sm, letterSpacing: 0.5,
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: SIZE.sm, letterSpacing: LETRA.denso,
     boxShadow: `0 4px 16px ${tint(C.black, 40)}`,
     animation: ANIM.drop,
   },

@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, useEffect, useRef } from 'react';
 import { useApp } from '@/store/AppContext';
-import { EmotionProvider, EmotionParticles, useEmotion } from '@/shared/components/EmotionAwareUI';
+import { EmotionProvider, useEmotion } from '@/shared/components/EmotionAwareUI';
 import { ambientDrone } from '@/shared/utils/ambientDrone';
 import type { ReactNode } from 'react';
 
@@ -82,7 +82,6 @@ export function EmotionBridge({ children }: Props) {
 
   return (
     <EmotionProvider signals={signals}>
-      <EmotionParticles />
       <DroneSync />
       {children}
     </EmotionProvider>

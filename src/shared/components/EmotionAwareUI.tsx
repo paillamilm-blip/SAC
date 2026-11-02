@@ -4,7 +4,7 @@
 //
 // The UI FEELS your state and reflects it ambientally:
 //
-//   onFire   → streak 3+, recent achievements → golden particles, fast orb
+//   onFire   → streak 3+, recent achievements → golden tint, fast orb
 //   engaged  → active session, normal use → default warm state
 //   cooling  → 1-2 days inactive → slightly dimmer, slower breathing
 //   cold     → 3+ days inactive → muted colors, orb breathes very slow
@@ -34,8 +34,6 @@ interface EmotionConfig {
   glow: number;
   /** Orb breathing speed in seconds */
   breathDuration: number;
-  /** Background particle density (0=none, 1=full) */
-  particles: number;
 }
 
 const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
@@ -45,7 +43,6 @@ const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
     saturation: 1.0,
     glow: 0.9,
     breathDuration: 2.0,
-    particles: 0.8,
   },
   proud: {
     warmth: 0.7,
@@ -53,7 +50,6 @@ const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
     saturation: 0.95,
     glow: 0.75,
     breathDuration: 2.5,
-    particles: 0.4,
   },
   engaged: {
     warmth: 0.4,
@@ -61,7 +57,6 @@ const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
     saturation: 0.85,
     glow: 0.5,
     breathDuration: 3.0,
-    particles: 0.1,
   },
   cooling: {
     warmth: 0.2,
@@ -69,7 +64,6 @@ const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
     saturation: 0.65,
     glow: 0.25,
     breathDuration: 4.5,
-    particles: 0.0,
   },
   cold: {
     warmth: 0.05,
@@ -77,7 +71,6 @@ const EMOTION_CONFIGS: Record<EmotionState, EmotionConfig> = {
     saturation: 0.45,
     glow: 0.1,
     breathDuration: 6.0,
-    particles: 0.0,
   },
 };
 
@@ -147,7 +140,6 @@ export function EmotionProvider({ children, signals }: ProviderProps) {
     root.style.setProperty('--emotion-saturation', String(config.saturation));
     root.style.setProperty('--emotion-glow', String(config.glow));
     root.style.setProperty('--emotion-breath', `${config.breathDuration}s`);
-    root.style.setProperty('--emotion-particles', String(config.particles));
     prevRef.current = config;
   }, [config]);
 
@@ -157,46 +149,5 @@ export function EmotionProvider({ children, signals }: ProviderProps) {
     <EmotionContext.Provider value={value}>
       {children}
     </EmotionContext.Provider>
-  );
-}
-
-// ── Ambient Particles (for onFire/proud states) ──────────────────────
-// Lightweight CSS-only floating particles that appear when emotion is high
-export function EmotionParticles() {
-  const { config } = useEmotion();
-
-  if (config.particles <= 0) return null;
-
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: 'fixed', inset: 0,
-        pointerEvents: 'none',
-        zIndex: 0,
-        opacity: config.particles,
-        transition: 'opacity 2.5s ease',
-      }}
-    >
-      {Array.from({ length: 8 }, (_, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            width: 3 + Math.random() * 3,
-            height: 3 + Math.random() * 3,
-            borderRadius: '50%',
-            background: config.warmth > 0.6
-              ? `rgba(255, 176, 46, ${0.3 + Math.random() * 0.3})`
-              : `rgba(160,174,192, ${0.2 + Math.random() * 0.2})`,
-            left: `${10 + Math.random() * 80}%`,
-            top: `${10 + Math.random() * 80}%`,
-            animation: `omi-float ${4 + Math.random() * 4}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 3}s`,
-            filter: 'blur(0.5px)',
-          }}
-        />
-      ))}
-    </div>
   );
 }

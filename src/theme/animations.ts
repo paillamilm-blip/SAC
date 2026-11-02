@@ -56,6 +56,12 @@ export const ANIM = {
   /** Los dos anillos del Gemelo: mismo giro, tempos distintos a propósito. */
   orbita: 'omi-spin 25s linear infinite',
   orbitaContraria: 'omi-spin 18s linear infinite reverse',
+  /**
+   * El haz de lectura: el único movimiento continuo del escaneo. Barre de arriba
+   * a abajo sobre la silueta del documento y entra/sale con opacidad, así que el
+   * reinicio del ciclo no se ve. No es progreso: el progreso lo dicen los hitos.
+   */
+  barrido: `omi-barrido 2.4s ${EASE.default} infinite`,
 } as const;
 
 /** Framer Motion spring presets */

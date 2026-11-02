@@ -15,7 +15,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -29,7 +29,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
 
 interface Cand { titulo: string; etiquetas?: string; costo?: number; autor?: string; afinidad?: number }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ error: 'El Oráculo no está configurado (falta OPENROUTER_KEY).' }, 500);
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const sys =
       'Eres el Oráculo de la Bóveda de Omicrom, un asesor de conocimiento. Ayudas a quien busca a decidir ' +
       'QUE solucion(es) le conviene consultar para resolver su pregunta, priorizando afinidad y utilidad. ' +
-      'Considera las SKILLS del usuario para priorizar documentos que complementen sus habilidades o refuercen sus gaps. ' +
+      'Considera las HABILIDADES del usuario para priorizar documentos que complementen las que le faltan. ' +
       'NO tienes el contenido pagado, solo titulos/etiquetas/afinidad: no inventes el contenido. ' +
       'Recomienda 1 a 3 documentos en orden, explica en 1 frase por que cada uno le sirve SEGÚN SU PERFIL, y recuerdale ' +
       'que consultar paga regalias al autor (economia justa). Si nada calza, dilo. Espanol, claro y breve (~130 palabras). Sin markdown.';
@@ -80,4 +80,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Oráculo.', detail: String(e) }, 500);
   }
-});
+}));

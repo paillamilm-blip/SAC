@@ -36,7 +36,7 @@
 
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { ANIM, C, FONT, tint } from '@/theme';
+import { BLUR, HALO, ANIM, C, FONT, SHADOW, LETRA} from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import { wordPrefixes } from '../utils/typewriter';
 import { thinkingPulseLevel, revealPulseLevel } from '../utils/orbPulse';
@@ -172,14 +172,14 @@ export function ProactiveMessage({ message, actions, userColor, thinking, stream
     border: `${userColor}44`,
     glow: `${userColor}14`,
     btnBg: `linear-gradient(135deg, ${userColor}, ${userColor}cc)`,
-    btnShadow: `0 0 12px ${userColor}40`,
+    btnShadow: `0 0 ${HALO.foco}px ${userColor}40`,
   };
 
   return (
     <div style={{
       ...S.container,
       border: `1px solid ${accent.border}`,
-      boxShadow: `0 1px 3px ${tint(C.black, 30)}, 0 12px 40px ${tint(C.black, 45)}, 0 0 20px ${accent.glow}`,
+      boxShadow: `${SHADOW.lg}, 0 0 ${HALO.resplandor}px ${accent.glow}`,
       opacity: visible ? 1 : 0,
       transform: visible ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
     }}>
@@ -243,8 +243,8 @@ const S: Record<string, React.CSSProperties> = {
     padding: '16px',
     borderRadius: 16,
     background: C.surface,
-    backdropFilter: 'blur(14px)',
-    WebkitBackdropFilter: 'blur(14px)',
+    backdropFilter: `blur(${BLUR.cristal}px)`,
+    WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
     transition: 'opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
     // Por encima de la vista fullscreen (zIndex 20) y de las superficies de
     // preview (4/5), pero por debajo de la barra de input (zIndex 50), para
@@ -260,7 +260,7 @@ const S: Record<string, React.CSSProperties> = {
   tag: {
     fontFamily: FONT.mono,
     fontSize: 9,
-    letterSpacing: 1.5,
+    letterSpacing: LETRA.ancha,
   },
   closeBtn: {
     background: 'none',

@@ -254,10 +254,10 @@ export function resumenRed(model: RedVivaModel): string {
   const { declaradas, probadas } = model.totales;
 
   if (declaradas === 0) {
-    return 'Todavía no hay nada acá. Subí tu CV y aparecen tus habilidades.';
+    return 'Todavía no hay nada aquí. Sube tu CV y aparecen tus habilidades.';
   }
   if (probadas === 0) {
-    return `Declaraste ${declaradas} ${declaradas === 1 ? 'habilidad' : 'habilidades'} y todavía no probaste ninguna. Probá una y empieza a valer.`;
+    return `Declaraste ${declaradas} ${declaradas === 1 ? 'habilidad' : 'habilidades'} y todavía no probaste ninguna. Prueba una y empieza a valer.`;
   }
   if (probadas === declaradas) {
     return `Probaste ${probadas === 1 ? 'la habilidad registrada' : `las ${probadas} habilidades registradas`}. ${probadas === 1 ? 'Tiene' : 'Todas tienen'} una prueba registrada.`;

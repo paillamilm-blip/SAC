@@ -14,7 +14,7 @@ import { useApp } from '@/store/AppContext';
 import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
-import { C, FONT, RADIUS, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, FONT, RADIUS, SIZE, ANIM, LETRA} from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import type { GemeloDigital } from '@/types';
 
@@ -44,7 +44,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
-        background: C.wash, backdropFilter: 'blur(6px)',
+        background: C.wash, backdropFilter: `blur(${BLUR.vaho}px)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
         animation: ANIM.fade,
       }}
@@ -53,8 +53,8 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 420, maxHeight: '92vh', overflowY: 'auto',
-          borderRadius: RADIUS.xl, background: 'linear-gradient(165deg, rgba(22,34,58,0.98), rgba(10,17,32,0.99))',
-          border: `1px solid ${C.cyanDim}`, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.nocheClara}, ${C.noche})`,
+          border: `1px solid ${C.cyanDim}`, boxShadow: `0 20px 60px ${C.scrim}`,
           position: 'relative',
         }}
       >
@@ -148,7 +148,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-          <div style={{ padding: 12, borderRadius: 16, background: '#fff', boxShadow: `0 0 22px ${uc}33` }}>
+          <div style={{ padding: 12, borderRadius: 16, background: '#fff', boxShadow: `0 0 ${HALO.resplandor}px ${uc}33` }}>
             <img
               src={qrSrc}
               alt="Código QR de tu credencial"
@@ -161,7 +161,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, justifyContent: 'center' }}>
           <QrCode size={13} style={{ color: C.cyanDim }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: LETRA.etiqueta }}>
             @{username}
           </span>
         </div>
@@ -170,7 +170,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           onClick={nativeShare}
           style={{
             width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: 'pointer',
-            background: uc, border: 'none', color: '#021018',
+            background: uc, border: 'none', color: C.onAccent,
             fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10,
           }}
@@ -182,7 +182,7 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
           style={{
             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer',
             background: C.glass, border: `1px solid ${uc}66`, color: uc,
-            fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5,
+            fontFamily: FONT.mono, fontSize: 12, letterSpacing: LETRA.denso,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
@@ -200,19 +200,19 @@ export function ShareCredentialModal({ username, fullName, onClose }: {
         </p>
         {!passportUrl ? (
           <button onClick={generatePassport} disabled={issuing}
-            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: 'rgba(63, 208, 201,0.12)', border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: C.greenFaint, border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.display, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {issuing ? <Loader2 size={16} style={{ animation: ANIM.spin }} /> : <ShieldCheck size={16} />}
-            {issuing ? 'Firmando...' : 'Generar Pasaporte Verificable'}
+            {issuing ? 'Firmando…' : 'Generar Pasaporte Verificable'}
           </button>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-              <div style={{ padding: 10, borderRadius: 14, background: '#fff', boxShadow: `0 0 22px ${C.green}33` }}>
+              <div style={{ padding: 10, borderRadius: 14, background: '#fff', boxShadow: `0 0 ${HALO.resplandor}px ${C.green}33` }}>
                 <img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(passportUrl)}`} width={190} height={190} alt="QR Pasaporte Verificable" style={{ display: 'block', width: 190, height: 190 }} />
               </div>
             </div>
             <button onClick={() => { navigator.clipboard?.writeText(passportUrl); setCopiedP(true); setTimeout(() => setCopiedP(false), 2000); }}
-              style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: C.glass, border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.mono, fontSize: 12, letterSpacing: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              style={{ width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: 'pointer', background: C.glass, border: `1px solid ${C.greenDim}`, color: C.green, fontFamily: FONT.mono, fontSize: 12, letterSpacing: LETRA.denso, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               {copiedP ? <Check size={15} /> : <Copy size={15} />} {copiedP ? 'COPIADO' : 'COPIAR LINK VERIFICABLE'}
             </button>
           </>
@@ -304,7 +304,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
       {loading && (
         <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <Loader2 size={26} style={{ color: C.cyan, animation: ANIM.spin }} />
-          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>CARGANDO CREDENCIAL...</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: LETRA.etiqueta }}>CARGANDO CREDENCIAL…</span>
         </div>
       )}
 
@@ -327,9 +327,9 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             <div style={{
               width: 72, height: 72, borderRadius: 18, overflow: 'hidden', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: cred.avatar_url ? '#0a1120' : `linear-gradient(135deg, ${r.color}, ${C.cyan})`,
-              color: C.onAccent, fontWeight: 700, fontSize: 26, fontFamily: FONT.display,
-              boxShadow: `0 0 18px ${r.color}44`,
+              background: cred.avatar_url ? C.noche : `linear-gradient(135deg, ${r.color}, ${C.cyan})`,
+              color: C.onAccent, fontWeight: 700, fontSize: SIZE.xxl, fontFamily: FONT.display,
+              boxShadow: `0 0 ${HALO.marca}px ${r.color}44`,
             }}>
               {cred.avatar_url
                 ? <img src={cred.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -346,7 +346,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                   background: `${r.color}14`, border: `1px solid ${r.color}44`,
                 }}>
                   <Shield size={11} style={{ color: r.color }} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: 1 }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: LETRA.etiqueta }}>
                     {cred.node_type} · N{cred.node_level}
                   </span>
                 </span>
@@ -356,7 +356,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                     background: C.greenFaint, border: `1px solid ${C.greenDim}`,
                   }}>
                     <BadgeCheck size={12} style={{ color: C.green }} />
-                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.green, letterSpacing: 1 }}>VERIFICADO</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.green, letterSpacing: LETRA.etiqueta }}>VERIFICADO</span>
                   </span>
                 )}
               </div>
@@ -374,14 +374,14 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 2 }}>
               <span style={{ fontFamily: FONT.body, fontSize: 12, color: C.cyanDim }}>Reputación</span>
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 30, color: r.color, textShadow: `0 0 14px ${r.color}55` }}>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 30, color: r.color, textShadow: `0 0 ${HALO.marca}px ${r.color}55` }}>
                 {cred.reputation_score.toFixed(1)}
               </span>
               <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim }}>/100</span>
               <span style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '3px 9px', borderRadius: RADIUS.pill, background: `${r.color}18`, border: `1px solid ${r.color}44`,
-                fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: 1,
+                fontFamily: FONT.mono, fontSize: 9, color: r.color, letterSpacing: LETRA.etiqueta,
               }}>
                 <Icon role={r.icon} size={11} color={r.color} />
                 {r.label}
@@ -398,7 +398,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             return (
               <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: `${ac}10`, border: `1px solid ${ac}40` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: ac, letterSpacing: 1 }}>AFINIDAD DE COLABORACION</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: ac, letterSpacing: LETRA.etiqueta }}>AFINIDAD DE COLABORACION</span>
                   <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: ac }}>{aff}%</span>
                 </div>
                 <p style={{ margin: '6px 0 0', fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
@@ -423,7 +423,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
             return (
               <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: 1 }}>FUSIÓN DE ORBES</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: LETRA.etiqueta }}>FUSIÓN DE ORBES</span>
                 </div>
 
                 {!hasData ? (
@@ -434,7 +434,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {fusion.shared.length > 0 && (
                       <div>
-                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>EN COMÚN</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: LETRA.etiqueta }}>EN COMÚN</span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
                           {fusion.shared.map((s) => (
                             <span key={`shared-${s.name}`} style={{
@@ -450,7 +450,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
                     {fusion.complementary.length > 0 && (
                       <div>
-                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>SE COMPLEMENTAN</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: LETRA.etiqueta }}>SE COMPLEMENTAN</span>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 5 }}>
                           {fusion.complementary.map((s) => (
                             <div key={`comp-${s.name}`} style={{ fontFamily: FONT.body, fontSize: 11, color: C.cyanDim, lineHeight: 1.4 }}>
@@ -465,7 +465,7 @@ export function PublicCredentialModal({ username, onClose }: { username: string;
 
                     {fusion.onlyTheirs.length > 0 && (
                       <div>
-                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: 1 }}>APRENDER ALGO NUEVO</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: 9, color: uc, letterSpacing: LETRA.etiqueta }}>APRENDER ALGO NUEVO</span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
                           {fusion.onlyTheirs.map((s) => (
                             <span key={`only-${s.name}`} style={{

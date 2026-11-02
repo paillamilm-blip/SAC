@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Loader2, TrendingUp, BadgeCheck } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
-import { C, FONT, tint, SIZE, ANIM } from '@/theme';
+import { HALO, C, FONT, tint, SIZE, ANIM, LETRA} from '@/theme';
 
 interface Cred { v: number; u: string; n: string; nt: string; nl: string; rep: number; ej: number[]; cv: number; pe: number; iat: number; }
 const EJES = ['Ejecución', 'Calidad', 'Trascendencia', 'Fundamento'];
@@ -34,9 +34,9 @@ export function VerifyCredentialView({ token }: { token: string }) {
   const repColor = cred && cred.rep >= 70 ? C.green : cred && cred.rep >= 50 ? C.gold : C.cyan;
 
   return (
-    <div style={{ minHeight: '100vh', background: `radial-gradient(circle at 50% 0%, #061024, ${C.bg})`, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px' }}>
+    <div style={{ minHeight: '100vh', background: `radial-gradient(circle at 50% 0%, ${C.noche}, ${C.bg})`, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})` }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${C.ice}, ${C.cyan})` }}>
           <span style={{ color: C.bg, fontFamily: FONT.display, fontWeight: 700, fontSize: 15 }}>Ω</span>
         </div>
         <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 17, color: C.ink }}>Ómicrom · Verificación</span>
@@ -46,7 +46,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
         {state === 'loading' && (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <Loader2 size={28} style={{ color: C.cyan, animation: ANIM.spin }} />
-            <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1, marginTop: 12 }}>VERIFICANDO FIRMA...</p>
+            <p style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: LETRA.etiqueta, marginTop: 12 }}>VERIFICANDO FIRMA…</p>
           </div>
         )}
 
@@ -70,7 +70,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', padding: '8px 12px', borderRadius: 12, background: C.greenFaint, border: `1px solid ${C.greenDim}`, marginBottom: 18 }}>
               <ShieldCheck size={18} style={{ color: C.green }} />
-              <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.green, fontWeight: 700 }}>VERIFICADO POR ÓMICROM</span>
+              <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, color: C.green, fontWeight: 700 }}>VERIFICADO POR ÓMICROM</span>
             </div>
 
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
@@ -80,7 +80,7 @@ export function VerifyCredentialView({ token }: { token: string }) {
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
               <span style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim }}>Reputación</span>
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.hero, color: repColor, textShadow: `0 0 14px ${repColor}55` }}>{cred.rep}</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.hero, color: repColor, textShadow: `0 0 ${HALO.marca}px ${repColor}55` }}>{cred.rep}</span>
               <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.cyanDim }}>/100</span>
             </div>
 
@@ -100,11 +100,11 @@ export function VerifyCredentialView({ token }: { token: string }) {
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: tint(C.cyan, 5), border: `1px solid ${C.cyanFaint}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.green }}><BadgeCheck size={15} /> {cred.cv}</div>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, letterSpacing: 1 }}>COMPETENCIAS VALIDADAS</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, letterSpacing: LETRA.etiqueta }}>HABILIDADES VALIDADAS</div>
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 8, background: tint(C.cyan, 5), border: `1px solid ${C.cyanFaint}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: FONT.display, fontWeight: 700, fontSize: 20, color: C.cyan }}><TrendingUp size={15} /> {cred.pe}</div>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, letterSpacing: 1 }}>PUNTOS DE EXPERIENCIA</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, letterSpacing: LETRA.etiqueta }}>PUNTOS DE EXPERIENCIA</div>
               </div>
             </div>
 

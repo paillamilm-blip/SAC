@@ -21,7 +21,7 @@ const SYS = [
   '1. Extraer TODA la info del CV. NO inventar. NO omitir.',
   '2. seniorLabel = posicionamiento REAL como especialista.',
   '3. Medir los 4 ejes con evidencia concreta del CV.',
-  '4. Skills con pct diferenciados: principal 80-96%, secundario 50-75%, menor 30-50%.',
+  '4. Los pct por habilidad deben diferenciarse: principal 80-96%, secundarias 50-75%, menores 30-50%.',
   '5. Years = suma TOTAL de experiencia laboral.',
   '6. Funciona para CUALQUIER industria.',
   '',

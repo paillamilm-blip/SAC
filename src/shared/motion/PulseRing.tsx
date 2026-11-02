@@ -8,7 +8,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from './useReducedMotion';
-import { C } from '@/theme';
+import { HALO, C } from '@/theme';
 
 interface Props {
   /** Increment this to trigger a new pulse */
@@ -44,7 +44,7 @@ export function PulseRing({ trigger, color = C.cyan, size = 48, style }: Props) 
               position: 'absolute', inset: 0,
               borderRadius: '50%',
               border: `2px solid ${color}`,
-              boxShadow: `0 0 12px ${color}44`,
+              boxShadow: `0 0 ${HALO.foco}px ${color}44`,
             }}
           />
         )}

@@ -1,7 +1,7 @@
 // components/shared/Toast.tsx
 // Sistema de notificaciones (toasts) global, holográfico.
 // Uso:  const { toast } = useToast();  toast('Guardado', 'success');
-import { C, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, SIZE, ANIM } from '@/theme';
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle2, XCircle, Info } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface ToastItem { id: number; message: string; type: ToastType; }
 interface ToastCtx { toast: (message: string, type?: ToastType) => void; }
 const Ctx = createContext<ToastCtx | null>(null);
 
-const COLOR: Record<ToastType, string> = { success: C.green, error: '#ff5066', info: C.cyan };
+const COLOR: Record<ToastType, string> = { success: C.green, error: C.red, info: C.cyan };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -28,7 +28,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div style={S.viewport} role="status" aria-live="polite" aria-atomic="true">
         {items.map((t) => (
-          <div key={t.id} style={{ ...S.toast, borderColor: `${COLOR[t.type]}66`, boxShadow: `0 0 18px ${COLOR[t.type]}33` }}>
+          <div key={t.id} style={{ ...S.toast, borderColor: `${COLOR[t.type]}66`, boxShadow: `0 0 ${HALO.marca}px ${COLOR[t.type]}33` }}>
             <span style={{ color: COLOR[t.type], display: 'flex', flexShrink: 0 }}>
               {t.type === 'success' ? <CheckCircle2 size={16} /> : t.type === 'error' ? <XCircle size={16} /> : <Info size={16} />}
             </span>
@@ -56,7 +56,7 @@ const S: Record<string, React.CSSProperties> = {
   toast: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px',
     borderRadius: 12, border: '1px solid',
-    background: C.surface, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    background: C.surface, backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
     animation: ANIM.rise,
   },
   msg: {

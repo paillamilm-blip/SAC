@@ -23,7 +23,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 
 const json = (body: unknown, status = 200) =>
@@ -35,7 +35,7 @@ const json = (body: unknown, status = 200) =>
 // Configuración: ventana de Ghost Approval en minutos
 const GHOST_APPROVAL_MINUTES = 15;
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
@@ -164,4 +164,4 @@ Deno.serve(async (req) => {
     console.error('[ghost-approval] Unexpected error:', e);
     return json({ error: 'Error inesperado en Ghost Approval', detail: String(e) }, 500);
   }
-});
+}));

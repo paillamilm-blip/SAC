@@ -1,12 +1,15 @@
 import { useState, lazy, Suspense, useCallback, useRef, useEffect, useMemo } from 'react';
 import { type OrbNode } from '../types';
-import { OrbOnboarding, type GeneratedProfile } from './OrbOnboarding';
+import { OrbOnboarding } from './OrbOnboarding';
+import type { GeneratedProfile } from '@/features/omicron/utils/perfilDeclaracion';
 import { OmicronBar } from './OmicronBar';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
-import { RedVivaCanvas } from '@/features/redviva/components/RedVivaCanvas';
 import { useRedViva } from '@/features/redviva/hooks/useRedViva';
 import { textoLecturaOmicron } from '@/features/omicron/services/omicronLectura';
-import type { NodoRed } from '@/features/redviva/services/redViva';
+import MapaCapacidades from '@/features/mapa/MapaCapacidades';
+import { useVistaBrechas } from '@/features/aprendizaje/useVistaBrechas';
+import { aBrechaDeMapa, AVISO_MUESTRA, AVISO_VACIO } from '@/features/aprendizaje/abrirBrechas';
+import { OmicronError, OmicronLoading } from '@/shared/components/OmicronChrome';
 import { ProactiveMessage, type ProactiveAction } from './ProactiveMessage';
 import { Icon } from '@/shared/components/icons';
 // NOTE ("Matar el Escritorio" Inc 2): ProactiveCards y OrbContextLabel se
@@ -35,11 +38,13 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { C, FONT, tint, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, FONT, FONT_STYLE, tint, SIZE, ANIM, BASE, UMBRAL, LETRA} from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
-import { getUserColor } from '@/shared/components/ColorPicker';
+import { getUserColor } from '@/shared/services/userColor';
+import { OrbTopbar } from '@/shared/components/OrbTopbar';
+import { OrbeEnVuelo } from '@/shared/components/OrbeEnVuelo';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   detectActiveSynergies,
@@ -85,24 +90,32 @@ const HUB_NODES: OrbNode[] = [
   { id: 'aprendizaje',  label: 'Aprendizaje',  tab: 'aprendizaje', icon: 'aprendizaje' },
 ];
 
-// Todo nodo de la Red Viva es UNA HABILIDAD TUYA: se acciona probándola, y eso
-// vive en Habilidades. (El viejo 'ausente → Empleos' se fue con la capa de
-// mercado de la Fase 6B: ya no hay ofertas que mostrar.)
-const HABILIDADES_HUB = HUB_NODES.find((h) => h.tab === 'maxskill')!;
+// ── Caja de la escena central ───────────────────────────────────────
+// El lienzo que preside el home es el mapa radial (viewBox 772×640, casi
+// cuadrado). El tope es la ALTURA del primer viewport: la escena tiene que verse
+// entera sin hacer scroll (la moneda del producto) y 772 es el punto donde una
+// unidad del mapa vale exactamente un pixel, o sea donde sus letras ya no
+// necesitan compensación.
+//
+// El cuarto término es la banda que deja el cromo fijo, no el viewport entero:
+// 56 px de franja arriba y 104 + safe-area de barra abajo (los mismos números del
+// contenedor de abajo). A 418 px de alto, `78vh` solo medía 326 y la fila de
+// chips se metía bajo la barra. 216 = 56 + 104 + los 56 que gasta la fila de
+// chips; 1,2 = 772/640, el factor ancho/alto del viewBox.
+const ESCENA_MAPA =
+  'min(78vh, 92vw, 772px, calc((100dvh - 216px - env(safe-area-inset-bottom, 0px)) * 1.2))';
 
-// ── Shared orb box dimensions ───────────────────────────────────────
-// El orbe y la capa de etiquetas (labels HTML proyectadas desde 3D)
-// DEBEN compartir exactamente la misma caja centrada para que las
-// coordenadas proyectadas (0..box) caigan sobre el orbe visible.
-const ORB_SIZE_VMIN = 54;
-const ORB_MAX = 300;
+// Dos caminos esperan a la IA (el coach y el oráculo) y los dos avisaban tarde
+// con la misma frase escrita dos veces: la misma promesa, dos redacciones que
+// podían diverger. Un solo texto, un solo dueño.
+const MS_ESPERA_LARGA = 'Ómicrom está tardando más de lo normal… sigue esperando.';
 
 // ── Default invitation nodes (when user has no skills yet) ───────────
 const INVITATION_NODES: OrbNode[] = [
   { id: 'inv-cv',       label: 'Sube tu CV',        tab: 'perfil',   icon: 'cv' },
-  { id: 'inv-skills',   label: 'Descubre skills',   tab: 'maxskill', icon: 'descubrir' },
+  { id: 'inv-skills',   label: 'Descubre habilidades',   tab: 'maxskill', icon: 'descubrir' },
   { id: 'inv-curso',    label: 'Primer curso',      tab: 'academia', icon: 'curso' },
-  { id: 'inv-valida',   label: 'Valida expertise',  tab: 'maxskill', icon: 'validar' },
+  { id: 'inv-valida',   label: 'Valida una habilidad',  tab: 'maxskill', icon: 'validar' },
 ];
 
 // El ícono de un nodo de skill comunica su estado real, no su orden de aparición.
@@ -196,7 +209,7 @@ function TabLoader() {
       <div style={{ width: 64, height: 64 }}>
         <OmicronPlaceholder2D size={64} color={getUserColor()} />
       </div>
-      <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Un momento, lo estoy preparando…</p>
+      <p style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: LETRA.anunciada, color: C.cyanDim, textTransform: 'uppercase', margin: 0 }}>Un momento, lo estoy preparando…</p>
     </div>
   );
 }
@@ -224,15 +237,38 @@ export function OrbShell() {
   // Respetar prefers-reduced-motion para el micro-feedback de las etiquetas
   const prefersReducedMotion = useReducedMotion();
 
-  // ── FUSIÓN ORBE + RED VIVA (una sola cosa) ──────────────────────────
-  // El home YA no renderiza el orbe 3D (OrbNeuronal): renderiza la Red Viva
-  // (motor B con sabor A, varianteNodo='pieza') alimentada por datos reales.
-  // El centro = la reputación del usuario. La red representa su EVIDENCIA, no
-  // las tabs; la navegación por tabs sigue por la barra de voz/texto y por la
-  // selección de nodos del mapa (→ Habilidades).
+  // ── EL HOME ES EL MAPA DE CAPACIDADES ────────────────────────────────
+  // Ruling del dueño (01-11): la portada es la pantalla del mapa radial, con el
+  // orbe geodésico plantado en la raíz dorada y esperando el próximo CV. La Red
+  // Viva sigue viva detrás: es la fuente de la voz de lectura del home.
   const { model: redVivaModel } = useRedViva();
-  // Nodo enfocado en el mapa del home (para la lectura de Ómicrom y la nav).
-  const [nodoRedSel, setNodoRedSel] = useState<string | null>(null);
+  const vistaMapa = useVistaBrechas();
+  // La voz del vacío: la portada muestra título y acción, la pestaña agrega el
+  // por qué. Ambas salen de AVISO_VACIO, así no pueden diverger en dos redacciones.
+  const avisoVacio = vistaMapa.trabajo.tipo === 'vacio' ? AVISO_VACIO[vistaMapa.trabajo.motivo] : null;
+
+  // ── EL DESCENSO DEL ORBE (continuidad de escena pedida por el dueño) ────
+  // Se arma al cerrar el análisis y se dispara SOLO cuando llega una lectura
+  // distinta y con contenido: si el CV no cambió nada, no hay fiesta. La
+  // referencia del array es el marcador — react-query la conserva cuando el
+  // resultado es idéntico, así que es un cambio real y no un re-render.
+  const [intentoDescenso, setIntentoDescenso] = useState<null | typeof vistaMapa.brechas>(null);
+  const [orbeVolando, setOrbeVolando] = useState(false);
+
+  useEffect(() => {
+    if (!intentoDescenso || vistaMapa.brechas === intentoDescenso) return;
+    setIntentoDescenso(null);
+    if (vistaMapa.trabajo.tipo === 'mapa' && vistaMapa.brechas.length > 0) setOrbeVolando(true);
+  }, [intentoDescenso, vistaMapa.brechas, vistaMapa.trabajo.tipo]);
+
+  // Cerrar el CV es el gesto que cierra un análisis. Se vuelve a leer la verdad
+  // porque nadie más invalida `brechas-aprendizaje` cuando `analizar-cv` guarda:
+  // sin este `recargar()`, el mapa del home se quedaría con el análisis viejo.
+  const cierraConvalida = useCallback(() => {
+    setShowConvalida(false);
+    setIntentoDescenso(vistaMapa.brechas);
+    vistaMapa.recargar();
+  }, [vistaMapa]);
 
   // ── Build GemeloDigital from Supabase profile for omicronCoach ──────
   const sbProfile = sbFull; // Supabase profile (has execution_score, skills_detail, etc.)
@@ -486,18 +522,18 @@ export function OrbShell() {
       inicio:      { level: Math.min(1, rep / 100), nextStep: nodeGuidance('perfil', sbProfile, gemeloDigital) || (rep < 50 ? 'Completa tu perfil' : '¡Perfil sólido!') },
       academia:    { level: execNorm * 0.5 + foundNorm * 0.5, nextStep: nodeGuidance('academia', sbProfile, gemeloDigital) },
       habilidades: { level: qualNorm, nextStep: nodeGuidance('maxskill', sbProfile, gemeloDigital) },
-      aprendizaje: { level: qualNorm, nextStep: 'Reconocé y dominá tus brechas: cada una que marcabas enciende un nodo del mapa.' },
+      aprendizaje: { level: qualNorm, nextStep: 'Reconoce y domina tus brechas: cada una que marcabas enciende un nodo del mapa.' },
       // Invitation nodes (when user has no skills)
       'inv-cv':       { level: hasSkill(['cv', 'curriculum']) ? 0.9 : 0.1, nextStep: '¡Sube tu CV para activar tu Gemelo!' },
       'inv-skills':   { level: qualNorm, nextStep: 'Descubre tus habilidades ocultas' },
       'inv-curso':    { level: foundNorm * 0.5, nextStep: 'Empieza tu primer curso' },
-      'inv-valida':   { level: qualNorm * 0.5, nextStep: 'Valida tu expertise' },
+      'inv-valida':   { level: qualNorm * 0.5, nextStep: 'Valida tu mejor habilidad' },
     };
 
     return dynamicOrbNodes.map(node => ({
       ...node,
       level: levelMap[node.id]?.level ?? node.level ?? 0,
-      nextStep: levelMap[node.id]?.nextStep ?? node.nextStep ?? 'Explora esta competencia',
+      nextStep: levelMap[node.id]?.nextStep ?? node.nextStep ?? 'Explora esta habilidad',
     }));
   }, [profile, sbProfile, gemeloDigital, dynamicOrbNodes]);
 
@@ -578,7 +614,7 @@ export function OrbShell() {
     if (intent.kind === 'coach') {
       flash('Ómicrom está pensando…');
       speakLocal('Déjame ver tu Gemelo Digital.');
-      const coachTimer = setTimeout(() => flash('Ómicrom está tardando más de lo normal… seguí esperando.'), 8000);
+      const coachTimer = setTimeout(() => flash(MS_ESPERA_LARGA), 8000);
       const omCtx: OmicronContext = {
         skills: sbProfile?.skills ?? [],
         cv_summary: sbProfile?.cv_summary ?? '',
@@ -593,7 +629,7 @@ export function OrbShell() {
         displayName: sbProfile?.display_name || sbProfile?.username,
       };
       if (!checkOmicronLimit()) {
-        flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+        flash('Alcanzaste el límite diario de consultas. Vuelve mañana con energía recargada.');
         clearTimeout(coachTimer);
         return;
       }
@@ -615,7 +651,7 @@ export function OrbShell() {
 
     if (intent.kind === 'fact') {
       let msg = '';
-      if (intent.topic === 'reputacion') msg = `Tu reputación va en ${Math.round(sbProfile?.reputation_score ?? 0)} de 100. ${(sbProfile?.reputation_score ?? 0) >= 50 ? '¡Vas bien!' : 'Validando skills la subimos juntos.'}`;
+      if (intent.topic === 'reputacion') msg = `Tu reputación va en ${Math.round(sbProfile?.reputation_score ?? 0)} de 100. ${(sbProfile?.reputation_score ?? 0) >= 50 ? '¡Vas bien!' : 'Validando habilidades la subimos juntos.'}`;
       else if (intent.topic === 'tokens') {
         // Los tokens no compran nada hoy: no hay checkout, ni transferencias,
         // ni retiros en la app (y la cuota de IA usa otro sistema). Decirlo es
@@ -623,8 +659,8 @@ export function OrbShell() {
         const tokens = sbProfile?.token_balance ?? 0;
         const rep = Math.round(sbProfile?.reputation_score ?? 0);
         msg = tokens > 0
-          ? `Tenés ${tokens.toLocaleString()} tokens, pero todavía no hay nada que comprar con ellos. Lo que pesa acá es tu reputación: ${rep} de 100.`
-          : `Todavía no tenés tokens, y no compran nada: lo que pesa acá es tu reputación, ${rep} de 100.`;
+          ? `Tienes ${tokens.toLocaleString()} tokens, pero todavía no hay nada que comprar con ellos. Lo que pesa aquí es tu reputación: ${rep} de 100.`
+          : `Todavía no tienes tokens, y no compran nada: lo que pesa aquí es tu reputación, ${rep} de 100.`;
       }
       else if (intent.topic === 'pe') msg = `Llevas ${(sbProfile?.pe_points ?? 0).toLocaleString()} puntos de experiencia. Cada nodo que valides suma más.`;
       else msg = 'Puedes decirme cosas como: "abre academia", "dame un consejo", "cuánta reputación tengo", o simplemente tocar un nodo del orbe. Estoy aquí para lo que necesites.';
@@ -651,7 +687,7 @@ export function OrbShell() {
     // unknown — Ómicrom cerebro unificado (coach + tutor + motivador)
     flash('Ómicrom está pensando…');
     // Show timeout indicator if AI takes too long
-    const slowTimer = setTimeout(() => flash('Ómicrom está tardando más de lo normal… seguí esperando.'), 8000);
+    const slowTimer = setTimeout(() => flash(MS_ESPERA_LARGA), 8000);
     const omCtx: OmicronContext = {
       skills: sbProfile?.skills ?? [],
       cv_summary: sbProfile?.cv_summary ?? '',
@@ -666,7 +702,7 @@ export function OrbShell() {
       displayName: sbProfile?.display_name || sbProfile?.username,
     };
     if (!checkOmicronLimit()) {
-      flash('Alcanzaste el límite diario de consultas. Volvé mañana con energía recargada.');
+      flash('Alcanzaste el límite diario de consultas. Vuelve mañana con energía recargada.');
       clearTimeout(slowTimer);
       return;
     }
@@ -776,38 +812,16 @@ export function OrbShell() {
     }
   }, [state]);
 
-  // ── Selección de un nodo de la Red Viva del home ───────────────────
-  // La red del home representa la EVIDENCIA del usuario (habilidades), no las
-  // tabs. Al seleccionar un nodo: (1) lo marcamos para que Ómicrom lo LEA en
-  // modo lectura, y (2) abrimos Habilidades, la superficie donde toda
-  // habilidad se acciona, reutilizando el mismo flujo
-  // de navegación que el resto del shell (setSelectedNode + preview + tab).
-  const handleRedNodeSelect = useCallback((nodo: NodoRed) => {
-    // Toggle: volver a tocar el nodo activo cierra su foco (y su lectura).
-    setNodoRedSel((prev) => (prev === nodo.id ? null : nodo.id));
-    if (nodoRedSel === nodo.id) return;
-    hapticMedium();
-    firePulse('user');
-    const hubNode = HABILIDADES_HUB;
-    setSelectedNode({ ...hubNode, label: nodo.label });
-    setState('preview');
-    setActiveTab(hubNode.tab);
-    window.dispatchEvent(new CustomEvent('omicron:node-tap'));
-  }, [nodoRedSel, setActiveTab]);
-
   // ── Lectura de Ómicrom (modo 'lectura' de la barra en el home) ──────
-  // Ómicrom LEE la red con textos REALES (resumenRed/textoEstado vía el helper
-  // puro textoLecturaOmicron): resumen global si no hay nodo enfocado, o la
-  // línea del nodo enfocado. Sin jerga y sin inventar. Solo se muestra en el
-  // home (state 'orb') y cuando NO hay una respuesta reactiva activa
-  // (responseMsg), para no pisar la burbuja de ProactiveMessage.
-  const nodoRedActivo = useMemo(
-    () => redVivaModel.nodos.find((n) => n.id === nodoRedSel) ?? null,
-    [redVivaModel.nodos, nodoRedSel],
-  );
+  // Ómicrom LEE la red con textos REALES (resumenRed del helper puro
+  // textoLecturaOmicron). Sin jerga y sin inventar. Solo se muestra en el home
+  // (state 'orb') y cuando NO hay una respuesta reactiva activa (responseMsg),
+  // para no pisar la burbuja de ProactiveMessage.
+  // El nodo enfocado desapareció con el lienzo anterior: en el mapa los nodos no
+  // son botones (44 px en el teléfono), la decisión se toma en la cola.
   const lecturaOmicron = useMemo(
-    () => (redVivaModel.vacia ? null : textoLecturaOmicron(redVivaModel, nodoRedActivo)),
-    [redVivaModel, nodoRedActivo],
+    () => (redVivaModel.vacia ? null : textoLecturaOmicron(redVivaModel, null)),
+    [redVivaModel],
   );
 
   // ── B: Connect real OraculoBar voice state ──────────────────────────
@@ -958,10 +972,10 @@ export function OrbShell() {
           try {
             const { supabase } = await import('@/infrastructure/supabase/client');
             if (sbProfile?.id) {
-              const skillsDetail = generated.skills.map((s: string, i: number) => ({
-                name: s,
-                pct: Math.max(40, 80 - i * 10),
-              }));
+              // p_skills_detail vacío a propósito: el porcentaje por habilidad lo
+              // mide el análisis del CV. Antes se repartía 80/70/60… por posición
+              // en la lista y quedaba guardado como si fuera una medición. Con el
+              // array vacío la RPC no toca el detalle (guarda `array_length > 0`).
               await supabase.rpc('aplicar_analisis_cv', {
                 p_name: '',
                 p_skills: generated.skills,
@@ -971,7 +985,7 @@ export function OrbShell() {
                 p_fund: Math.round(generated.axes.fund),
                 p_years: generated.years || 0,
                 p_summary: generated.summary || '',
-                p_skills_detail: skillsDetail,
+                p_skills_detail: [],
               });
               // Broadcast "activó su Gemelo Digital" a toda la red por la
               // conexión única de RealtimeContext (antes abría un canal
@@ -988,6 +1002,12 @@ export function OrbShell() {
       <div style={{
         position: 'absolute',
         inset: 0,
+        paddingTop: 56,
+        // La barra de abajo y las etiquetas del anillo exterior se peleaban por
+        // el mismo suelo: el mapa se centra en el espacio libre, no en toda la
+        // pantalla.
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 104px)',
+        boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -998,136 +1018,91 @@ export function OrbShell() {
         zIndex: 1,
       }}>
         {/*
-          FUSIÓN ORBE + RED VIVA: el home ES la Red Viva (motor B, constelación
-          2D SVG con sabor A: varianteNodo='pieza'). Cada nodo es una habilidad
-          real del usuario; el centro es su reputación NN/100 en su color. Ya no
-          hay render 3D acá. La caja mantiene el mismo encuadre centrado que el
-          orbe anterior (ORB_SIZE_VMIN / ORB_MAX) para no mover el layout.
+          EL HOME ES EL MAPA DE CAPACIDADES. La raíz dorada lleva encima la misma
+          trama del orbe que preside la franja de arriba (un solo dibujante,
+          orbGeometry): el orbe dejó de ser una pantalla y se plantó en el centro
+          del mapa. Alrededor nacen las brechas reales que devolvió el último CV.
 
-          NAVEGACIÓN: seleccionar un nodo del mapa abre Habilidades, donde se
-          acciona (handleRedNodeSelect), sin romper el
-          flujo por voz/texto. Bajo prefers-reduced-motion la red no anima.
+          Los cuatro estados del estándar viven acá, no sólo en la pestaña: la
+          portada no puede prometer un mapa y dejar la duda. Vacío = la raíz sola
+          con su única acción (subir el CV); cargando y error usan el mismo cromo
+          que la cola, con las mismas palabras.
+
+          Los nodos no son botones (en el teléfono el disco mide 18-24 px y el
+          estándar de la app pide 44). Se acciona en la cola de la pestaña
+          Aprendizaje; acá el mapa se lee: role="img" con su resumen hablado.
         */}
-        <div
-          style={{
-            width: `${ORB_SIZE_VMIN}vmin`,
-            height: `${ORB_SIZE_VMIN}vmin`,
-            maxWidth: ORB_MAX,
-            maxHeight: ORB_MAX,
-            transformOrigin: 'center',
-          }}
-        >
-          <RedVivaCanvas
-            model={redVivaModel}
-            userColor={orbColor}
-            reputacion={realReputation}
-            seleccionado={nodoRedSel}
-            onSelect={handleRedNodeSelect}
-            varianteNodo="pieza"
+        {vistaMapa.trabajo.tipo === 'cargando' && <OmicronLoading message="Buscando tu mapa…" />}
+
+        {vistaMapa.trabajo.tipo === 'error' && (
+          <OmicronError
+            cause={vistaMapa.trabajo.mensaje}
+            title="Tu mapa no llegó"
+            ctaLabel="Intentarlo de nuevo"
+            onCta={vistaMapa.recargar}
           />
-        </div>
+        )}
+
+        {(vistaMapa.trabajo.tipo === 'mapa' || vistaMapa.trabajo.tipo === 'vacio') && (
+          <div style={{ width: ESCENA_MAPA, transformOrigin: 'center' }}>
+            <MapaCapacidades
+              ocupacion={vistaMapa.ocupacion || 'Tu perfil'}
+              brechas={vistaMapa.brechas.map(aBrechaDeMapa)}
+              modo="naciendo"
+              orbe={!orbeVolando}
+              escena
+            />
+            {/* La muestra sólo es legítima si está etiquetada (spec §8). El home
+                pinta el mapa de OTRA persona cuando todavía no hay nada propio,
+                y tiene que decirlo él también: no alcanza con que la pestaña lo
+                avise. */}
+            {vistaMapa.simulado && (
+              <p style={{ ...FONT_STYLE.label, margin: '14px auto 0', maxWidth: 360, textAlign: 'center', color: C.mut }}>
+                {AVISO_MUESTRA}
+              </p>
+            )}
+
+            {/* El vacío tiene dos caras y la portada dice cuál: sin CV se pide el
+                CV; con el CV leído y sin brechas se lo dice, no se calla. */}
+            {avisoVacio && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <p style={{ ...FONT_STYLE.body, margin: 0, maxWidth: 340, textAlign: 'center', color: C.mut }}>
+                  {avisoVacio.titulo}
+                </p>
+                <button
+                  type="button"
+                  style={{ ...BASE.btnPrimary, width: 'auto', minHeight: 44, padding: '12px 24px' }}
+                  onClick={() => { hapticLight(); setShowConvalida(true); }}
+                >
+                  {avisoVacio.cta}
+                </button>
+              </div>
+            )}
+
+            {/* El orbe de la franja, volando al centro. Mientras vuela, la franja
+                esconde el suyo y el mapa deja su trama fuera: uno solo a la vez. */}
+            {orbeVolando && (
+              <OrbeEnVuelo color={orbColor} onPlantado={() => setOrbeVolando(false)} />
+            )}
+          </div>
+        )}
       </div>
 
 
-      {/* ── GUEST LOGIN BUTTON (visible, esquina superior izquierda) ── */}
-      {state !== 'fullscreen' && !sbProfile?.id && (
-        <motion.button
-          // Micro-feedback de tap consistente con el Home (OBRA MAESTRA INC 4):
-          // press transform-only, <=160ms, neutralizado bajo reduced-motion.
-          whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
-          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-          onClick={() => {
-            hapticLight();
-            window.dispatchEvent(new CustomEvent('omicron:request-auth'));
-          }}
-          aria-label="Iniciar sesión"
-          title="Iniciar sesión"
-          style={{
-            position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
-            left: 16,
-            zIndex: 4,
-            minHeight: 40,
-            padding: '8px 16px',
-            borderRadius: 999,
-            border: `1.5px solid ${orbColor}`,
-            background: `linear-gradient(135deg, ${orbColor}22, ${C.surface})`,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: FONT.display,
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: -0.2,
-            color: orbColor,
-            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px ${tint(C.black, 40)}`,
-            // El transform lo gobierna framer-motion (whileTap); mantenemos
-            // solo la transición de box-shadow para no competir por transform.
-            transition: 'box-shadow 0.15s ease',
-          }}
-        >
-          Iniciar sesión
-        </motion.button>
-      )}
-
-      {/* ── PROFILE AVATAR BUTTON (sutil, esquina superior derecha) ──── */}
-      {state !== 'fullscreen' && (
-        <motion.button
-          // Micro-feedback de tap consistente con el Home (OBRA MAESTRA INC 4):
-          // press transform-only, <=160ms, neutralizado bajo reduced-motion.
-          whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
-          transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-          onClick={() => setShowCredencial(true)}
-          aria-label="Ver mi credencial"
-          title="Mi credencial"
-          style={{
-            position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 12px) + 14px)',
-            right: 16,
-            zIndex: 4,
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            border: `1.5px solid ${orbColor}`,
-            background: `radial-gradient(circle at 32% 26%, ${orbColor}22, ${C.surface})`,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            boxShadow: `0 0 12px ${orbColor}33, 0 4px 14px ${tint(C.black, 40)}`,
-            // El transform lo gobierna framer-motion (whileTap); mantenemos
-            // solo la transición de box-shadow para no competir por transform.
-            transition: 'box-shadow 0.15s ease',
-            padding: 0,
-          }}
-        >
-          {sbProfile?.avatar_url ? (
-            <img
-              src={sbProfile.avatar_url}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-            />
-          ) : (
-            <span style={{
-              fontFamily: FONT.display,
-              fontWeight: 800,
-              fontSize: 13,
-              color: orbColor,
-              letterSpacing: -0.3,
-            }}>
-              {(sbProfile?.display_name || sbProfile?.full_name || sbProfile?.username || 'N')
-                .trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
-            </span>
-          )}
-        </motion.button>
-      )}
-
+      {/* ── LA FRANJA DEL ORBE: arriba de todo, en los tres estados ──
+          El orbe dejó de ser una pantalla para ser la marca que preside. Los
+          dos botones sueltos que vivían en las esquinas de este mismo borde
+          (Iniciar sesión / avatar) ahora son la izquierda y la derecha de una
+          sola franja. */}
+      <OrbTopbar
+        color={orbColor}
+        reputacion={state === 'orb' ? null : realReputation}
+        guest={!sbProfile?.id}
+        enVuelo={orbeVolando}
+        onInicio={() => { hapticLight(); setState('orb'); setSelectedNode(null); }}
+        onCredencial={() => { hapticLight(); setShowCredencial(true); }}
+        onIniciarSesion={() => { hapticLight(); window.dispatchEvent(new CustomEvent('omicron:request-auth')); }}
+      />
 
       {/* ── PREVIEW PANEL (swipeable, con mejoras) ─────────────────── */}
       {state === 'preview' && selectedNode && (() => {
@@ -1197,9 +1172,9 @@ export function OrbShell() {
               borderRadius: 22,
               padding: '22px 22px 18px',
               zIndex: 10,
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              boxShadow: `0 20px 60px ${C.scrim}, 0 0 30px ${C.cyanFaint}`,
+              backdropFilter: `blur(${BLUR.esmeril}px)`,
+              WebkitBackdropFilter: `blur(${BLUR.esmeril}px)`,
+              boxShadow: `0 20px 60px ${C.scrim}, 0 0 ${HALO.resplandor}px ${C.cyanFaint}`,
               animation: ANIM.pop,
               touchAction: 'pan-y',
             }}
@@ -1222,13 +1197,13 @@ export function OrbShell() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <Icon role={selectedNode.icon} size={SIZE.xxl} color={orbColor} />
               <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+                <h3 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: LETRA.titulo }}>
                   {selectedNode.label}
                 </h3>
                 {selectedNode.level !== undefined && selectedNode.level > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <div style={{ flex: 1, height: 4, borderRadius: 2, background: `${orbColor}22` }}>
-                      <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: orbColor, boxShadow: `0 0 6px ${orbColor}66` }} />
+                      <div style={{ height: '100%', width: `${Math.round(selectedNode.level * 100)}%`, borderRadius: 2, background: orbColor, boxShadow: `0 0 ${HALO.ascua}px ${orbColor}66` }} />
                     </div>
                     <span style={{ fontFamily: FONT.mono, fontSize: 11, color: orbColor, fontWeight: 700 }}>
                       {Math.round(selectedNode.level * 100)}%
@@ -1244,7 +1219,7 @@ export function OrbShell() {
               background: `linear-gradient(135deg, ${C.cyanGhost}, ${C.glass})`,
               border: `1px solid ${C.cyanFaint}`,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: C.cyan, textTransform: 'uppercase', marginBottom: 6 }}>
                 <Icon role="idea" size={12} />
                 Cómo mejorar
               </div>
@@ -1283,7 +1258,7 @@ export function OrbShell() {
                   border: `1px solid ${orbColor}44`,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: orbColor, textTransform: 'uppercase', marginBottom: 6 }}>
                   <Icon role="sinergia" size={12} />
                   Sinergia activa
                 </div>
@@ -1323,7 +1298,7 @@ export function OrbShell() {
 
             {/* Swipe hint */}
             {canSwipe && (
-              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '10px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, letterSpacing: 1, textTransform: 'uppercase' }}>
+              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '10px 0 0', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, letterSpacing: LETRA.etiqueta, textTransform: 'uppercase' }}>
                 <Icon role="anterior" size={11} />
                 desliza para cambiar de nodo
                 <Icon role="siguiente" size={11} />
@@ -1346,6 +1321,9 @@ export function OrbShell() {
         display: 'flex',
         flexDirection: 'column',
         background: C.bg,
+        // La franja del orbe preside también en pantalla completa: el tab
+        // despega 56 px más abajo para no pelear con ella.
+        paddingTop: 56,
       }}>
         {/* Back button header */}
         <div style={{
@@ -1357,7 +1335,7 @@ export function OrbShell() {
           paddingTop: 'calc(env(safe-area-inset-top, 12px) + 8px)',
           borderBottom: `1px solid ${C.line}`,
           background: C.surface,
-          backdropFilter: 'blur(20px)',
+          backdropFilter: `blur(${BLUR.esmeril}px)`,
         }}>
           <button
             onClick={handleBack}
@@ -1416,14 +1394,13 @@ export function OrbShell() {
       )}
 
       {/* ── ANUNCIO ACCESIBLE DEL MAPA ───────────────────────────────
-          El orbe 3D proyectaba etiquetas HTML sobre las que se navegaba; con la
-          Red Viva 2D ese overlay se retiró (el propio SVG ya se anuncia con su
-          resumen en aria-label, y la selección de nodos es directa sobre el
-          mapa). Se conserva una región aria-live que anuncia el nodo enfocado
-          para lectores de pantalla. */}
+          Región aria-live con lo que pasa en la escena. El mapa es role="img" y
+          no se toca: lo que se anuncia es lo que el resumen del SVG ya dice más
+          el sitio real donde se actúa (la barra de abajo y la pestaña
+          Aprendizaje). El voseo no: el resto de la app habla de tú. */}
       {state !== 'fullscreen' && (
         <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-          {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Mapa de tu red. Tocá un nodo o escribí abajo qué querés hacer.'}
+          {selectedNode ? `${selectedNode.label} seleccionado. ${selectedNode.nextStep || ''}` : 'Mapa de tus capacidades. Se lee, no se toca: decide abajo, en la barra, o entra a Aprendizaje para revisar cada una.'}
         </div>
       )}
 
@@ -1436,14 +1413,16 @@ export function OrbShell() {
         zIndex: 50,
         padding: '8px 16px',
         paddingBottom: 'calc(env(safe-area-inset-bottom, 12px) + 8px)',
-        background: 'linear-gradient(0deg, rgba(0,2,6,0.98) 70%, transparent 100%)',
+        background: `linear-gradient(0deg, ${tint(C.black, 98)} 70%, transparent 100%)`,
       }}>
-        {/* Idle help message (30s sin interacción) */}
+        {/* Idle help message (30s sin interacción). Franja de UNA línea: el hueco
+            real entre la leyenda del mapa y la barra es de 36 px a 485 px de ancho,
+            y con dos renglones (53 px) tapaba los chips que la frase manda tocar. */}
         {helpMessage && !responseMsg && (
-          <div style={{
-            marginBottom: 8, padding: '8px 12px', background: tint(C.gold, 8),
-            border: `1px solid ${tint(C.gold, 20)}`, borderRadius: 12,
-            fontFamily: FONT.mono, fontSize: 11, color: C.gold, textAlign: 'center',
+          <div role="status" style={{
+            marginBottom: 6, padding: '6px 12px', background: tint(C.gold, 8),
+            border: `1px solid ${tint(C.gold, 20)}`, borderRadius: 9,
+            fontFamily: FONT.mono, fontSize: 11, lineHeight: 1.45, color: C.gold, textAlign: 'center',
           }}>
             {helpMessage}
           </div>
@@ -1639,7 +1618,7 @@ export function OrbShell() {
       {showCredencial && (
         <ErrorBoundary section="Credencial">
           <Suspense fallback={
-            <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)` }}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', alignItems: 'center', justifyContent: 'center', background: UMBRAL.apertura }}>
               <OmicronPlaceholder2D size={80} color={getUserColor()} />
             </div>
           }>
@@ -1661,7 +1640,7 @@ export function OrbShell() {
               <p style={{ marginTop: 16, fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Abriendo tu módulo de CV…</p>
             </div>
           }>
-            <ConvalidaOmicron onClose={() => setShowConvalida(false)} />
+            <ConvalidaOmicron onClose={cierraConvalida} />
           </Suspense>
         </ErrorBoundary>
       )}

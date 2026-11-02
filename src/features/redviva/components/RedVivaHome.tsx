@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Upload } from 'lucide-react';
-import { C, FONT, SIZE, RADIUS, BORDER } from '@/theme';
+import { C, FONT, SIZE, RADIUS, BORDER, LETRA} from '@/theme';
 import { useApp } from '@/store/AppContext';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { TabId } from '@/types/common';
@@ -103,7 +103,7 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
           Todavía no vemos tus habilidades
         </h2>
         <p style={{ ...styles.textoEstado, maxWidth: 420 }}>
-          Subí tu CV para identificar tus habilidades declaradas y separarlas de las que ya tienen una prueba. Así vas a ver qué podés demostrar primero.
+          Sube tu CV para identificar tus habilidades declaradas y separarlas de las que ya tienen una prueba. Así vas a ver qué puedes demostrar primero.
         </p>
         <button
           type="button"
@@ -138,7 +138,7 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
   return (
     <section aria-label="Mapa de habilidades" style={styles.raiz}>
       <header style={{ textAlign: 'center', padding: '0 8px' }}>
-        <p style={{ margin: '0 0 4px', fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.8, textTransform: 'uppercase', color: C.mut }}>
+        <p style={{ margin: '0 0 4px', fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.etiqueta, textTransform: 'uppercase', color: C.mut }}>
           {pruebasDisponibles
             ? `${model.totales.probadas}/${model.totales.declaradas} habilidades probadas`
             : `${model.totales.declaradas} ${model.totales.declaradas === 1 ? 'habilidad registrada' : 'habilidades registradas'}`}
@@ -178,7 +178,7 @@ export function RedVivaHome({ onAbrirTab, onSubirCv }: RedVivaHomeProps) {
 
       {grupos.map((grupo) => (
         <section key={grupo.estado} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <h3 style={{ margin: 0, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.7, textTransform: 'uppercase', color: C.mut, fontWeight: 600 }}>
+          <h3 style={{ margin: 0, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.medido, textTransform: 'uppercase', color: C.mut, fontWeight: 600 }}>
             {!pruebasDisponibles ? 'Pruebas no consultables' : TITULO_GRUPO[grupo.estado]} · {grupo.nodos.length}
           </h3>
           {grupo.nodos.map((nodo) => (

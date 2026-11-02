@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { getUserColor } from '@/shared/components/ColorPicker';
+import { getUserColor } from '@/shared/services/userColor';
 
 /**
  * Returns the user's selected color as a hex string (e.g. '#a0aec0').

@@ -23,7 +23,7 @@ export type AchievementType =
 
 const ACHIEVEMENT_TEMPLATES: Record<AchievementType, (name: string, detail?: string) => string> = {
   cv_uploaded: (name) => `${name} activó su Gemelo Digital`,
-  skill_validated: (name, detail) => `${name} certificó ${detail ?? 'una skill'}`,
+  skill_validated: (name, detail) => `${name} certificó ${detail ?? 'una habilidad'}`,
   lesson_completed: (name, detail) => `${name} completó una lección de ${detail ?? 'la Academia'}`,
   course_completed: (name, detail) => `${name} completó ${detail ?? 'un curso'}`,
   level_up: (name, detail) => `${name} ascendió a ${detail ?? 'un nuevo nivel'}`,

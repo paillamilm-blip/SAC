@@ -9,7 +9,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const _admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 
 const json = (body: unknown, status = 200) =>
@@ -17,7 +17,7 @@ const json = (body: unknown, status = 200) =>
 
 interface Turn { role: 'user' | 'model'; text: string }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) {
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       'El estudiante está leyendo una lección y te hará dudas sobre ella. ' +
       'Apóyate SIEMPRE en el contenido de la lección que te paso abajo; si la pregunta se sale del tema, ' +
       'respóndela igual de forma breve pero invita a volver a la lección. ' +
-      'Adapta tus ejemplos al nivel y experiencia del estudiante según sus skills y CV. ' +
+      'Adapta tus ejemplos al nivel y experiencia del estudiante según sus habilidades y CV. ' +
       'Explica simple, en español neutro-chileno, con ejemplos concretos y, cuando ayude, pasos numerados. ' +
       'Sé breve (máx ~160 palabras). No inventes datos; si no sabes, dilo con honestidad.\n\n' +
       `LECCIÓN: "${lessonTitle}"\n` +
@@ -68,4 +68,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Tutor IA.', detail: String(e) }, 500);
   }
-});
+}));

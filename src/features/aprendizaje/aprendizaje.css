@@ -13,7 +13,7 @@
   /* El acento es el color del usuario (regla del sistema: foco y estado activo).
      El mapa abajo se pinta SIEMPRE con su paleta fija; esto manda en el andamio.
      Lo sobreescribe el style inline de AprendizajeTab con useUserColor(). */
-  --omi-accent: var(--silver);
+  --omi-accent: var(--info);
   --omi-accent-soft: color-mix(in srgb, var(--omi-accent) 20%, transparent);
   color: var(--ink);
   padding: 0 16px;
@@ -34,8 +34,8 @@
   padding: 10px 16px 11px;
   margin: 0 -16px 12px;
   background: var(--sticky);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--vidrio-esmeril));
+  -webkit-backdrop-filter: blur(var(--vidrio-esmeril));
   box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 86%, transparent); /* la línea de BASE.header, sin ocupar altura */
 }
 
@@ -50,11 +50,14 @@
   margin: 0;
   font-size: 17px; /* SIZE.lg · en el bolsillo manda la fila, no el cartel */
   font-weight: 700;
-  letter-spacing: -0.3px;
+  letter-spacing: var(--letra-titulo);
   white-space: nowrap;
 }
 
-@media (min-width: 900px) {
+/* Mide el workspace, no la ventana: el título solo respira cuando hay ancho
+   real donde apoyarlo (el #root de bolsillo va a quedar en 430 px aunque la
+   pantalla tenga 1440). */
+@container (min-width: 720px) {
   .aprendizaje-titulo {
     font-size: 20px; /* SIZE.xl · títulos de sección, con aire de sobra */
   }
@@ -63,7 +66,7 @@
 .aprendizaje-badge {
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 11px; /* SIZE.xs · chips */
-  letter-spacing: 0.4px;
+  letter-spacing: var(--letra-denso);
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
@@ -81,7 +84,7 @@
 .aprendizaje-progreso {
   margin: 0 auto 0 0;
   font-size: 13px; /* SIZE.sm */
-  color: var(--silver);
+  color: var(--info);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -125,7 +128,7 @@
   max-width: 62ch;
   font-size: 13px; /* SIZE.sm */
   line-height: 1.5;
-  color: var(--silver);
+  color: var(--info);
 }
 
 .aprendizaje-aviso strong {
@@ -144,6 +147,104 @@
   border-radius: 12px;
 }
 
+/* ── el puntero de la cola ──────────────────────────────────────────────────
+   Una sola fila, tocable de borde a borde, que responde las dos preguntas que
+   el mapa no responde: ¿cuál sigue? y ¿cuántas quedan?. No es una tarjeta más:
+   vive en el flujo, entre el aviso y la grilla, y su altura mínima es el target
+   táctil del brief (44 px). Con la cola vacía se vuelve estado de éxito y deja
+   de ser botón — no se puede "ir" a ninguna parte.
+
+   DOS LÍNEAS FIJAS, no un flex que se parte solo: con `flex-wrap` la cuenta
+   (monoespaciada, 125 px) empujaba a la flecha y el icono quedaba abandonado en
+   una segunda línea (medido en el navegador a 485 px: 62 px de alto y el svg
+   sólo). La rejilla reparte el ancho de arriba abajo y el título nunca compite
+   con la cuenta. */
+.aprendizaje-siguiente {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'etiqueta titulo icono'
+    '.        cuenta cuenta';
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 16px;
+  padding: 8px 14px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px; /* RADIUS.md */
+  box-shadow: var(--altura-sm-cercana);
+}
+
+@media (hover: hover) {
+  .aprendizaje-siguiente:hover {
+    border-color: color-mix(in srgb, var(--omi-accent) 55%, var(--line));
+  }
+}
+
+.aprendizaje-siguiente:focus-visible {
+  outline: 2px solid var(--omi-accent);
+  outline-offset: 2px;
+}
+
+.siguiente-etiqueta {
+  grid-area: etiqueta;
+  justify-self: start;
+  font-size: 11px; /* SIZE.xxs · la etiqueta de sección del brief */
+  font-weight: 600;
+  letter-spacing: var(--letra-etiqueta);
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.siguiente-titulo {
+  grid-area: titulo;
+  min-width: 0;
+  font-size: 15px; /* base */
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.siguiente-cuenta {
+  grid-area: cuenta;
+  justify-self: start;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--info);
+}
+
+.aprendizaje-siguiente svg {
+  grid-area: icono;
+  color: var(--gold);
+}
+
+/* Sin pendientes no hay a dónde ir: la fila se vuelve estado, no botón, y el
+   texto ocupa las dos columnas elásticas en vez de dejar huecos vacíos. El color
+   del éxito es `--teal` (el mismo del logro); `--green` no existe en los tokens y
+   el `color-mix` se habría caído en silencio. */
+.aprendizaje-siguiente[data-estado='libre'] {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'etiqueta titulo';
+  align-items: start;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+}
+
+.aprendizaje-siguiente[data-estado='libre'] .siguiente-etiqueta {
+  color: var(--teal);
+}
+
+.aprendizaje-siguiente[data-estado='libre'] .siguiente-titulo {
+  font-weight: 400;
+  color: var(--ink);
+}
+
 /* ── grilla de dos columnas ───────────────────────────────────────────────── */
 .aprendizaje-grid {
   display: grid;
@@ -152,9 +253,19 @@
   align-items: start;
 }
 
-@media (min-width: 900px) {
+/* La division en dos columnas se mide contra el workspace, no contra la
+   ventana. Con el #root recortado a 430 px (la forma de bolsillo de la app),
+   un @media por viewport mentia: a 1440 px de pantalla la consigna era
+   "1fr + 380 px" dentro de un contenedor de 424 px, y el mapa salia a 0 px de
+   ancho — invisible en todo escritorio. Un container query solo abre la
+   segunda columna cuando de verdad hay 720 px donde apoyarla. */
+.aprendizaje-workspace {
+  container-type: inline-size;
+}
+
+@container (min-width: 720px) {
   .aprendizaje-grid {
-    grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-columns: minmax(0, 1fr) 372px;
     gap: 20px;
   }
 }
@@ -179,14 +290,14 @@
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: 0.4px;
-  color: var(--silver);
+  letter-spacing: var(--letra-denso);
+  color: var(--info);
 }
 
 .cola-vacia {
   margin: 0;
   padding: 12px 14px;
-  color: var(--silver);
+  color: var(--info);
   font-size: 13px;
   background: var(--glass);
   border: 1px dashed var(--line);
@@ -199,7 +310,7 @@
   border-radius: 16px; /* RADIUS.lg · la tarjeta de la cola */
   margin-bottom: 12px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--altura-sm);
   overflow: hidden;
   transition: border-color var(--timing-normal) var(--ease-default),
     box-shadow var(--timing-normal) var(--ease-default);
@@ -208,7 +319,7 @@
 @media (hover: hover) {
   .cola-item:hover {
     border-color: var(--line-strong);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--altura-md);
   }
 }
 
@@ -274,8 +385,8 @@
   height: 12px;
   border-radius: 50%;
   flex: none;
-  background: var(--punto, var(--silver));
-  box-shadow: 0 0 10px color-mix(in srgb, var(--punto, var(--silver)) 35%, transparent);
+  background: var(--punto, var(--info));
+  box-shadow: 0 0 var(--halo-foco) color-mix(in srgb, var(--punto, var(--info)) 35%, transparent);
 }
 
 .cola-nombre {
@@ -291,8 +402,8 @@
   flex: none;
   width: 8px;
   height: 8px;
-  border-right: 1.5px solid var(--silver);
-  border-bottom: 1.5px solid var(--silver);
+  border-right: 1.5px solid var(--info);
+  border-bottom: 1.5px solid var(--info);
   transform: rotate(45deg) translate(-1px, -1px);
   transition: transform var(--timing-normal) var(--ease-default),
     border-color var(--timing-fast) var(--ease-default);
@@ -309,11 +420,11 @@
   flex: none;
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 11px;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--letra-denso);
   padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  color: var(--silver);
+  color: var(--info);
 }
 
 .cola-badge[data-estado='confirmada'] {
@@ -341,7 +452,7 @@
   border-top: 1px solid color-mix(in srgb, var(--line) 71%, transparent);
   font-size: 13px;
   line-height: 1.5;
-  color: var(--silver);
+  color: var(--info);
 }
 
 /* Impacto: la severidad manda el color, y la palabra siempre está escrita. */
@@ -349,7 +460,7 @@
   margin: 12px 0 8px;
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 11px;
-  letter-spacing: 1.4px;
+  letter-spacing: var(--letra-ancha);
   text-transform: uppercase;
   color: var(--red);
 }
@@ -359,13 +470,13 @@
 }
 
 .cola-severidad[data-severidad='baja'] {
-  color: var(--silver);
+  color: var(--info);
 }
 
 .cola-severidad i {
   font-style: normal;
-  letter-spacing: 0.4px;
-  color: var(--silver);
+  letter-spacing: var(--letra-denso);
+  color: var(--info);
 }
 
 .cola-evidencia {
@@ -380,8 +491,8 @@
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 9px; /* SIZE.xxs · FONT_STYLE.label */
   text-transform: uppercase;
-  letter-spacing: 1.4px;
-  color: var(--silver);
+  letter-spacing: var(--letra-ancha);
+  color: var(--info);
   margin-bottom: 4px;
 }
 
@@ -403,8 +514,8 @@
   font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 1.4px;
-  color: var(--silver);
+  letter-spacing: var(--letra-ancha);
+  color: var(--info);
 }
 
 .cola-aprender dd {
@@ -463,7 +574,7 @@
 .boton-bad[aria-pressed] {
   border-color: var(--line);
   border-style: dashed;
-  color: var(--silver);
+  color: var(--info);
   background: var(--glass);
   opacity: 1;
   text-decoration: line-through;
@@ -500,7 +611,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--silver);
+  color: var(--info);
   font-size: 13px;
 }
 

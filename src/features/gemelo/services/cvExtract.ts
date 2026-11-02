@@ -62,19 +62,35 @@ async function docxText(buffer: ArrayBuffer): Promise<string> {
   return (res.value || '').replace(/\s+/g, ' ').trim();
 }
 
-/** Extrae el texto de un CV (PDF / Word / TXT). Robusto y con fallback. */
-export async function extractCVText(file: File): Promise<string> {
-  const name = file.name.toLowerCase();
-  const buffer = await file.arrayBuffer();
+/** Extrae el texto de un CV (PDF / Word / TXT). Robusto y con fallback.
+ *
+ *  Devuelve TAMBIÉN el total que había en el documento. Sin ese número, un CV de
+ *  40 000 caracteres volvía como «leído (15000 caracteres)» y el usuario creía
+ *  que Ómicrom había visto todo: el recorte existía, no se decía. El huésped
+ *  compara `totales` con `texto.length` y lo nombra en pantalla.
+ */
+export interface LecturaCV {
+  texto: string;
+  totales: number;
+}
 
-  // Attempt specialized extraction (PDF.js for PDF, Mammoth for DOCX)
+// Una sola pareja de números para toda la app: la lectura, el hook y el CTA
+// prometen y exigen lo mismo.
+export const TOPE_CV = 15000;
+export const PISO_CV = 40;
+
+export async function extractCVText(file: File): Promise<LecturaCV> {
+  const name = file.name.toLowerCase();
+
+  // Attempt specialized extraction (PDF.js for PDF, Mammoth for DOCX).
+  // El buffer se lee DENTRO de este intento y solo para estos dos formatos: un
+  // .txt no necesita pasar por ArrayBuffer, y si la lectura binaria falla queda
+  // vivo el fallback de texto — que es la promesa del módulo.
   try {
-    if (name.endsWith('.pdf')) {
-      const t = await pdfText(buffer.slice(0));
-      if (t.length > 15) return t.slice(0, 15000);
-    } else if (name.endsWith('.docx')) {
-      const t = await docxText(buffer.slice(0));
-      if (t.length > 15) return t.slice(0, 15000);
+    if (name.endsWith('.pdf') || name.endsWith('.docx')) {
+      const buffer = await file.arrayBuffer();
+      const t = name.endsWith('.pdf') ? await pdfText(buffer) : await docxText(buffer);
+      if (t.length > 15) return { texto: t.slice(0, TOPE_CV), totales: t.length };
     }
   } catch (err) {
     // CDN failed or library error — log and fall through to text fallback
@@ -84,15 +100,22 @@ export async function extractCVText(file: File): Promise<string> {
   // Fallback 1: Try reading as plain text (works for .txt, .doc with text, and some PDFs)
   try {
     const t = (await file.text()).trim();
-    // Filter out binary garbage: if >30% of chars are non-printable, it's binary
-    const printable = t.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\uFFFF\n\r\t]/g, '');
-    if (printable.length > 30 && printable.length / t.length > 0.7) {
-      return printable.slice(0, 15000);
+    // Un archivo se descarta por BASURA (pocos caracteres imprimibles), no por
+    // corto: el umbral absoluto de 30 hacía devolver 0 para un .txt de 9, y la
+    // pantalla le decía al usuario que su archivo no tenía nada. La longitud la
+    // juzga PISO_CV en el hook, que es donde se explica el porqué.
+    const printable = [...t].filter((ch) => {
+      const c = ch.codePointAt(0) ?? 0;
+      if (c === 9 || c === 10 || c === 13) return true;
+      return (c >= 0x20 && c <= 0x7e) || c >= 0xa0;
+    }).join('');
+    if (printable.length > 0 && printable.length / t.length > 0.7) {
+      return { texto: printable.slice(0, TOPE_CV), totales: printable.length };
     }
   } catch {
     /* noop */
   }
 
-  // Fallback 2: Return empty — caller will show "paste your experience" message
-  return '';
+  // Fallback 2: Sin texto — el huésped decide el mensaje y el total es 0.
+  return { texto: '', totales: 0 };
 }

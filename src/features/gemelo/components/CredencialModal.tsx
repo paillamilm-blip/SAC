@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // CREDENCIAL ÓMICROM — Tu Gemelo Digital como credencial verificable.
 //
-// A diferencia de GemeloTab (el "taller" interno donde trabajás tu perfil),
+// A diferencia de GemeloTab (el "taller" interno donde trabajas tu perfil),
 // este modal presenta tu Gemelo Digital como una CREDENCIAL: el equivalente
 // visual a una tarjeta de presentación / documento oficial, pensada para
 // mostrar y compartir con otros profesionales.
@@ -21,17 +21,14 @@ import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCi
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, RADIUS, tint, UMBRAL, LETRA} from '@/theme';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
 import { credentialPng } from '@/features/gemelo/services/credencialCanvas';
 
-// Fondo radial de la marca Ómicrom (mismo lenguaje que BASE.root del tema).
-const OMICRON_BG = 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)';
-
 // ── Pestañas de la credencial (orden fijo): el cuerpo se pagina en 3 vistas. ──
-const TABS = ['Perfil', 'Competencias', 'Trayectoria'] as const;
+const TABS = ['Perfil', 'Habilidades', 'Trayectoria'] as const;
 type TabIndex = 0 | 1 | 2;
 
 // Ease del brillo holográfico (sheen). Tupla cubic-bezier MUTABLE tipada
@@ -42,8 +39,8 @@ const SHEEN_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 function BlockTitle({ uc, children }: { uc: string; children: ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: uc, boxShadow: `0 0 6px ${uc}88`, flexShrink: 0 }} />
-      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase' }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: uc, boxShadow: `0 0 ${HALO.ascua}px ${uc}88`, flexShrink: 0 }} />
+      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: C.mut, textTransform: 'uppercase' }}>
         {children}
       </span>
     </div>
@@ -199,10 +196,10 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
     }
 
     if (tab === 1) {
-      // ── Nivel de Competencias (topSkills) ──
+      // ── Nivel de habilidades (topSkills) ──
       return (
         <section style={{ ...tabPanelStyle, background: C.glass }}>
-          <BlockTitle uc={uc}>Nivel de Competencias</BlockTitle>
+          <BlockTitle uc={uc}>Nivel de habilidades</BlockTitle>
           {topSkills.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
               {topSkills.map((skill, i) => {
@@ -221,7 +218,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                       {highMastery
                         ? <CheckCircle2 size={13} color={uc} />
                         : <Circle size={13} color={C.mut} />}
-                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.4, color: highMastery ? C.ink : C.mut }}>
+                      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.denso, color: highMastery ? C.ink : C.mut }}>
                         {highMastery ? 'Dominio alto' : 'En desarrollo'}
                       </span>
                     </span>
@@ -231,7 +228,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             </div>
           ) : (
             <p style={{ margin: '10px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.55 }}>
-              Todavía no hay competencias para mostrar.
+              Todavía no hay habilidades para mostrar.
             </p>
           )}
         </section>
@@ -256,7 +253,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
         )}
 
         {/* Los 4 ejes del Gemelo como pieza central de la evidencia medible. */}
-        <p style={{ margin: '16px 0 10px', fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>
+        <p style={{ margin: '16px 0 10px', fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.denso, color: C.mut, textTransform: 'uppercase' }}>
           Nivel de conocimiento medido
         </p>
         <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -272,7 +269,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                   <Icon size={13} color={color} />
-                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
+                  <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.denso, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22`, overflow: 'hidden' }}>
@@ -280,7 +277,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                       initial={{ width: 0 }}
                       animate={{ width: `${val}%` }}
                       transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: 'easeOut' }}
-                      style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
+                      style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 ${HALO.chispa}px ${color}66` }}
                     />
                   </div>
                   <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>
@@ -304,7 +301,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
       transition={{ duration: 0.2 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 95,
-        background: OMICRON_BG,
+        background: UMBRAL.credencial,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
       }}
     >
@@ -321,7 +318,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           borderRadius: RADIUS.xl,
           background: `linear-gradient(160deg, ${C.glass2}, ${tint(C.white, 2)})`,
           border: `1px solid ${C.line}`,
-          backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
           boxShadow: `0 20px 60px ${C.scrim}`,
         }}
       >
@@ -346,7 +343,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             borderRadius: RADIUS.xl,
             pointerEvents: 'none',
             opacity: 0.7,
-            backgroundImage: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.10) 45%, ${uc}22 50%, rgba(255,255,255,0.10) 55%, transparent 70%)`,
+            backgroundImage: `linear-gradient(105deg, transparent 30%, ${tint(C.white, 10)} 45%, ${uc}22 50%, ${tint(C.white, 10)} 55%, transparent 70%)`,
             backgroundSize: '250% 250%',
             backgroundRepeat: 'no-repeat',
           }}
@@ -419,10 +416,10 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
             {/* ── Identidad: eyebrow + nombre + seniority ── */}
             {/* paddingRight deja espacio para la X (top:14 right:14) sin solapar. */}
             <div style={{ flex: 1, minWidth: 0, paddingRight: 36 }}>
-              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2.5, color: uc, textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.anunciada, color: uc, textTransform: 'uppercase' }}>
                 Credencial Ómicrom
               </div>
-              <h2 style={{ margin: '4px 0 0', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: -0.3 }}>
+              <h2 style={{ margin: '4px 0 0', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: LETRA.titulo }}>
                 {name || 'Tu Gemelo Digital'}
               </h2>
               <p style={{ margin: '3px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut }}>
@@ -434,10 +431,10 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           {/* ── Reputación ── */}
           <div style={{ width: '100%', marginTop: 14 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-start', gap: 6 }}>
-              <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, color: C.mut, textTransform: 'uppercase', marginRight: 4 }}>
+              <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.etiqueta, color: C.mut, textTransform: 'uppercase', marginRight: 4 }}>
                 Reputación
               </span>
-              <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: uc, letterSpacing: -0.5 }}>
+              <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl, color: uc, letterSpacing: LETRA.titulo }}>
                 {reputation}
               </span>
               <span style={{ fontFamily: FONT.mono, fontSize: SIZE.sm, color: C.mut }}>/100</span>
@@ -447,7 +444,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                 initial={{ width: 0 }}
                 animate={{ width: `${reputation}%` }}
                 transition={{ delay: 0.15, duration: 0.7, ease: 'easeOut' }}
-                style={{ height: '100%', borderRadius: 3, background: uc, boxShadow: `0 0 6px ${uc}66` }}
+                style={{ height: '100%', borderRadius: 3, background: uc, boxShadow: `0 0 ${HALO.ascua}px ${uc}66` }}
               />
             </div>
             {/* Modelo 20/80: la reputación combina credenciales + desempeño demostrado. */}
@@ -480,7 +477,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                   flex: 1, position: 'relative', cursor: 'pointer',
                   padding: '8px 4px 10px', minHeight: 44,
                   background: 'transparent', border: 'none',
-                  fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.6,
+                  fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.medido,
                   color: active ? C.ink : C.mut,
                 }}
               >
@@ -491,7 +488,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                     layoutId="cred-tab-indicator"
                     style={{
                       position: 'absolute', left: 8, right: 8, bottom: 0, height: 2,
-                      borderRadius: 2, background: uc, boxShadow: `0 0 6px ${uc}88`,
+                      borderRadius: 2, background: uc, boxShadow: `0 0 ${HALO.ascua}px ${uc}88`,
                     }}
                   />
                 )}
@@ -541,7 +538,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                   height: active ? 7 : 6,
                   borderRadius: '50%',
                   background: active ? uc : C.line,
-                  boxShadow: active ? `0 0 6px ${uc}88` : 'none',
+                  boxShadow: active ? `0 0 ${HALO.ascua}px ${uc}88` : 'none',
                   transition: 'background 0.2s ease',
                 }}
               />
@@ -560,7 +557,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               cursor: username ? 'pointer' : 'not-allowed',
               background: username ? uc : C.glass,
               border: username ? 'none' : `1px solid ${C.line}`,
-              color: username ? '#021018' : C.mut,
+              color: username ? C.onAccent : C.mut,
               fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: username ? 1 : 0.6,
@@ -599,7 +596,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
               background: 'transparent',
               border: `1px solid ${C.line}`,
               color: C.mut,
-              fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+              fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: LETRA.denso,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
@@ -635,7 +632,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                     background: `${C.red}14`,
                     border: `1px solid ${C.red}44`,
                     color: C.red,
-                    fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                    fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: LETRA.denso,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   }}
                 >
@@ -659,7 +656,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                       background: `${C.red}26`,
                       border: `1px solid ${C.red}`,
                       color: C.red,
-                      fontFamily: FONT.mono, fontWeight: 700, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                      fontFamily: FONT.mono, fontWeight: 700, fontSize: SIZE.xxs, letterSpacing: LETRA.denso,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}
                   >
@@ -673,7 +670,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                       cursor: 'pointer',
                       background: 'transparent', border: 'none',
                       color: C.mut,
-                      fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: 0.4,
+                      fontFamily: FONT.mono, fontWeight: 600, fontSize: SIZE.xxs, letterSpacing: LETRA.denso,
                     }}
                   >
                     Cancelar
@@ -713,7 +710,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
                 <CheckCircle2 size={13} color={C.green} />
               </motion.span>
             </span>
-            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5, color: C.mut }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso, color: C.mut }}>
               Conocimiento verificable, no declarado
             </span>
           </div>

@@ -23,7 +23,7 @@ import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
 import { speak } from '@/infrastructure/voice/engine';
 import { analyzeCV, type AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
-import { extractCVText } from '@/features/gemelo/services/cvExtract';
+import { extractCVText, PISO_CV } from '@/features/gemelo/services/cvExtract';
 import type { AnalysisCrudoIA } from '@/features/gemelo/services/aprendizaje';
 import { savePendingCvAnalysis, getPendingCvAnalysis, clearPendingCvAnalysis, hasPendingCvAnalysis } from '@/shared/utils/guestMode';
 import { C } from '@/theme';
@@ -31,6 +31,15 @@ import { C } from '@/theme';
 type Kind = 'cv' | 'title' | 'year';
 export type Phase = 'upload' | 'syncing' | 'reveal';
 export interface Push { id: number; label: string; delta: number; color: string }
+
+export type HitoId = 'documento' | 'lectura' | 'analisis' | 'ejes' | 'registro' | 'gemelo';
+export type HitoEstado = 'espera' | 'activo' | 'hecho' | 'fallido';
+/**
+ * Un paso del escaneo. `medida` es el número REAL que lo justifica (palabras,
+ * etiquetas locales, fuente que respondió, brechas del run): sin medida el hito
+ * es decoración, y de eso ya estuvo lleno esta pantalla.
+ */
+export interface Hito { id: HitoId; etiqueta: string; estado: HitoEstado; medida: string }
 
 /**
  * Safety timeout (ms) — if AI doesn't respond within this, forcibly reset.
@@ -44,13 +53,44 @@ export interface Push { id: number; label: string; delta: number; color: string 
  */
 const SAFETY_TIMEOUT_MS = 150_000;
 
-/** Progress messages shown during AI wait to keep the user informed. */
-const PROGRESS_MESSAGES = [
-  'Conectando con la IA…',
-  'Analizando habilidades y experiencia…',
-  'Calculando ejes del Gemelo Digital…',
-  'Puede tardar: primero el motor propio y, si no responde, el respaldo.',
-];
+/**
+ * El orden del escaneo, y la única verdad de la barra.
+ *
+ * Los seis identificadores corresponden a seis HECHOS del flujo de abajo: el
+ * texto en la mano, la heurística local corriendo, la respuesta del motor, el
+ * análisis con ejes, el run en el servidor y el reveal montado. No hay un
+ * séptimo ni un relleno. Había cuatro mensajes cosméticos avanzando cada 6 s
+ * (`PROGRESS_MESSAGES` sobre un `setInterval`) y un riel de tres pasos atado a
+ * `currentStep`, que sólo se mueve en la cadena de convalidación posterior:
+ * durante la espera real la barra estaba congelada y el texto mentía.
+ */
+export const HITOS_ESCANEO: readonly { id: HitoId; etiqueta: string }[] = [
+  { id: 'documento', etiqueta: 'Tu documento' },
+  { id: 'lectura', etiqueta: 'Primera lectura' },
+  { id: 'analisis', etiqueta: 'Análisis con IA' },
+  { id: 'ejes', etiqueta: 'Ejes y habilidades' },
+  { id: 'registro', etiqueta: 'Run en el servidor' },
+  { id: 'gemelo', etiqueta: 'Gemelo listo' },
+] as const;
+
+/** Recién iniciado: el primer hito es el que está ocurriendo, nadie avanzó. */
+export function escaneoInicial(): Hito[] {
+  return HITOS_ESCANEO.map((h, i) => ({ ...h, estado: i === 0 ? 'activo' : 'espera', medida: '' }));
+}
+
+/** Avanza un hito sin tocar los demás. El orden lo decide quien llama. */
+export function marcarHito(lista: readonly Hito[], id: HitoId, estado: HitoEstado, medida = ''): Hito[] {
+  return lista.map((h) => (h.id === id ? { ...h, estado, medida } : h));
+}
+
+/**
+ * Fracción del documento que se ilumina. Es la proporción de hitos HECHOS, así
+ * que la barra se queda quieta mientras la IA piensa: es exactamente lo que
+ * significa esperar una respuesta, y el haz que barre dice "sigo acá".
+ */
+export function fraccionEscaneo(lista: readonly Hito[]): number {
+  return lista.length === 0 ? 0 : lista.filter((h) => h.estado === 'hecho').length / lista.length;
+}
 
 /**
  * Mezcla el análisis crudo de la IA con la base heurística de `analyzeCV()`:
@@ -91,6 +131,10 @@ export function useGemeloActivation() {
   const [phase, setPhase] = useState<Phase>('upload');
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Kind[]>([]);
+  const [hitos, setHitos] = useState<Hito[]>(escaneoInicial);
+  // Cuántos segundos lleva el análisis en el aire: lo único honesto que se
+  // puede mostrar durante la espera larga, porque es medición y no promesa.
+  const [segundos, setSegundos] = useState(0);
   const [dossier, setDossier] = useState<AnalyzedProfile | null>(null);
   const [ai, setAi] = useState<{ loading: boolean; text: string }>({ loading: false, text: '' });
   const [cvText, setCvText] = useState('');
@@ -111,7 +155,7 @@ export function useGemeloActivation() {
   const pushIdRef = useRef(0);
   const isProcessingRef = useRef(false);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cuentaRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cancelledRef = useRef(false);
 
   const rep = gemelo ? Math.round(gemelo.overallReputation) : 0;
@@ -121,12 +165,17 @@ export function useGemeloActivation() {
   useEffect(() => {
     return () => {
       if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+      if (cuentaRef.current) clearInterval(cuentaRef.current);
     };
   }, []);
 
   // Keep dossierRef in sync (avoids stale closure in pendingPersist effect)
   useEffect(() => { dossierRef.current = dossier; }, [dossier]);
+
+  // ── El escaneo se marca con hechos, no con un reloj ───────────────
+  const registrar = useCallback((id: HitoId, estado: HitoEstado, medida = '') => {
+    setHitos((prev) => marcarHito(prev, id, estado, medida));
+  }, []);
 
   // ── Push notification helper ─────────────────────────────────────
   const emitPush = useCallback((label: string, delta: number, color: string) => {
@@ -290,11 +339,11 @@ export function useGemeloActivation() {
     cancelledRef.current = true;
     isProcessingRef.current = false;
     if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
-    if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+    if (cuentaRef.current) { clearInterval(cuentaRef.current); cuentaRef.current = null; }
     setLastError(null);
     setPersistError(null);
     setPhase('upload');
-    setMsg('Cancelado. Podés reintentar cuando quieras.');
+    setMsg('Cancelado. Puedes reintentar cuando quieras.');
     toast('Análisis cancelado', 'info');
   }, [toast]);
 
@@ -327,27 +376,43 @@ export function useGemeloActivation() {
 
   // ── Read CV file ─────────────────────────────────────────────────
   const onCVFile = useCallback(async (file: File) => {
-    setCvFileName(file.name);
     setMsg('Leyendo tu documento…');
     try {
-      const text = await extractCVText(file);
-      console.info(`[Omicron] CV extracted: ${text.length} chars. Preview: "${text.slice(0, 200)}…"`);
-      if (text.length >= 30) {
+      const lectura = await extractCVText(file);
+      const text = lectura.texto;
+      console.info(`[Omicron] CV extracted: ${text.length}/${lectura.totales} chars. Preview: "${text.slice(0, 200)}…"`);
+      // El piso es UN número para toda la app (PISO_CV): si la lectura aceptara 30
+      // y el CTA exigiera 40, haber "leído" el archivo no habilitaría nada.
+      if (text.length >= PISO_CV) {
+        // El nombre viaja con el texto que se va a analizar: ponerlo antes de la
+        // lectura dejaba la pantalla nombrando a un archivo que no se usó.
+        setCvFileName(file.name);
         setCvText(text);
         setCvReadOk(true);
         const preview = text.slice(0, 60).replace(/\s+/g, ' ').trim();
-        setMsg(`"${file.name}" leído (${text.length} caracteres). Toca "Activar Gemelo Completo".`);
-        toast(`CV leído: "${preview}…"`, 'success');
+        // El recorte se dice con el número verdadero: "leído" a secas hacía creer
+        // que el análisis vio todo el documento cuando sólo vio la primera parte.
+        setMsg(
+          lectura.totales > text.length
+            ? `"${file.name}" tiene ${lectura.totales} caracteres y el análisis llega a ${text.length}: uso los primeros. Si algo clave quedó afuera, pegalo abajo.`
+            : `"${file.name}" leído (${text.length} caracteres). Toca "Activar Gemelo Completo".`,
+        );
+        toast(
+          lectura.totales > text.length
+            ? `CV leído en parte: uso ${text.length} de ${lectura.totales} caracteres.`
+            : `CV leído: "${preview}…"`,
+          'success',
+        );
       } else {
         setCvReadOk(false);
-        setMsg(`No pude extraer texto del archivo (solo ${text.length} caracteres). Pega tu experiencia abajo.`);
-        toast('El archivo no tiene texto legible. Prueba pegando tu experiencia.', 'error');
+        setMsg(`No pude extraer texto de "${file.name}" (solo ${text.length} caracteres). Pega tu experiencia abajo: con menos de ${PISO_CV} no alcanzo a ver un rol.`);
+        toast(`"${file.name}" no tiene texto legible. Prueba pegando tu experiencia.`, 'error');
       }
     } catch (err) {
       console.warn('[Omicron] CV file read failed:', err);
       setCvReadOk(false);
-      setMsg('No pude leer el archivo. Pega tu experiencia abajo.');
-      toast('Error leyendo el archivo. Intenta con otro formato.', 'error');
+      setMsg(`No pude leer "${file.name}". Pega tu experiencia abajo.`);
+      toast('Error leyendo el archivo. Prueba con otro formato.', 'error');
     }
   }, [toast]);
 
@@ -368,51 +433,72 @@ export function useGemeloActivation() {
   // ══════════════════════════════════════════════════════════════════
   const activateGemeloCompleto = useCallback(async () => {
     const text = cvText.trim();
-    if (!text) return;
+    // El piso ahora tiene voz. Antes: `if (!text) return;` — con 12 caracteres el
+    // botón arrancaba un run que gastaba cota y devolvía un gemelo vacío, y con
+    // 0 no pasaba NADA visible. Menos de PISO_CV caracteres no alcanza para ver un
+    // rol, una tecnología ni un dónde: se dice y no se parte.
+    if (text.length < PISO_CV) {
+      setMsg(
+        text.length === 0
+          ? 'Sube tu CV o pega tu experiencia: sin texto no hay análisis.'
+          : `Con ${text.length} caracteres no alcanzo a ver un rol, ni tecnologías, ni dónde las usaste. Pega al menos ${PISO_CV}.`,
+      );
+      return;
+    }
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
     cancelledRef.current = false;
 
     setPhase('syncing');
     setCurrentStep(0);
-    setMsg('Ómicrom está analizando TODO tu CV con IA…');
+    setHitos(escaneoInicial());
+    setSegundos(0);
+    setMsg('Tu documento está bajo el haz de lectura…');
     setLastError(null);
     setPersistError(null);
+
+    // Cronómetro de espera: muestra cuánto va durando el análisis, que es dato
+    // verdadero. El riel decorativo que avanzaba solo ya no existe.
+    cuentaRef.current = setInterval(() => setSegundos((s) => s + 1), 1000);
 
     // ── Safety timeout ───────────────────────────────────────────────
     safetyTimerRef.current = setTimeout(() => {
       if (!isProcessingRef.current || cancelledRef.current) return;
       console.warn(`[Omicron] Safety timeout reached (${SAFETY_TIMEOUT_MS / 1000}s). Resetting UI.`);
       isProcessingRef.current = false;
-      if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+      if (cuentaRef.current) { clearInterval(cuentaRef.current); cuentaRef.current = null; }
       // Timeout — show error instead of wrong local data
-      isProcessingRef.current = false;
+      // El hito que estaba en el aire es el que se rindió: se marca con los
+      // segundos que realmente corrieron, no con un "intenta de nuevo" vacío.
+      setHitos((prev) => prev.map((h) => (h.estado === 'activo'
+        ? { ...h, estado: 'fallido', medida: `sin respuesta en ${SAFETY_TIMEOUT_MS / 1000} s` }
+        : h)));
       setMsg('La IA tardó demasiado. Intenta de nuevo.');
       setLastError('timeout');
       toast('Timeout: la IA no respondió. Reintenta.', 'error');
       setPhase('upload');
     }, SAFETY_TIMEOUT_MS);
 
-    // ── Progress messages ────────────────────────────────────────────
-    let msgIndex = 0;
-    setMsg(PROGRESS_MESSAGES[0]);
-    progressTimerRef.current = setInterval(() => {
-      if (cancelledRef.current) return;
-      msgIndex = Math.min(msgIndex + 1, PROGRESS_MESSAGES.length - 1);
-      setMsg(PROGRESS_MESSAGES[msgIndex]);
-      if (msgIndex >= PROGRESS_MESSAGES.length - 1 && progressTimerRef.current) {
-        clearInterval(progressTimerRef.current);
-        progressTimerRef.current = null;
-      }
-    }, 6000);
-
     try {
+      // ── 0) El texto ya está en la mano. Eso es el primer hito, no una promesa. ──
+      const palabras = (text.match(/\S+/g) ?? []).length;
+      registrar('documento', 'hecho', `${palabras} palabras · ${text.length} caracteres`);
+
+      // La heurística local corría adentro de `mezclarAnalisis`, recién terminada
+      // la espera. Acá corre antes de pedir nada: es el segundo hecho verdadero
+      // del escaneo y su medida (`labels` reconocidos) es la primera lectura que
+      // ve el usuario mientras el motor piensa.
+      const base = analyzeCV(text);
+      registrar('lectura', 'hecho', `${base.labels.length} etiquetas del documento`);
+
       // ── 1) Analiza el CV: motor → fallback → error (nunca datos falsos) ──
       let analyzed: AnalyzedProfile | null = null;
       // El texto LITERAL con el que el servidor cortó a este usuario (401/429/503).
       // Viaja aparte del "no hay análisis" genérico: mezclarlos es el tope
       // silencioso que el spec §8 prohibe.
       let bloqueo: string | null = null;
+      registrar('analisis', 'activo');
+      setMsg('El motor de aprendizaje está leyendo tu CV…');
 
       try {
         // El motor de aprendizaje (Edge Function `analizar-cv`) es el camino que
@@ -434,24 +520,36 @@ export function useGemeloActivation() {
         if (r?.fuente === 'bloqueado') {
           bloqueo = r.error;            // el texto del servidor, literal
           analyzed = null;
+          // El motivo del corte es la medida del hito: llega crudo del servidor
+          // y acá se reporta, no se disfraza de "algo está tardando".
+          registrar('analisis', 'fallido', r.error);
         } else if (r && r.analysis && r.analysis.axes) {
-          analyzed = mezclarAnalisis(analyzeCV(text), r.analysis);
+          analyzed = mezclarAnalisis(base, r.analysis);
+          registrar('analisis', 'hecho', r.fuente === 'motor' ? 'respondió el motor propio' : 'respondió el respaldo declarado');
+          registrar('ejes', 'hecho', `${analyzed.labels.length} habilidades · 4 ejes calculados`);
+          // El run guardado es un hecho con número adentro (brechas + huella de
+          // la build viva). `guardado: null` NO es un detalle menor: es el caso
+          // en que la Fase 1 no tiene métrica, así que se muestra como fallido.
+          registrar('registro', r.guardado ? 'hecho' : 'fallido',
+            r.guardado ? `${r.guardado.brechas.length} brechas · huella ${r.build ?? 'sin'}` : 'el respaldo no deja run en el servidor');
           console.info(`[Omicron] análisis servido por ${r.fuente === 'motor' ? 'el motor analizar-cv' : 'el fallback Gemini'} · guardado: ${r.guardado ? 'sí' : 'no'} · huella: ${r.build ?? 'sin'}`);
         } else {
           // Ningun motor trajo un analisis completo — show error, NO local
           // fallback con datos falsos
           console.error('[Omicron] AI result incomplete. No local fallback.');
           analyzed = null;
+          registrar('analisis', 'fallido', 'el análisis llegó sin ejes');
         }
       } catch (err) {
         // Any error from IA → NO fallback local (prefer error over wrong data)
         console.error('[Omicron] AI threw:', err);
         analyzed = null;
+        registrar('analisis', 'fallido', 'la IA no respondió');
       }
 
       // Clear timers
       if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
-      if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+      if (cuentaRef.current) { clearInterval(cuentaRef.current); cuentaRef.current = null; }
 
       if (cancelledRef.current) return;
 
@@ -477,6 +575,7 @@ export function useGemeloActivation() {
       await new Promise(r => setTimeout(r, 2000));
 
       if (cancelledRef.current) return;
+      registrar('gemelo', 'hecho', `${analyzed.seniorLabel} · ${analyzed.years} años`);
 
       // ── 3) Show GemeloReveal — user decides when to persist ────────
       console.info('[Omicron] Analysis complete:', {
@@ -517,7 +616,7 @@ export function useGemeloActivation() {
 
     } catch (err) {
       if (safetyTimerRef.current) { clearTimeout(safetyTimerRef.current); safetyTimerRef.current = null; }
-      if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+      if (cuentaRef.current) { clearInterval(cuentaRef.current); cuentaRef.current = null; }
       if (cancelledRef.current) return;
       console.error('[Omicron] activateGemeloCompleto failed:', err);
       // Even on catastrophic failure, show clear error
@@ -527,11 +626,12 @@ export function useGemeloActivation() {
       setPhase('upload');
       isProcessingRef.current = false;
     }
-  }, [cvText, cvFileName, toast, profile?.id, persistAnalysis]);
+  }, [cvText, cvFileName, toast, profile?.id, persistAnalysis, registrar]);
 
   return {
     // State
     phase, currentStep, completedSteps, dossier, ai,
+    hitos, segundos,
     cvText, setCvText, cvFileName, cvReadOk, msg, pushes,
     rep, hasExistingCV, gemelo, profile, lastError,
     isProcessing: isProcessingRef.current,

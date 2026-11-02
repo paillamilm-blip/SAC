@@ -103,7 +103,7 @@ describe('vacío y respaldos', () => {
     const model = buildRedViva({});
     expect(model.vacia).toBe(true);
     expect(model.nodos).toEqual([]);
-    expect(resumenRed(model)).toContain('Subí tu CV');
+    expect(resumenRed(model)).toContain('Sube tu CV');
   });
 
   it('sin skills_detail usa skills[] y NO inventa un pct', () => {
@@ -190,7 +190,7 @@ describe('textos — cero jerga, cada número con contexto', () => {
   it('el resumen dice la verdad incómoda cuando no hay nada probado', () => {
     const model = buildRedViva({ skillsDetail, proofs: [] });
     expect(resumenRed(model)).toBe(
-      'Declaraste 3 habilidades y todavía no probaste ninguna. Probá una y empieza a valer.',
+      'Declaraste 3 habilidades y todavía no probaste ninguna. Prueba una y empieza a valer.',
     );
   });
 

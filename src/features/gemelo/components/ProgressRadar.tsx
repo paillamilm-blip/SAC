@@ -2,7 +2,7 @@
 // Visualización del Gemelo Digital como radar dinámico en tiempo real
 
 import { useMemo } from 'react';
-import { C, inkAt, tint, ANIM } from '@/theme';
+import { HALO, C, inkAt, tint, ANIM } from '@/theme';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import type { GemeloDigital } from '@/types';
 import { formatScore, getReputationBadge } from '@/features/gemelo/services/reputation';
@@ -169,7 +169,7 @@ export function ProgressRadar({
             borderRadius: '50%',
             padding: 6,
             background: `radial-gradient(circle at 50% 45%, ${tint(C.cyan, 10)}, ${tint(C.surface, 25)} 60%, transparent 75%)`,
-            boxShadow: `0 0 40px ${tint(C.cyan, 12)}, inset 0 0 40px ${tint(C.purple, 10)}`,
+            boxShadow: `0 0 ${HALO.difusion}px ${tint(C.cyan, 12)}, inset 0 0 ${HALO.difusion}px ${tint(C.purple, 10)}`,
             animation: animated ? ANIM.float : undefined,
           }}
         >

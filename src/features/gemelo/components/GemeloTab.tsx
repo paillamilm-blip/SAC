@@ -14,7 +14,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { C, FONT, tint, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, FONT, tint, SIZE, ANIM, LETRA} from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
 import { GlowCard, SmoothNumber, MagneticButton } from '@/shared/motion';
@@ -38,7 +38,7 @@ const AXIS_META = [
   { key: 'fund', label: 'Fundamento', color: C.green, Icon: TrendingUp },
 ] as const;
 
-const CARD_LABELS = ['Identidad', 'Competencias', 'Impacto'];
+const CARD_LABELS = ['Identidad', 'Habilidades', 'Impacto'];
 const SWIPE_THRESHOLD = 40;
 const SWIPE_VELOCITY = 200;
 
@@ -151,10 +151,10 @@ export function GemeloTab() {
       {/* ═══ HEADER ═══ */}
       <div style={{ textAlign: 'center', padding: '16px 20px 8px', flexShrink: 0, position: 'relative', ...aging.style }}>
         <AuraBackground axes={{ execution: axes.exec, quality: axes.qual, transcendence: axes.trans, foundation: axes.fund }} />
-        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: LETRA.anunciada, color: uc, textTransform: 'uppercase', marginBottom: 4 }}>
           Gemelo Digital · Perfil Ómicrom
         </div>
-        <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>
+        <h1 style={{ margin: 0, fontFamily: FONT.display, fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: LETRA.titulo }}>
           {name || 'Tu Gemelo Digital'}
         </h1>
         <p style={{ margin: '2px 0 0', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.mut }}>
@@ -178,7 +178,7 @@ export function GemeloTab() {
                 border: i === currentSlide ? `1px solid ${uc}` : `1px solid ${C.line}`,
                 background: i === currentSlide ? `${uc}18` : 'transparent',
                 color: i === currentSlide ? uc : C.mut,
-                fontFamily: FONT.mono, fontSize: 9, fontWeight: 600, letterSpacing: 0.5,
+                fontFamily: FONT.mono, fontSize: 9, fontWeight: 600, letterSpacing: LETRA.denso,
                 transition: 'all 0.2s ease',
               }}
             >
@@ -234,7 +234,7 @@ export function GemeloTab() {
 
       {/* ═══ RED VIVA: lo declarado vs. lo probado ═══
           Cada nodo es un dato con nombre: hueco = lo dijo tu CV, sólido = está
-          probado, ámbar = el mercado lo pide y no lo tenés. Ver
+          probado, ámbar = el mercado lo pide y no lo tienes. Ver
           .tasks/red-viva-plan.md. */}
       <div style={{ width: '100%', padding: '0 16px 8px', flexShrink: 0 }}>
         <RedVivaHome
@@ -279,7 +279,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
       borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
-      backdropFilter: 'blur(12px)',
+      backdropFilter: `blur(${BLUR.escarcha}px)`,
       boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Orbital */}
@@ -290,7 +290,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
             border: `1px solid ${SKILL_COLORS[2]}33`,
             animation: ANIM.orbita,
           }}>
-            <div style={{ position: 'absolute', top: -5, left: '50%', transform: 'translateX(-50%)', width: 10, height: 10, borderRadius: '50%', background: SKILL_COLORS[2], boxShadow: `0 0 8px ${SKILL_COLORS[2]}` }} />
+            <div style={{ position: 'absolute', top: -5, left: '50%', transform: 'translateX(-50%)', width: 10, height: 10, borderRadius: '50%', background: SKILL_COLORS[2], boxShadow: `0 0 ${HALO.ascua}px ${SKILL_COLORS[2]}` }} />
           </div>
         )}
         {hasTwo && (
@@ -299,7 +299,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
             border: `1.5px solid ${SKILL_COLORS[1]}44`,
             animation: ANIM.orbitaContraria,
           }}>
-            <div style={{ position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)', width: 12, height: 12, borderRadius: '50%', background: SKILL_COLORS[1], boxShadow: `0 0 10px ${SKILL_COLORS[1]}` }} />
+            <div style={{ position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)', width: 12, height: 12, borderRadius: '50%', background: SKILL_COLORS[1], boxShadow: `0 0 ${HALO.foco}px ${SKILL_COLORS[1]}` }} />
           </div>
         )}
         {nucleus && (
@@ -307,11 +307,11 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
             position: 'absolute', inset: 60, borderRadius: '50%',
             background: `radial-gradient(circle at 35% 35%, ${SKILL_COLORS[0]}44, ${C.bg} 70%)`,
             border: `2px solid ${SKILL_COLORS[0]}88`,
-            boxShadow: `0 0 30px ${SKILL_COLORS[0]}55`,
+            boxShadow: `0 0 ${HALO.resplandor}px ${SKILL_COLORS[0]}55`,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
           }}>
             <span style={{ fontFamily: FONT.display, fontSize: SIZE.xxl, fontWeight: 800, color: SKILL_COLORS[0] }}>{nucleus.pct}%</span>
-            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1, color: C.ink, textTransform: 'uppercase', textAlign: 'center', padding: '0 8px', lineHeight: 1.2 }}>{nucleus.name}</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.etiqueta, color: C.ink, textTransform: 'uppercase', textAlign: 'center', padding: '0 8px', lineHeight: 1.2 }}>{nucleus.name}</span>
           </div>
         )}
       </div>
@@ -324,7 +324,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
             padding: '6px 12px', borderRadius: 999,
             background: `${SKILL_COLORS[i]}14`, border: `1px solid ${SKILL_COLORS[i]}44`,
           }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: SKILL_COLORS[i], boxShadow: `0 0 5px ${SKILL_COLORS[i]}` }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: SKILL_COLORS[i], boxShadow: `0 0 ${HALO.chispa}px ${SKILL_COLORS[i]}` }} />
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.ink }}>{skill.name}</span>
             <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SKILL_COLORS[i], fontWeight: 700 }}>{skill.pct}%</span>
           </div>
@@ -340,7 +340,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
           padding: '5px 12px', borderRadius: 999,
           background: `${uc}14`, border: `1px solid ${uc}33`,
         }}>
-          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>Nivel</span>
+          <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.denso, color: C.mut, textTransform: 'uppercase' }}>Nivel</span>
           <span style={{ fontFamily: FONT.display, fontSize: SIZE.xs, fontWeight: 700, color: uc }}>{level.band}</span>
           <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut }}>({level.range}/100)</span>
         </div>
@@ -374,13 +374,13 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
       borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
-      backdropFilter: 'blur(12px)',
+      backdropFilter: `blur(${BLUR.escarcha}px)`,
       boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         <FileText size={14} color={uc} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: uc, textTransform: 'uppercase' }}>CV Verificado</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.ancha, color: uc, textTransform: 'uppercase' }}>CV Verificado</span>
         <CheckCircle2 size={12} color={C.green} />
       </div>
 
@@ -404,7 +404,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
                 style={{
                   height: '100%', borderRadius: 3,
                   background: `linear-gradient(90deg, ${SKILL_COLORS[i % SKILL_COLORS.length]}cc, ${SKILL_COLORS[(i + 1) % SKILL_COLORS.length]}88)`,
-                  boxShadow: `0 0 5px ${SKILL_COLORS[i % SKILL_COLORS.length]}44`,
+                  boxShadow: `0 0 ${HALO.chispa}px ${SKILL_COLORS[i % SKILL_COLORS.length]}44`,
                 }}
               />
             </div>
@@ -421,7 +421,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
         }}>
           <div style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 2, borderRadius: 1, background: `linear-gradient(to bottom, ${uc}, ${C.purple}, ${C.gold})`, opacity: 0.6 }} />
           <div style={{ paddingLeft: 12 }}>
-            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen IA</div>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: C.mut, textTransform: 'uppercase', marginBottom: 6 }}>Resumen IA</div>
             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: SIZE.xs, lineHeight: 1.55, color: C.ink, whiteSpace: 'pre-wrap' }}>
               {cvSummary.slice(0, 300)}{cvSummary.length > 300 ? '…' : ''}
             </p>
@@ -444,13 +444,13 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
       borderRadius: 999, padding: '20px 16px',
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
-      backdropFilter: 'blur(12px)',
+      backdropFilter: `blur(${BLUR.escarcha}px)`,
       boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
     }}>
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Globe size={14} color={C.gold} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1.5, color: C.gold, textTransform: 'uppercase' }}>4 Ejes del Gemelo Digital</span>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.ancha, color: C.gold, textTransform: 'uppercase' }}>4 Ejes del Gemelo Digital</span>
       </div>
 
       {/* 4 Axes */}
@@ -461,7 +461,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
             <GlowCard key={key} color={color} intensity={0.1} style={{ padding: '12px 12px', borderRadius: 14, background: `${color}08`, border: `1px solid ${color}33` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Icon size={13} color={color} />
-                <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: 0.5, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: LETRA.denso, color: C.mut, textTransform: 'uppercase' }}>{label}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ flex: 1, height: 5, borderRadius: 3, background: `${color}22` }}>
@@ -469,7 +469,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
                     initial={skipAnimation ? false : { width: 0 }}
                     animate={{ width: `${val}%` }}
                     transition={skipAnimation ? { duration: 0 } : { delay: 0.3, duration: 0.7, ease: 'easeOut' }}
-                    style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 5px ${color}66` }}
+                    style={{ height: '100%', borderRadius: 3, background: color, boxShadow: `0 0 ${HALO.chispa}px ${color}66` }}
                   />
                 </div>
                 <span style={{ fontFamily: FONT.mono, fontSize: 13, fontWeight: 700, color, minWidth: 26, textAlign: 'right' }}>{val}<span style={{ fontSize: 9, fontWeight: 600, color: C.mut }}>/100</span></span>
@@ -484,7 +484,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
         <MagneticButton onClick={() => setActiveTab('maxskill')} style={{
           flex: 1, padding: '12px 0', borderRadius: 12,
           background: C.glass, border: `1px solid ${uc}29`, color: uc,
-          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: LETRA.denso,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <Zap size={13} /> Habilidades
@@ -492,7 +492,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
         <MagneticButton onClick={() => setActiveTab('academia')} style={{
           flex: 1, padding: '12px 0', borderRadius: 12,
           background: C.glass, border: `1px solid ${C.purpleFaint}`, color: C.purple,
-          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+          fontFamily: FONT.mono, fontSize: 11, fontWeight: 700, letterSpacing: LETRA.denso,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
           <TrendingUp size={13} /> Academia

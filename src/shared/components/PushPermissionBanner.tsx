@@ -72,12 +72,12 @@ export function PushPermissionBanner() {
         <div style={S.icon}><Bell size={16} /></div>
         <div style={S.text}>
           <div style={S.title}>¿Activar notificaciones?</div>
-          <div style={S.subtitle}>Te aviso cuando haya empleos nuevos con match alto o cuando tu racha esté por romperse.</div>
+          <div style={S.subtitle}>Te aviso cuando haya empleos nuevos que calzan con tu perfil, o cuando tu racha esté por romperse.</div>
         </div>
       </div>
       <div style={S.actions}>
         <button onClick={handleSubscribe} disabled={subscribing} style={S.btnYes}>
-          {subscribing ? 'Activando...' : 'Sí, avísame'}
+          {subscribing ? 'Activando…' : 'Sí, avísame'}
         </button>
         <button onClick={handleDismiss} style={S.btnNo}>Después</button>
       </div>
@@ -113,7 +113,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#8a88f0',
+    color: C.iris,
     flexShrink: 0,
   },
   text: { flex: 1, paddingRight: 20 },
@@ -125,7 +125,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: '10px',
     borderRadius: 8,
     border: 'none',
-    background: `linear-gradient(135deg, ${C.purple}, #8a88f0)`,
+    background: `linear-gradient(135deg, ${C.purple}, ${C.iris})`,
     color: '#fff',
     fontFamily: FONT.mono,
     fontSize: 11,

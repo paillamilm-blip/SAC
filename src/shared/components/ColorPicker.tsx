@@ -2,47 +2,16 @@
 // ═══════════════════════════════════════════════════════════════════════
 // COLOR PICKER — User chooses their Gemelo's primary color.
 //
-// 4 colors from the Ómicrom palette. Each renders as a glowing circle.
-// Selected color gets a scale + ring animation.
-// Persists choice to localStorage for use across the app.
-//
-// Landing-pro: minimal, centered, beautiful. No labels needed.
+// Solo el dibujo. La paleta y la persistencia viven en
+// shared/services/userColor.ts, que es el módulo puro que pueden importar los
+// tests sin arrastrar spatialAudio (su constructor usa window.matchMedia).
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useCallback, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { hapticLight } from '@/shared/utils/haptics';
 import { audioTick } from '@/shared/utils/spatialAudio';
-import { C, FONT } from '@/theme';
-
-const STORAGE_KEY = 'omicron_user_color';
-
-export interface ColorOption {
-  id: string;
-  hex: string;
-  label: string;
-}
-
-export const COLOR_OPTIONS: ColorOption[] = [
-  { id: 'ice', hex: '#7dd3fc', label: 'Hielo' },
-  { id: 'pink', hex: '#ff6b9d', label: 'Rosa' },
-  { id: 'gold', hex: '#ffb02e', label: 'Oro' },
-  { id: 'lime', hex: '#84cc16', label: 'Lima' },
-];
-
-/** Get the user's saved color (or default cyan) */
-export function getUserColor(): string {
-  if (typeof localStorage === 'undefined') return COLOR_OPTIONS[0].hex;
-  const saved = localStorage.getItem(STORAGE_KEY);
-  const found = COLOR_OPTIONS.find(c => c.id === saved || c.hex === saved);
-  return found?.hex ?? COLOR_OPTIONS[0].hex;
-}
-
-/** Save user's color choice */
-export function setUserColor(colorId: string): void {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, colorId);
-  }
-}
+import { HALO, C, FONT, LETRA} from '@/theme';
+import { COLOR_OPTIONS, setUserColor, type ColorOption } from '@/shared/services/userColor';
 
 interface Props {
   /** Called when user selects a color */
@@ -55,7 +24,7 @@ interface Props {
 }
 
 export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) {
-  const [active, setActive] = useState(selected || 'ice');
+  const [active, setActive] = useState(selected || 'ambar');
 
   const handleSelect = useCallback((option: ColorOption) => {
     setActive(option.id);
@@ -100,8 +69,8 @@ export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) 
                   ? `radial-gradient(circle at 35% 35%, ${option.hex}, ${option.hex}88)`
                   : `radial-gradient(circle at 35% 35%, ${option.hex}88, ${option.hex}44)`,
                 boxShadow: isActive
-                  ? `0 0 20px ${option.hex}88, 0 0 40px ${option.hex}44, inset 0 0 10px ${option.hex}44`
-                  : `0 0 8px ${option.hex}33`,
+                  ? `0 0 ${HALO.resplandor}px ${option.hex}88, 0 0 ${HALO.difusion}px ${option.hex}44, inset 0 0 ${HALO.foco}px ${option.hex}44`
+                  : `0 0 ${HALO.ascua}px ${option.hex}33`,
                 cursor: 'pointer',
                 padding: 0,
                 outline: 'none',
@@ -119,7 +88,7 @@ export function ColorPicker({ onSelect, selected, dotSize = 38, style }: Props) 
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         style={{
-          fontFamily: FONT.mono, fontSize: 10, letterSpacing: 1.5,
+          fontFamily: FONT.mono, fontSize: 10, letterSpacing: LETRA.ancha,
           color: COLOR_OPTIONS.find(c => c.id === active)?.hex ?? C.cyan,
           textTransform: 'uppercase',
         }}

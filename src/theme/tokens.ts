@@ -1,71 +1,96 @@
 // theme/tokens.ts
 // Sistema Ómicrom — Design Tokens: Colores y estados
 //
-// Identidad: negro-azulado premium (tipo Apple) + paleta silver-ice/indigo/teal + ámbar.
-//   cyan  → SILVER ICE #a0aec0 (héroe plateado)
-//   purple→ INDIGO #5e5ce6  (tiers / destacados)
-//   green → TEAL  #3fd0c9   (estado OK / economía)
-//   gold  → ÁMBAR #ffb02e   (acento cálido)
+// Identidad: LABORATORIO PROFESIONAL (brief del dueño, 2026-11-01). Negro
+// azulado plano + ámbar como MARCA y acción primaria + tres semánticos fríos.
+//   cyan  → INFO        #6aa9ff  (estado en curso, datos azules)
+//   gold  → ÁMBAR       #f2b134  (marca, acción primaria, raíz del mapa)
+//   green → ÉXITO       #3ddc97  (validado / dominado / economía)
+//   red   → ERROR       #f87171  (rechazado, fallo)
+//   purple→ CREDENCIAL  #c084fc  (tiers altos)
+//
+// Este ruling deroga el de 2026-10-26 ("el ámbar del donante muere, el mapa
+// nunca usa ámbar"): el dueño pidió explícitamente ámbar #f2b134 como acento de
+// marca y categoría de dato. El guard que lo prohibía se actualizó en la misma
+// jugada (features/mapa/contratoMapa.test.ts).
 
 export const C = {
-  cyan:         '#a0aec0',
-  cyanDim:      'rgba(160,174,192,0.46)',
-  cyanFaint:    'rgba(160,174,192,0.16)',
-  cyanGhost:    'rgba(160,174,192,0.08)',
-  gold:         '#ffb02e',
-  goldDim:      'rgba(255,176,46,0.46)',
-  goldFaint:    'rgba(255,176,46,0.14)',
-  purple:       '#5e5ce6',
-  purpleDim:    'rgba(94,92,230,0.44)',
-  purpleFaint:  'rgba(94,92,230,0.14)',
-  green:        '#3fd0c9',
-  greenDim:     'rgba(63,208,201,0.44)',
-  greenFaint:   'rgba(63,208,201,0.14)',
-  red:          '#ff5c7a',
-  redDim:       'rgba(255,92,122,0.44)',
-  redFaint:     'rgba(255,92,122,0.14)',
-  bg:           '#000206',
-  surface:      'rgba(12,16,30,0.86)',
-  surfaceLight: 'rgba(22,28,48,0.9)',
-  overlay:      'rgba(2,3,10,0.98)',
-  locked:       'rgba(255,255,255,0.12)',
-  lockedBg:     'rgba(255,255,255,0.04)',
-  grid:         'rgba(92,140,255,0.05)',
-  ink:          '#eaf0fb',
-  // Nota tenue para labels y body secundario. Subió de #6b7590 a #76829d: la
-  // versión anterior quedaba en ~4.0:1 sobre el vidrio de la app y el estándar
-  // asistente pide AA (4.5:1) en TODO el texto, no solo en el héroe.
-  mut:          '#76829d',
-  glass:        'rgba(255,255,255,0.045)',
-  glass2:       'rgba(255,255,255,0.08)',
-  // Velo debajo de modales y cinematicos: el negro del sistema, no un gris
-  // inventado. Vivía como rgba(0,0,0,0.5/0.6/0.7) en 5 archivos distintos.
-  scrim:        'rgba(0,0,0,0.6)',
-  // Vidrio de barra sticky: la fija (BASE.header) puede ser translúcida porque
-  // no tiene contenido pasando por debajo; una sticky a 0.55 deja leer la cola
-  // a través del título y se vuelve ilegible.
-  sticky:       'rgba(6,8,16,0.96)',
+  cyan:         '#6aa9ff',
+  cyanDim:      'rgba(106,169,255,0.46)',
+  cyanFaint:    'rgba(106,169,255,0.16)',
+  cyanGhost:    'rgba(106,169,255,0.08)',
+  gold:         '#f2b134',
+  goldDim:      'rgba(242,177,52,0.46)',
+  goldFaint:    'rgba(242,177,52,0.14)',
+  purple:       '#c084fc',
+  purpleDim:    'rgba(192,132,252,0.44)',
+  purpleFaint:  'rgba(192,132,252,0.14)',
+  green:        '#3ddc97',
+  greenDim:     'rgba(61,220,151,0.44)',
+  greenFaint:   'rgba(61,220,151,0.14)',
+  red:          '#f87171',
+  redDim:       'rgba(248,113,113,0.44)',
+  redFaint:     'rgba(248,113,113,0.14)',
+  bg:           '#0b0d10',
+  surface:      '#14171c',
+  surfaceLight: '#1a1e25',
+  overlay:      'rgba(11,13,16,0.94)',
+  locked:       'rgba(233,236,239,0.12)',
+  lockedBg:     '#14171c',
+  grid:         'rgba(38,44,53,0.60)',
+  ink:          '#e9ecef',
+  // Tenue de cuerpo secundario y labels: 7,5:1 sobre el fondo del sistema.
+  mut:          '#98a2b0',
+  // El terciario del brief (12px decorativos, dashes, guías). Mide 4,29:1 sobre
+  // #0b0d10, por debajo del AA de texto: NUNCA se usa para texto legible, solo
+  // para apoyos visuales. Está acá para que nadie invente un gris distinto.
+  mutSoft:      '#6d7885',
+  // Superficies de card: el brief pide material sólido, no vidrio translúcido.
+  glass:        '#14171c',
+  glass2:       '#1a1e25',
+  // Velo debajo de modales y cinematicos: el fondo del sistema con alfa.
+  scrim:        'rgba(11,13,16,0.72)',
+  // Vidrio de barra sticky: casi opaco porque tiene contenido pasando debajo.
+  sticky:       'rgba(20,23,28,0.86)',
   // Lavado oscuro translúcido (fila sobre contenido, celda del radar, overlay
   // de banner). Existían 6 variantes casi iguales entre 0.25 y 0.72 de alfa.
-  wash:         'rgba(6,10,22,0.6)',
+  wash:         'rgba(20,23,28,0.72)',
   white:        '#ffffff',
   black:        '#000000',
-  line:         'rgba(150,180,255,0.14)',
-  // Tinta sobre un fondo VIVO (botón plateado, orbe, badge de color). El blanco
-  // puro sobre silver no existe en este sistema: se lee lechoso. #021018 estaba
-  // suelto en 3 archivos con el mismo rol; acá queda su nombre.
-  onAccent:     '#021018',
+  // Los dos bordes del brief: el de card y el suave (separadores, filas).
+  line:         '#262c35',
+  lineSoft:     '#1f242c',
+  // Tinta sobre un fondo VIVO: el ámbar de marca y el orbe. #1a1408 es la tinta
+  // que el brief asigna al ámbar; el blanco puro sobre ámbar se lee lechoso.
+  onAccent:     '#1a1408',
   // Los dos tonos claros que la credencial compartible y el radar usan para
-  // datos. Viven en la misma familia que silver-ice/índigo, no en la paleta
-  // genérica de Tailwind. Se promueven a token porque se repetían en 3 archivos.
-  ice:          '#8bd4ff',
-  iris:         '#8a88f0',
-  // El extremo oscuro del degradado silver→teal de los botones grandes (reto del
-  // día, reintento del ErrorBoundary). Vivía como hex suelto en dos archivos.
-  tealDeep:     '#008b9e',
+  // datos. Son primos claros de info y credencial, no colores sueltos.
+  ice:          '#8ec4ff',
+  iris:         '#d4b6ff',
+  // El extremo oscuro del degradado ámbar de los botones grandes (reto del día,
+  // reintento del ErrorBoundary) y el brillo de la raíz del mapa.
+  amberDeep:    '#c98a12',
   // Naranja de la racha: el único cálido entre el ámbar y el rojo. StreakBanner
   // lo escribía tres veces (un hex y dos rgba casi iguales).
   flame:        '#ff6432',
+  // El azul-noche de la credencial: la tarjeta compartible y su página de
+  // verificación se pintan sobre noche, no sobre el fondo neutro del sistema.
+  // Existía en cuatro ortografías (dos rgba de un degradado, un #0a1120 de avatar
+  // y un #061024 de radial) para decir una sola cosa. `nocheClara` es el paso de
+  // arriba de ese degradado; `noche` es el resto.
+  noche:        '#0a1120',
+  nocheClara:   '#16223a',
+} as const;
+
+// ── El fondo de las pantallas de umbral ────────────────────────────────────
+// Lo que se ve antes de que haya contenido: negro frío arriba, tinta cálida al
+// centro, casi negro abajo. La rampa estaba copiada palabra por palabra en las
+// tres hojas de auth y en el takeover del orbe (cuatro dueños, cero diferencias).
+// `credencial` es la misma rampa con el centro frío porque la tarjeta imprimida
+// vive sobre el navy del lienzo, no sobre la tinta del ámbar.
+export const UMBRAL = {
+  apertura:   `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
+  credencial: 'radial-gradient(130% 95% at 50% 18%, #050813 0%, #02030a 52%, #000003 100%)',
 } as const;
 
 export function statusColor(status: string, options?: { master?: boolean; depth?: number }): string {
@@ -85,17 +110,15 @@ export const CATEGORY_COLOR: Record<string, string> = {
   ADVANCED: C.purple, GOVERNANCE: C.red, ECONOMY: C.green, DEFAULT: C.cyan,
 };
 
-// Mapa neuronal (port del donante bb1434fb/components/MapaCapacidades.tsx).
-// Fijos SIEMPRE: el mapa nunca pinta con el color del usuario. Regla D5 del
-// dueño: el ámbar histórico del donante desaparece — 'blanda' toma el
-// verde-lima que ya es opción del ColorPicker; 'conocimiento' reutiliza
-// C.green. La geometría y los tiempos del mapa viven en
-// features/mapa/mapaLayout.ts y se prueban en features/mapa/contratoMapa.test.ts.
+// Mapa radial. Fijos SIEMPRE: el mapa no pinta con el color del usuario, pinta
+// con la paleta de categorías de dato del brief (azul / ámbar / verde / violeta).
+// La raíz dorada es C.gold por definición de marca. La geometría y los tiempos
+// viven en features/mapa/mapaLayout.ts y se prueban en contratoMapa.test.ts.
 export const MAPA_CAT = {
-  dura: '#6aa9ff',
-  blanda: '#84cc16',
+  dura: C.cyan,
+  blanda: C.gold,
   conocimiento: C.green,
-  credencial: '#c084fc',
+  credencial: C.purple,
 } as const;
 
 export function categoryColor(cat: string): string {
@@ -110,7 +133,7 @@ export function categoryColor(cat: string): string {
 // de color-mix y de un gradiente.
 export const ACCENT = 'var(--omi-accent)';
 
-/** Alfa de un color vivo. Acepta hex ('#a0aec0') y referencia ('var(--omi-accent)'). */
+/** Alfa de un color vivo. Acepta hex ('#f2b134') y referencia ('var(--omi-accent)'). */
 export function tint(color: string, pct: number): string {
   return `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }

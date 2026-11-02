@@ -14,7 +14,7 @@
 // Updates in real-time as axes change (SmoothNumber-like transition).
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
-import { C, ANIM } from '@/theme';
+import { HALO, BLUR, C, ANIM } from '@/theme';
 
 export interface AuraAxes {
   execution: number;      // 0-100
@@ -71,7 +71,7 @@ export function computeAura(axes: AuraAxes): AuraColors {
   const gradient = `radial-gradient(ellipse at 50% 50%, ${stops}, transparent 85%)`;
 
   const glowOpacity = Math.round(intensity * 0.45 * 255).toString(16).padStart(2, '0');
-  const glow = `0 0 20px ${primary.color}${glowOpacity}, 0 0 40px ${secondary.color}${Math.round(intensity * 0.2 * 255).toString(16).padStart(2, '0')}`;
+  const glow = `0 0 ${HALO.resplandor}px ${primary.color}${glowOpacity}, 0 0 ${HALO.difusion}px ${secondary.color}${Math.round(intensity * 0.2 * 255).toString(16).padStart(2, '0')}`;
 
   const ringGradient = `conic-gradient(from ${primary.angle}deg, ${primary.color}, ${secondary.color}, ${scores[2].color}44, ${primary.color})`;
 
@@ -148,7 +148,7 @@ export function AuraRing({ axes, size = 52, thickness = 2.5, animate = true, chi
           borderRadius: '50%',
           background: aura.gradient,
           opacity: aura.intensity * 0.3,
-          filter: 'blur(8px)',
+          filter: `blur(${BLUR.vaho}px)`,
         }}
       />
       {/* Content (avatar) */}

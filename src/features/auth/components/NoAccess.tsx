@@ -4,7 +4,7 @@ import { ShieldOff, Shield } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS, tint } from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, RADIUS, tint, UMBRAL, LETRA} from '@/theme';
 
 // ═══════════════════════════════════════════════════════════════════════
 // CSS inyectado: estados interactivos para el boton ghost (signOut).
@@ -49,7 +49,7 @@ export function NoAccess() {
           transition={{ duration: 0.5 }}
           style={S.logoBlock}
         >
-          <div style={{ ...S.orbRing, boxShadow: `0 0 30px ${uc}33, inset 0 0 20px ${uc}14` }}>
+          <div style={{ ...S.orbRing, boxShadow: `0 0 ${HALO.resplandor}px ${uc}33, inset 0 0 ${HALO.resplandor}px ${uc}14` }}>
             <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -116,7 +116,7 @@ const S: Record<string, CSSProperties> = {
     position: 'fixed', inset: 0, zIndex: 95,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '32px 24px', overflow: 'auto',
-    background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
+    background: UMBRAL.apertura,
   },
   halo: {
     position: 'absolute', top: '4%', left: '50%',
@@ -139,18 +139,18 @@ const S: Record<string, CSSProperties> = {
   brand: {
     margin: 0,
     fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl,
-    letterSpacing: -0.5, color: C.ink,
+    letterSpacing: LETRA.titulo, color: C.ink,
   },
   tagline: {
     margin: '6px 0 0',
-    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.4, color: C.mut,
+    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso, color: C.mut,
   },
   card: {
     position: 'relative', width: '100%',
     borderRadius: RADIUS.xl, padding: 24, overflow: 'hidden',
     background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
-    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
     boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
   },
   cardAccent: {
@@ -168,7 +168,7 @@ const S: Record<string, CSSProperties> = {
   title: {
     margin: 0,
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl,
-    letterSpacing: -0.3, color: C.ink,
+    letterSpacing: LETRA.titulo, color: C.ink,
   },
   desc: {
     margin: 0,
@@ -182,7 +182,7 @@ const S: Record<string, CSSProperties> = {
   },
   statusLabel: {
     margin: '0 0 8px',
-    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4,
+    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha,
     textTransform: 'uppercase', color: C.mut,
   },
   statusRow: {
@@ -197,7 +197,7 @@ const S: Record<string, CSSProperties> = {
   ghost: {
     width: '100%', marginTop: 4, padding: '13px 0',
     borderRadius: RADIUS.md, background: 'transparent',
-    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5,
+    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso,
     color: tint(C.ink, 70), cursor: 'pointer',
   },
   secure: {

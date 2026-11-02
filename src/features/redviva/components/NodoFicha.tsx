@@ -1,5 +1,5 @@
 // features/redviva/components/NodoFicha.tsx
-// LA FICHA DEL NODO — qué es, qué prueba tenés encima y qué te falta.
+// LA FICHA DEL NODO — qué es, qué prueba tienes encima y qué te falta.
 //
 // Es la pantalla donde el CV deja de ser un documento y se vuelve una tarea
 // concreta. Se muestra debajo del mapa (no encima) a propósito: mientras leés
@@ -9,12 +9,12 @@
 //   • Cero jerga: se explica QUÉ hacer + POR QUÉ + QUÉ GANÁS.
 //   • Todo número con su escala ("88/100", nunca "88").
 //   • No promete un examen que el backend no puede dar (ver useExamenDisponible).
-//   • Lo que ganás es evidencia, no tokens.
+//   • Lo que ganas es evidencia, no tokens.
 
 import { forwardRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { C, EASING, FONT, SIZE, RADIUS, BORDER, TIMING } from '@/theme';
+import { BLUR, C, EASING, FONT, SIZE, RADIUS, BORDER, TIMING, LETRA} from '@/theme';
 import { textoEstado, type NodoRed } from '../services/redViva';
 import { useExamenDisponible } from '../hooks/useNodoDetalle';
 import { useProbarHabilidad } from '../hooks/useProbarHabilidad';
@@ -78,8 +78,8 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
         borderRadius: RADIUS.lg,
         border: BORDER.default,
         background: C.surface,
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
+        backdropFilter: `blur(${BLUR.cristal}px)`,
+        WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
         padding: '14px 15px',
         display: 'flex',
         flexDirection: 'column',
@@ -108,7 +108,7 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
               margin: '3px 0 0',
               fontFamily: FONT.mono,
               fontSize: SIZE.xs,
-              letterSpacing: 0.6,
+              letterSpacing: LETRA.medido,
               textTransform: 'uppercase',
               color: acento,
             }}
@@ -154,7 +154,7 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
           : 'Esta habilidad está registrada. No pudimos consultar si ya tiene una prueba en esta cuenta.'}
       </p>
 
-      {/* ── Qué ganás ──────────────────────────────────────────────────── */}
+      {/* ── Qué ganas ──────────────────────────────────────────────────── */}
       <div
         style={{
           borderRadius: RADIUS.md,
@@ -226,7 +226,7 @@ export const NodoFicha = forwardRef<HTMLElement, NodoFichaProps>(function NodoFi
                 textAlign: 'center',
               }}
             >
-              Un caso práctico de tu área. Si lo aprobás, esta habilidad queda probada.
+              Un caso práctico de tu área. Si lo apruebas, esta habilidad queda probada.
             </p>
           )}
         </>

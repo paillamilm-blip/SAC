@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { ANCHO } from '@/theme';
 
 interface Props {
   title: string;
@@ -55,7 +56,8 @@ export function Modal({ title, onClose, children, maxHeight = 'max-h-[90vh]' }: 
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`w-full max-w-[430px] bg-omicron-card border border-omicron-border rounded-t-3xl ${maxHeight} flex flex-col shadow-2xl outline-none`}
+        className={`w-full bg-omicron-card border border-omicron-border rounded-t-3xl ${maxHeight} flex flex-col shadow-2xl outline-none`}
+        style={{ maxWidth: ANCHO.bolsillo }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-none">

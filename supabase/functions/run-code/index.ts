@@ -17,7 +17,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { checkRateLimit, tooManyRequests } from "../_shared/rateLimit.ts";
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 
 const cors = corsHeaders();
 
@@ -144,7 +144,7 @@ async function runInSandbox(code: string, inputs: string[], nonce: string) {
   return await res.json() as PistonResponse;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
@@ -268,4 +268,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: String((e as Error)?.message ?? e) }, 500);
   }
-});
+}));

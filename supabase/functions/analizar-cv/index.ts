@@ -9,7 +9,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const _admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const BUILD = '10e-dos-claves';
 const json = (body: unknown, status = 200, extraHeaders?: Record<string, string>) => {
@@ -220,7 +220,7 @@ function segundosHastaReset(resetAt?: string): number {
 // no hace que aparezca cf-connecting-ip.
 const analisis_sin_origen = () => json({
   ok: false,
-  error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Iniciá sesión y te devolvemos el análisis.',
+  error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Inicia sesión y te devolvemos el análisis.',
 }, 503);
 
 // Puerta de acceso: lo que protege el endpoint del abuso (burst por IP, token
@@ -298,7 +298,7 @@ async function puertaDeAcceso(req: Request, userId: string | null, tokenRechazad
     // cf-connecting-ip cierra el corner: solo se abre en dev y en un path raro
     // del borde.
     if (tokenRechazado) {
-      return json({ ok: false, error: 'Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.' }, 401);
+      return json({ ok: false, error: 'Tu sesión expiró. Vuelve a iniciar sesión para analizar tu CV.' }, 401);
     }
     return null;
   } catch (e) {
@@ -379,9 +379,9 @@ async function topeDelDia(req: Request, userId: string | null): Promise<Response
   }
 }
 
-const SYS = 'Eres el Motor de ADN Digital de Omicron. Tu mision: CLONAR fielmente un CV real y MEDIR al profesional con el sistema de reputacion de Omicron.\n\nCONTEXTO DEL SISTEMA OMICRON:\nOmicron mide a cada persona con 4 EJES de 0-100 basados en EVIDENCIA REAL:\n- EJECUCION (exec): Capacidad de ENTREGAR. Proyectos completados, anios activos, roles de produccion, resultados medibles.\n- CALIDAD (qual): RIGOR profesional. Certificaciones, estandares cumplidos, metodologias, buenas practicas, nivel de responsabilidad.\n- TRASCENDENCIA (trans): IMPACTO mas alla de uno mismo. Liderazgo de equipos, mentoria, docencia, publicaciones, cargos de responsabilidad sobre personas.\n- FUNDAMENTO (fund): BASE teorica y formal. Titulos universitarios, diplomados, certificaciones tecnicas, especializaciones.\n\nFormula: reputacion = 20% credenciales formales + 80% promedio(4 ejes). Un titulo ayuda (20%) pero el 80% se gana DEMOSTRANDO.\n\nTU TRABAJO:\n1. CLONAR el CV: extraer TODA la informacion tal como es. NO omitir nada. NO inventar nada.\n2. POSICIONAR como especialista: seniorLabel = POSICIONAMIENTO REAL basado en EXPERIENCIA DOMINANTE.\n3. MEDIR con los 4 ejes de Omicron basandote en EVIDENCIA CONCRETA del CV.\n\nREGLAS:\n- NO inventes NADA que no este en el texto.\n- NO subestimes: si tiene 15 anios, refleja 15 anios.\n- Los skills deben ser los que REALMENTE domina segun su trayectoria.\n- Los porcentajes (pct) DEBEN diferenciarse: area principal 80-96%, secundarias 50-75%, menores 30-50%.\n- Los anios son la SUMA TOTAL de experiencia laboral.\n- Funciona para CUALQUIER industria.\n\nDevuelve SOLO un JSON valido con esta estructura exacta (sin texto antes ni despues). Ademas del perfil, detecta HASTA 12 brechas reales entre lo que el CV muestra y lo que el puesto objetivo exige; cada brecha debe tener un camino accionable. Estructura:\n{"name":"","seniorLabel":"","seniorLevel":0,"years":0,"skills":[],"skillsDetail":[{"name":"","pct":0}],"arch":"","axes":{"exec":0,"qual":0,"trans":0,"fund":0},"summary":"","brechas":[{"categoria":"dura|blanda|conocimiento|credencial","titulo":"","evidencia":"","porQueImporta":"","severidad":"alta|media|baja","aprender":{"que":"","como":"","comoLoDemuestro":""}}]}\nReglas de brechas: si no hay ninguna real, []. Prohibido inventar brechas de skills que el CV si declara. "evidencia" cita el CV; "porQueImporta" habla del puesto, no del mercado en general.';
+const SYS = 'Eres el Motor de ADN Digital de Omicron. Tu mision: CLONAR fielmente un CV real y MEDIR al profesional con el sistema de reputacion de Omicron.\n\nCONTEXTO DEL SISTEMA OMICRON:\nOmicron mide a cada persona con 4 EJES de 0-100 basados en EVIDENCIA REAL:\n- EJECUCION (exec): Capacidad de ENTREGAR. Proyectos completados, anios activos, roles de produccion, resultados medibles.\n- CALIDAD (qual): RIGOR profesional. Certificaciones, estandares cumplidos, metodologias, buenas practicas, nivel de responsabilidad.\n- TRASCENDENCIA (trans): IMPACTO mas alla de uno mismo. Liderazgo de equipos, mentoria, docencia, publicaciones, cargos de responsabilidad sobre personas.\n- FUNDAMENTO (fund): BASE teorica y formal. Titulos universitarios, diplomados, certificaciones tecnicas, especializaciones.\n\nFormula: reputacion = 20% credenciales formales + 80% promedio(4 ejes). Un titulo ayuda (20%) pero el 80% se gana DEMOSTRANDO.\n\nTU TRABAJO:\n1. CLONAR el CV: extraer TODA la informacion tal como es. NO omitir nada. NO inventar nada.\n2. POSICIONAR como especialista: seniorLabel = POSICIONAMIENTO REAL basado en EXPERIENCIA DOMINANTE.\n3. MEDIR con los 4 ejes de Omicron basandote en EVIDENCIA CONCRETA del CV.\n\nREGLAS:\n- NO inventes NADA que no este en el texto.\n- NO subestimes: si tiene 15 anios, refleja 15 anios.\n- Las habilidades deben ser las que REALMENTE domina segun su trayectoria.\n- Los porcentajes (pct) DEBEN diferenciarse: area principal 80-96%, secundarias 50-75%, menores 30-50%.\n- Los anios son la SUMA TOTAL de experiencia laboral.\n- Funciona para CUALQUIER industria.\n\nDevuelve SOLO un JSON valido con esta estructura exacta (sin texto antes ni despues). Ademas del perfil, detecta HASTA 12 brechas reales entre lo que el CV muestra y lo que el puesto objetivo exige; cada brecha debe tener un camino accionable. Estructura:\n{"name":"","seniorLabel":"","seniorLevel":0,"years":0,"skills":[],"skillsDetail":[{"name":"","pct":0}],"arch":"","axes":{"exec":0,"qual":0,"trans":0,"fund":0},"summary":"","brechas":[{"categoria":"dura|blanda|conocimiento|credencial","titulo":"","evidencia":"","porQueImporta":"","severidad":"alta|media|baja","aprender":{"que":"","como":"","comoLoDemuestro":""}}]}\nReglas de brechas: si no hay ninguna real, []. Prohibido inventar brechas de habilidades que el CV si declara. "evidencia" cita el CV; "porQueImporta" habla del puesto, no del mercado en general.';
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ ok: false, error: 'Falta OPENROUTER_KEY en secrets.' }, 500);
@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
       // Ya se cobro el cupo del dia (topeDelDia corre antes de la carrera), asi que
       // un corte por saturacion sin log es un gasto invisible en las metricas.
       console.error(`[analizar-cv] presupuesto de IA agotado (${PRESUPUESTO_IA_MS} ms): el cupo del dia ya estaba consumido`);
-      return json({ ok: false, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' }, 504);
+      return json({ ok: false, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintenta en unos minutos.' }, 504);
     }
     if (!crudo) return json({ ok: false, error: 'La IA no genero respuesta.' }, 502);
     const raw = crudo as string;
@@ -511,7 +511,7 @@ Deno.serve(async (req) => {
     // del usuario).
     if (!ejesUsables(parsed)) {
       console.error('[analizar-cv] la IA devolvio un analisis sin los 4 ejes: no se guarda, no se devuelve ok.');
-      return json({ ok: false, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Volvé a intentar.' }, 502);
+      return json({ ok: false, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Vuelve a intentarlo.' }, 502);
     }
 
     const brechas = normalizarBrechas((parsed as { brechas?: unknown }).brechas);
@@ -569,4 +569,4 @@ Deno.serve(async (req) => {
     console.error('[analizar-cv] Error fatal:', String(e));
     return json({ ok: false, error: 'Error inesperado.', detail: String(e) }, 500);
   }
-});
+}));

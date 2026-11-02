@@ -6,7 +6,7 @@
 // Taste: uses the Ómicrom color palette, not random colors.
 // Respects prefers-reduced-motion (shows a gentle scale pulse instead).
 // ═══════════════════════════════════════════════════════════════════════
-import { C, tint, ANIM } from '@/theme';
+import { HALO, C, tint, ANIM } from '@/theme';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from './useReducedMotion';
 
@@ -140,7 +140,7 @@ export function CelebrationBurst({ trigger, onComplete, style }: Props) {
             background: p.color,
             opacity: p.opacity,
             transform: `translate(${p.x}px, ${p.y}px) rotate(${p.rotation}deg)`,
-            boxShadow: `0 0 6px ${p.color}88`,
+            boxShadow: `0 0 ${HALO.ascua}px ${p.color}88`,
             willChange: 'transform, opacity',
           }}
         />

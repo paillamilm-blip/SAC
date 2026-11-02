@@ -1,107 +1,94 @@
 /* features/mapa/mapa.css
-   B3: coreografía y pintura del mapa neuronal, port 1:1 del CSS del donante
-   (bb1434fb/app/globals.css L630-L1090, congelado en
-   .superpowers/sdd/2026-10-26-unificacion-aprendizaje-motor/referencia/
-   donante-css-actos.css). Los tiempos NO se negocian (Invariante 1 del brief):
-     trazo    0.7s ease-out forwards        (pathLength=1, dashoffset de 1)
-     nacer    0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both
-     latir    1s ease-out 0.1s 1            (solo el nodo que acaba de nacer)
-     aparecer 0.5s ease-out both            (etiquetas de categoría)
-     camino   trazo 1.7s ease-in-out forwards con su caminoDelay (960 ms fixture)
-     escaneo  haz 1.6s cubic-bezier(0.45,0,0.55,1) infinite; linea-luz 1.44s ease-in-out infinite
-   El stagger de 45 ms por paso YA viene resuelto por mapaLayout en el
-   animationDelay inline de cada elemento: acá no se recalcula nada. */
+   Pintura y coreografía del mapa radial (el dibujo de la Cabina) con los tokens
+   de Ómicrom. El modelo (mapaLayout.ts) entrega geometría y ROLES; acá los roles
+   se traducen a color y los tiempos se aplican. Reglas de la casa:
+
+     · Cero geometría: ningún cx/cy/r se toca desde CSS.
+     · Cero color en el componente: el único vocabulario que entra acá es
+       data-rol-stroke / data-rol-fill ("cat:dura", "raiz", "logro").
+     · Los tiempos del sello narrativo (brief, "NARRATIVA VISUAL"):
+         trazar   300 ms cubic-bezier(0.2,0.8,0.2,1)  — la arista se dibuja sola
+         nacer    300 ms cubic-bezier(0.2,0.9,0.3,1.25) — rebote suave
+         aparecer 300 ms — las etiquetas llegan con su nodo
+         girar    9 s linear infinito — el micro-logro orbita su nodo
+       El stagger de 45 ms por paso ya viene resuelto por mapaLayout en el
+       animationDelay inline: acá no se recalcula nada. La excepción es el camino
+       (1,7 s), cuyo reparto también viene del modelo en --d-camino.
+
+   Los @keyframes de este archivo están excluidos del contrato de movimiento
+   (src/theme/contratoMovimiento.test.ts, esMapa) porque el mapa es el único
+   lugar de la app que anima trazado de líneas y órbita, y esos gestos no
+   pertenecen a la familia de la interfaz. */
 
 /* ── pintura por ROL (Invariante 3) ──────────────────────────────────────────
-   El componente nunca escribe colores: pega data-rol-stroke / data-rol-fill con
-   el rol literal del golden ("cat:dura", "cat:dura+alfa", "nodo-hueco", ...) y
-   las reglas de abajo traducen rol → CSS var. Las --mapa-* tienen que vivir en
-   los tokens (src/theme/tokens.ts / index.css, manos de B1); mientras no
-   existan, el fallback conserva el color medido del donante para que el port se
-   vea igual HOY y el TODO se vea mañana. */
-.mapa-caja {
-  /* TODO B1: borrar los fallbacks cuando tokens.ts defina --mapa-dura/blanda/
-     conocimiento/credencial desde MAPA_CAT (los 4 hex de abajo son exactamente
-     MAPA_CAT, fuente única; el ámbar f2b134 del donante MURIÓ — regla D5). */
-  --cat-dura: var(--mapa-dura, #6aa9ff);
-  --cat-blanda: var(--mapa-blanda, #84cc16);
-  --cat-conocimiento: var(--mapa-conocimiento, #3fd0c9);
-  --cat-credencial: var(--mapa-credencial, #c084fc);
-  /* El fill al 2e (≈18.04 %) de una brecha confirmada del donante (`${color}2e`):
-     se porta con color-mix al 18 %, mismo efecto, cero hex nuevo. */
-  --cat-dura-alfa: color-mix(in srgb, var(--cat-dura) 18%, transparent);
-  --cat-blanda-alfa: color-mix(in srgb, var(--cat-blanda) 18%, transparent);
-  --cat-conocimiento-alfa: color-mix(in srgb, var(--cat-conocimiento) 18%, transparent);
-  --cat-credencial-alfa: color-mix(in srgb, var(--cat-credencial) 18%, transparent);
-  /* Neutros del donante medidos en su CSS (hueco #171b21, bordes #4b545f y
-     #454d57, tinta del check #0b0d10). */
-  /* TODO B1: estas cuatro también deberían venir de tokens como --mapa-*. */
-  --nodo-hueco: var(--mapa-nodo-hueco, #171b21);
-  --borde-pendiente: var(--mapa-borde-pendiente, #4b545f);
-  --borde-rechazada: var(--mapa-borde-rechazada, #454d57);
-  --tinta-sobre-nodo: var(--mapa-tinta-sobre-nodo, #0b0d10);
-  /* Degradado dorado de la raíz (donante #f7c45c → #c98a12; no es el ámbar
-     prohibido, es el brillo de "tu centro"). */
-  /* TODO B1: --mapa-raiz-inicio / --mapa-raiz-fin desde tokens. */
-  --raiz-inicio: var(--mapa-raiz-inicio, #f7c45c);
-  --raiz-fin: var(--mapa-raiz-fin, #c98a12);
-  /* Alias de pintura del donante a los tokens de Ómicrom (el donante tenía
-     --muted/--text/--line-soft/--ok/--accent; acá se aterizan sin tocar
-     index.css). TODO B1: si B1 exporta alias globales, estos se disuelven. */
-  --mapa-texto: var(--ink, #eaf0fb);
-  --mapa-tenue: var(--mut, #6b7590);
-  --mapa-linea: var(--line, rgba(150, 180, 255, 0.14));
-  --mapa-superficie: var(--surface, rgba(12, 16, 30, 0.86));
-  --mapa-ok: var(--teal, #3fd0c9);
+   Un rol declara UN `color`; cada elemento decide si lo usa para su trazo, su
+   relleno o su fondo. Así la paleta de categorías se escribe una vez y la
+   herencia de SVG hace el resto: el nodo le pasa su color al disco, al anillo
+   doble y a la arista que lo cuelga de la categoría.
+   La escena del home (`.mapa-escena`) comparte la misma declaración: sin estos
+   tokens el mapa desnudo pintaría con los valores iniciales de SVG (negro). */
+.mapa-caja,
+.mapa-escena {
+  --linea-raiz: color-mix(in srgb, var(--gold) 38%, transparent);
+  --nodo-hueco: var(--glass-2);
+  --borde-pendiente: var(--mut);
+  --tachado: var(--red);
+  --guia: color-mix(in srgb, var(--info) 22%, transparent);
+  --tinta-raiz: var(--on-accent);
+  --tiza: var(--ink);
+  --logro: var(--teal);
+  --mapa-texto: var(--ink);
+  --mapa-tenue: var(--mut);
+  --mapa-linea: var(--line);
+  --mapa-superficie: var(--surface);
+  --f-salida: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --f-rebote: cubic-bezier(0.2, 0.9, 0.3, 1.25);
 }
 
-/* rol → propiedad. Cada combinación que el golden emite, enumerada: el color
-   nunca se calcula, se declara. */
-[data-rol-stroke="cat:dura"] { stroke: var(--cat-dura); }
-[data-rol-stroke="cat:blanda"] { stroke: var(--cat-blanda); }
-[data-rol-stroke="cat:conocimiento"] { stroke: var(--cat-conocimiento); }
-[data-rol-stroke="cat:credencial"] { stroke: var(--cat-credencial); }
-[data-rol-stroke="borde-pendiente"] { stroke: var(--borde-pendiente); }
-[data-rol-stroke="borde-rechazada"] { stroke: var(--borde-rechazada); }
-[data-rol-stroke="tinta-sobre-nodo"] { stroke: var(--tinta-sobre-nodo); }
-[data-rol-fill="cat:dura"] { fill: var(--cat-dura); }
-[data-rol-fill="cat:blanda"] { fill: var(--cat-blanda); }
-[data-rol-fill="cat:conocimiento"] { fill: var(--cat-conocimiento); }
-[data-rol-fill="cat:credencial"] { fill: var(--cat-credencial); }
-[data-rol-fill="cat:dura+alfa"] { fill: var(--cat-dura-alfa); }
-[data-rol-fill="cat:blanda+alfa"] { fill: var(--cat-blanda-alfa); }
-[data-rol-fill="cat:conocimiento+alfa"] { fill: var(--cat-conocimiento-alfa); }
-[data-rol-fill="cat:credencial+alfa"] { fill: var(--cat-credencial-alfa); }
-[data-rol-fill="nodo-hueco"] { fill: var(--nodo-hueco); }
-/* Los 4 chips de categoría de la leyenda pintan su <i> con el mismo rol. */
-.mapa-chip > i[data-rol-stroke="cat:dura"] { background: var(--cat-dura); }
-.mapa-chip > i[data-rol-stroke="cat:blanda"] { background: var(--cat-blanda); }
-.mapa-chip > i[data-rol-stroke="cat:conocimiento"] { background: var(--cat-conocimiento); }
-.mapa-chip > i[data-rol-stroke="cat:credencial"] { background: var(--cat-credencial); }
+[data-rol-stroke="cat:dura"] { color: var(--mapa-dura); }
+[data-rol-stroke="cat:blanda"] { color: var(--mapa-blanda); }
+[data-rol-stroke="cat:conocimiento"] { color: var(--mapa-conocimiento); }
+[data-rol-stroke="cat:credencial"] { color: var(--mapa-credencial); }
+[data-rol-stroke="raiz"] { color: var(--linea-raiz); }
+/* La línea blanca del camino: es tiza sobre pizarra de laboratorio, y el único
+   blanco de la casa es --ink (#e9ecef, 16.4:1 sobre el fondo). */
+[data-rol-stroke="camino"] { color: var(--tiza); }
+/* Lo que declara un rol de trazo pinta con él; en los chip-leyenda (HTML) la
+   propiedad stroke es inerte y el color sólo se hereda para el fondo. */
+[data-rol-stroke] { stroke: currentColor; }
 
-/* ── caja y cabecera (donante .mapa-caja/.mapa-cabecera/.mapa-sub) ────────── */
+[data-rol-fill="cat:dura"] { fill: var(--mapa-dura); }
+[data-rol-fill="cat:blanda"] { fill: var(--mapa-blanda); }
+[data-rol-fill="cat:conocimiento"] { fill: var(--mapa-conocimiento); }
+[data-rol-fill="cat:credencial"] { fill: var(--mapa-credencial); }
+[data-rol-fill="raiz"] { fill: var(--gold); }
+[data-rol-fill="logro"] { fill: var(--logro); }
+
+/* Los 4 chips de categoría de la leyenda pintan su <i> con el mismo rol. */
+.mapa-chip > i { background: currentColor; }
+
+/* ── caja y cabecera ───────────────────────────────────────────────────────── */
 .mapa-caja {
   margin-bottom: 8px;
-  /* El donante venía envuelto en su .card global; Ómicrom no la tiene, se
-     define solo para el mapa sin tocar index.css. */
   border: 1px solid var(--mapa-linea);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--mapa-superficie);
   color: var(--mapa-texto);
-  padding: 18px;
+  padding: 16px;
 }
 
 .mapa-caja .card-titulo {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--mapa-texto);
 }
 
 .mapa-cabecera {
   display: flex;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
   flex-wrap: wrap;
   margin-bottom: 8px;
@@ -110,25 +97,25 @@
 .mapa-sub {
   color: var(--mapa-tenue);
   font-size: 13.5px;
+  line-height: 1.6;
   margin: 0;
   max-width: 58ch;
 }
 
-/* Invariante 4: táctil >= 44 px y foco visible (con currentColor del tema hasta
-   que B1 defina la variable de foco del usuario). */
+/* Táctil >= 44 px y foco visible. */
 .mapa-caja .boton {
   min-height: 44px;
   min-width: 44px;
   padding: 8px 16px;
   border: 1px solid var(--mapa-linea);
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--mapa-superficie);
   color: var(--mapa-texto);
   font: inherit;
   cursor: pointer;
 }
 .mapa-caja .boton:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--omi-accent);
   outline-offset: 2px;
 }
 
@@ -137,60 +124,52 @@
   width: 100%;
   height: auto;
   display: block;
+  /* Los halos (drop-shadow) y las etiquetas del anillo exterior viven fuera de
+     la caja de 640: sin esto el recorte se come el brillo de la raíz. */
+  overflow: visible;
 }
 
-.mapa-orbita {
+/* Anillos guía: apoyo visual, nunca dato. Se dibujan sólo si algo está encima
+   (lo decide el modelo), por eso acá no hay regla por radio. */
+.mapa-guia {
   fill: none;
-  stroke: var(--mapa-linea);
-  stroke-dasharray: 3 8;
+  stroke: var(--guia);
+  stroke-dasharray: 2 6;
 }
 
-.mapa-trazo {
-  fill: none;
-  stroke-width: 1.6;
-  opacity: 0.5;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: trazo 0.7s ease-out forwards;
+/* Aristas: el modelo entrega `--largo` (longitud en unidades de usuario) y el
+   delay; el trazo se descubre de punta a punta. */
+.mapa-arista {
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-dasharray: var(--largo);
+  stroke-dashoffset: var(--largo);
+  animation: trazar 300ms var(--f-salida) forwards;
 }
 
-.mapa-trazo-suave {
-  opacity: 0.32;
-}
-
-.mapa-trazo[data-apagado="true"] {
-  opacity: 0.09;
-}
-
-.mapa-trazo-logro {
-  opacity: 0.85;
-  stroke-width: 1.4;
-}
-
-@keyframes trazo {
+@keyframes trazar {
   to {
     stroke-dashoffset: 0;
   }
 }
 
+/* La línea blanca del camino (brief: «una línea blanca cronológica une los pasos
+   hechos»). Mismo gesto que la arista —el keyframe `trazar`—, otro tempo: el
+   modelo reparte 1,7 s entre los segmentos y los entrega ya calculados en
+   --d-camino y animation-delay. Se pinta antes del nacimiento de los nodos, así
+   que la tinta pasa por debajo de los discos y no los pinta. */
 .mapa-camino {
-  fill: none;
-  stroke: #ffffff; /* el camino blanco del donante: literal, sin rol (no hay
-                     brecha que lo pinte; B1 no lo gobierna) */
-  stroke-width: 2;
-  opacity: 0.7;
-  stroke-linejoin: round;
+  stroke-width: 1.7;
   stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: trazo 1.7s ease-in-out forwards;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+  stroke-dasharray: var(--largo);
+  stroke-dashoffset: var(--largo);
+  animation: trazar var(--d-camino, 1700ms) linear forwards;
 }
 
-/* transform-box/transform-origin: lo que hace que scale(0.35) escale el nodo y
-   no el viewBox. Sin estas dos líneas el mapa "explota" desde la esquina. */
-.mapa-nodo {
-  animation: nacer 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+/* Nacer: transform-box/transform-origin es lo que hace que scale(0.2) escale el
+   nodo y no el viewBox. Sin estas dos líneas el mapa "explota" desde la esquina. */
+.mapa-nace {
+  animation: nacer 300ms var(--f-rebote) both;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -198,7 +177,7 @@
 @keyframes nacer {
   from {
     opacity: 0;
-    transform: scale(0.35);
+    transform: scale(0.2);
   }
   to {
     opacity: 1;
@@ -206,8 +185,7 @@
   }
 }
 
-/* latir: solo el nodo que acaba de nacer (el donante lo encadenaba en .pulso:
-   `animation: nacer ..., latir ...`). */
+/* latir: solo el nodo que acaba de nacer (modo 'naciendo', recienId). */
 @keyframes latir {
   0% {
     transform: scale(1);
@@ -221,66 +199,114 @@
 }
 
 .pulso {
-  animation: nacer 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both, latir 1s ease-out 0.1s 1;
+  animation: nacer 300ms var(--f-rebote) both, latir 800ms var(--f-salida) 200ms 1;
 }
 
-/* Invariante 2, modo 'vivo': el nodo que llega por realtime SOLO hace brillar
-   1100 ms (tiempo dictado por el brief; la forma del destello no estaba en el
-   CSS del donante — decisión documentada en el reporte B3). El crecimiento del
-   anillo queda pendiente para B4, cuando exista el evento realtime. */
+/* Modo 'vivo': el nodo que llega por realtime no vuelve a nacer, sólo destella
+   una vez. El remontaje del mapa lo dispara el clic del usuario, jamás un
+   evento (Invariante 2). */
 @keyframes brillar {
   0% {
-    transform: scale(1);
     filter: brightness(1);
   }
   40% {
-    transform: scale(1.12);
     filter: brightness(1.6);
   }
   100% {
-    transform: scale(1);
     filter: brightness(1);
   }
 }
 
 .mapa-brillar {
-  animation: brillar 1100ms ease-out 1;
+  animation: brillar 1100ms var(--f-salida) 1;
 }
 
-.mapa-brecha-rechazada {
-  opacity: 0.22;
+/* ── la escena (la portada del home) ───────────────────────────────────────
+   El mismo lienzo sin caja, sin cabecera y sin cola: presidir sin repetir lo
+   que ya dicen la franja de arriba y la barra de abajo. */
+.mapa-escena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  color: var(--mapa-texto);
 }
 
-.mapa-anillo {
-  fill: none;
-  stroke-dasharray: 4 5;
-  opacity: 0.85;
+.mapa-escena .mapa-svg {
+  max-height: 100%;
 }
 
+/* Cuando el mapa se encoge, las etiquetas se van del SVG a acá, donde un px es
+   un px. Es la misma gramática de la leyenda (chip + punto pintado por rol). */
+.mapa-escena-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+}
+
+/* ── la letra se escribe en pantalla, no en unidades ────────────────────────
+   El viewBox mide 772 unidades y el componente mide cuántos px reales vale cada
+   una en --mapa-escala. Sin esta división, un mapa de 360px pintaba sus
+   etiquetas a 5px: ilegible. Con data-estrecho="si" la letra ya no cabe ni
+   compensada (pisaría a su vecina), así que el SVG se queda con las formas y
+   los nombres viven en .mapa-escena-chips / la cola. */
+.mapa-svg[data-estrecho="si"] .mapa-nodo-texto,
+.mapa-svg[data-estrecho="si"] .mapa-cat-texto,
+.mapa-svg[data-estrecho="si"] .mapa-raiz-nombre {
+  display: none;
+}
+
+/* ── la raíz ───────────────────────────────────────────────────────────────── */
 .mapa-raiz {
-  /* El halo del donante era rgba(242,177,52,.35) — ámbar D5 muerto: mismo
-     35 % sobre el dorado propio de la raíz (--raiz-inicio). */
-  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--raiz-inicio) 35%, transparent));
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--gold) 35%, transparent));
 }
 
-.mapa-raiz-stop-inicio {
-  stop-color: var(--raiz-inicio);
-}
-.mapa-raiz-stop-fin {
-  stop-color: var(--raiz-fin);
-}
-
-.mapa-raiz-texto {
-  fill: #1a1408; /* tinta oscura sobre la raíz dorada: literal del donante */
-  font-size: 11.5px;
+.mapa-raiz-nombre {
+  fill: var(--tinta-raiz);
+  font-size: calc(11px / var(--mapa-escala, 1));
   font-weight: 700;
+  letter-spacing: 0.14em;
+  /* El plato limpio: la trama va debajo del nombre, así que el texto se recorta
+     sobre el propio ámbar de la raíz en vez de pelear con los hilos. */
+  paint-order: stroke;
+  stroke: var(--gold);
+  stroke-width: calc(3px / var(--mapa-escala, 1));
+  stroke-linejoin: round;
+}
+
+/* El orbe sobre la raíz: la trama de ./orbGeometry, la misma que vuela desde la
+   franja de arriba. Se pinta con la tinta de la raíz para que se lea sobre el
+   ámbar y no recibe puntero — la raíz se lee, no se toca.
+   Static: el orbe que aterriza en el mapa no sigue girando después. El giro
+   continuo convertía la esfera en un polígono dando vueltas sobre los datos, así
+   que la trama llega quieta, como llega el orbe en vuelo (spinning={0}). */
+.mapa-orbe {
+  stroke: var(--tinta-raiz);
+  fill: var(--tinta-raiz);
+  pointer-events: none;
+}
+
+.mapa-orbe line {
+  stroke-width: 1.1;
+}
+
+/* ── las categorías ────────────────────────────────────────────────────────── */
+.mapa-nodo-cat {
+  fill: var(--nodo-hueco);
+  stroke-width: 2;
 }
 
 .mapa-cat-texto {
-  font-size: 11px;
+  font-size: calc(11.5px / var(--mapa-escala, 1));
   font-weight: 700;
-  letter-spacing: 0.08em;
-  animation: aparecer 0.5s ease-out both;
+  letter-spacing: 0.06em;
+  animation: aparecer 300ms var(--f-salida) both;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: calc(3px / var(--mapa-escala, 1));
+  stroke-linejoin: round;
 }
 
 @keyframes aparecer {
@@ -292,7 +318,76 @@
   }
 }
 
-/* ── leyenda ───────────────────────────────────────────────────────────── */
+/* ── los nodos: la forma porta el estado, nunca sólo el color ──────────────── */
+.mapa-nodo-carne {
+  fill: var(--nodo-hueco);
+  stroke-width: 1.5;
+  transition: fill 250ms var(--f-salida);
+}
+
+/* Reconocida y dominada se rellenan del color de su categoría (heredado del
+   grupo por currentColor). Pendiente queda hueca: el hueco ES el estado. */
+.mapa-nodo[data-estado="confirmada"] .mapa-nodo-carne,
+.mapa-nodo[data-estado="dominada"] .mapa-nodo-carne {
+  fill: currentColor;
+}
+
+/* Dominada: doble anillo. */
+.mapa-anillo-doble {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0.85;
+}
+
+/* Descartada: el nodo se apaga y se tacha. La tinta del tachado es la única
+   aparición del rojo de error en el mapa, y llega con forma, no sólo con color. */
+.mapa-nodo[data-estado="rechazada"] {
+  opacity: 0.5;
+}
+
+.mapa-nodo[data-estado="rechazada"] .mapa-nodo-carne {
+  stroke-dasharray: 3 3;
+}
+
+.mapa-tachado {
+  stroke: var(--tachado);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* El micro-logro gira alrededor de su nodo dominado. La caja invisible de 84 que
+   monta el componente es la que da el centro de giro: sin ella la chispa
+   orbitaría sobre sí misma. */
+.mapa-orbita {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: girar 9s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mapa-chispa {
+  stroke: none;
+}
+
+/* Etiquetas de nodo: el halo de tinta oscura es lo que las hace legibles cuando
+   cruzan un anillo guía o una arista. */
+.mapa-nodo-texto {
+  font-size: calc(11px / var(--mapa-escala, 1));
+  font-weight: 600;
+  fill: var(--mapa-texto);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: calc(3px / var(--mapa-escala, 1));
+  stroke-linejoin: round;
+  animation: aparecer 300ms var(--f-salida) both;
+}
+
+/* ── leyenda ───────────────────────────────────────────────────────────────── */
 .mapa-leyenda {
   display: flex;
   flex-wrap: wrap;
@@ -316,97 +411,46 @@
   flex: none;
 }
 
+/* Los cuatro puntos de estado repiten la gramática del mapa: hueco, lleno, lleno
+   con anillo, apagado. */
 .mapa-punto-estado[data-estado="pendiente"] {
   background: var(--nodo-hueco);
-  border: 1.6px solid var(--borde-pendiente);
+  border: 1.5px dashed var(--borde-pendiente);
 }
 
 .mapa-punto-estado[data-estado="confirmada"] {
-  background: color-mix(in srgb, var(--mapa-ok) 20%, transparent);
-  border: 2px solid var(--mapa-ok);
+  background: color-mix(in srgb, var(--logro) 55%, transparent);
+  border: 1.5px solid var(--logro);
 }
 
 .mapa-punto-estado[data-estado="dominada"] {
-  background: var(--mapa-ok);
-  border: 2px solid var(--mapa-ok);
+  background: var(--logro);
+  border: 1.5px solid var(--logro);
+  box-shadow: 0 0 0 2.5px var(--mapa-superficie), 0 0 0 3.5px var(--logro);
 }
 
 .mapa-punto-estado[data-estado="rechazada"] {
-  background: var(--borde-rechazada);
-  border: 2px solid var(--borde-rechazada);
+  background: var(--borde-pendiente);
+  border: 1.5px solid var(--borde-pendiente);
   opacity: 0.5;
 }
 
-/* ── escaneo (acto 1): SOLO las animaciones y sus tiempos medidos ───────────
-   El markup del escaneo lo monta B4; acá vive el tiempo del donante para que
-   la lista reduced-motion de abajo no apague clases fantasma. El destello
-   ámbar rgba(242,177,52,α) del donante MURIÓ con la regla D5: se portó con
-   la misma alfa sobre --mapa-ok. Decisión documentada en el reporte B3. */
-.escaneo-haz {
-  animation: haz 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-}
-
-.escaneo-haz[data-activo="false"] {
-  display: none;
-}
-
-.escaneo-haz rect:first-child {
-  fill: var(--mapa-ok);
-}
-
-.escaneo-haz-bruma {
-  fill: color-mix(in srgb, var(--mapa-ok) 15%, transparent);
-}
-
-@keyframes haz {
-  0% {
-    transform: translateY(12px);
-  }
-  50% {
-    transform: translateY(134px);
-  }
-  100% {
-    transform: translateY(12px);
-  }
-}
-
-.escaneo-linea {
-  fill: #2a313b; /* gris de la hoja del documento: literal del donante */
-}
-
-.escaneo-linea[data-activo="true"] {
-  animation: linea-luz 1.44s ease-in-out infinite;
-}
-
-.escaneo-linea[data-listo="true"] {
-  fill: color-mix(in srgb, var(--mapa-ok) 35%, transparent);
-}
-
-@keyframes linea-luz {
-  0%,
-  100% {
-    fill: #2a313b;
-  }
-  45% {
-    fill: color-mix(in srgb, var(--mapa-ok) 55%, transparent);
-  }
-}
-
-/* ── el camino (actos 3-4) ─────────────────────────────────────────────── */
+/* ── el camino recorrido ───────────────────────────────────────────────────── */
 .camino-caja {
-  margin-top: 22px;
+  margin-top: 16px;
   border-top: 1px solid var(--mapa-linea);
   padding-top: 16px;
 }
 
 .camino-caja .card-titulo {
   font-size: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .camino-vacio {
   color: var(--mapa-tenue);
   font-size: 13.5px;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -422,7 +466,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 9px 0;
+  padding: 8px 0;
   border-bottom: 1px dashed var(--mapa-linea);
   font-size: 14px;
 }
@@ -439,13 +483,13 @@
 }
 
 .camino-punto[data-tipo="reconocida"] {
-  background: var(--mapa-ok);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mapa-ok) 20%, transparent);
+  background: color-mix(in srgb, var(--logro) 55%, transparent);
+  border: 1.5px solid var(--logro);
 }
 
 .camino-punto[data-tipo="dominada"] {
-  background: var(--mapa-ok);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mapa-ok) 20%, transparent);
+  background: var(--logro);
+  box-shadow: 0 0 0 2.5px var(--mapa-superficie), 0 0 0 3.5px var(--logro);
 }
 
 .camino-fecha {
@@ -471,6 +515,7 @@
   border: 1px solid var(--mapa-linea);
   border-radius: 999px;
   padding: 1px 9px;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 560px) {
@@ -483,29 +528,29 @@
   }
 }
 
-/* ── reduced motion (Invariante 4, lista literal del donante) ─────────────── */
+/* ── reduced motion ──────────────────────────────────────────────────────────
+   El reset global de index.css baja la duración a 0.001 ms, y eso alcanza para
+   `nacer`/`aparecer` (terminan en su estado final). Con el trazado no: la
+   arista existe con dashoffset = su largo, o sea invisible. Estas líneas son lo
+   único que evita que el mapa se pinte en blanco. La órbita se detiene porque
+   girar infinito es el gesto más invasivo del dibujo. */
 @media (prefers-reduced-motion: reduce) {
-  .escaneo-haz,
-  .escaneo-linea,
-  .mapa-nodo,
-  .mapa-trazo,
-  .mapa-camino,
-  .mapa-cat-texto,
-  .pulso,
-  .spinner {
-    animation: none !important;
-  }
-  /* Sin animación el trazo quedaría al 0 % de su largo (dashoffset=1): el mapa
-     se pintaría en blanco. Estas dos líneas son las que salvan el acto 1. */
-  .mapa-trazo,
-  .mapa-camino {
+  .mapa-arista {
+    animation: none;
     stroke-dashoffset: 0;
   }
-  .escaneo-haz {
-    display: none;
+  .mapa-camino {
+    animation: none;
+    stroke-dashoffset: 0;
   }
-  /* El brillar del modo 'vivo' es del port, no del donante: se apaga igual. */
-  .mapa-brillar {
-    animation: none !important;
+  .mapa-nace,
+  .pulso,
+  .mapa-brillar,
+  .mapa-cat-texto,
+  .mapa-nodo-texto {
+    animation: none;
+  }
+  .mapa-orbita {
+    animation: none;
   }
 }

@@ -14,7 +14,7 @@ const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 
 const json = (body: unknown, status = 200) =>
@@ -90,7 +90,7 @@ function calculateAdaptiveDifficulty(ctx: DifficultyContext): { level: number; l
 
 // ═══ HANDLER PRINCIPAL ════════════════════════════════════════════════
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ error: 'Simulador no configurado (falta OPENROUTER_KEY).' }, 500);
@@ -140,13 +140,13 @@ Deno.serve(async (req) => {
 
       // Generar reto con IA adaptativa (siempre modo ANÁLISIS)
       const sys =
-        'Eres el Simulador Universal de Omicrom: un evaluador experto que valida competencias en CUALQUIER disciplina. ' +
+        'Eres el Simulador Universal de Omicrom: un evaluador experto que valida habilidades en CUALQUIER disciplina. ' +
         'Tu rol es generar un RETO ADAPTATIVO que empuje al usuario justo por encima de su nivel actual. ' +
         'El reto debe ser práctico, realista y evaluable objetivamente. Responde SOLO en JSON válido. ' +
         'El idioma es español neutro-chileno.';
 
       const user =
-        `NODO/COMPETENCIA: "${node.title}" (categoría: ${node.category}, dificultad intrínseca: ${node.difficulty_level}/5)\n` +
+        `NODO/HABILIDAD: "${node.title}" (categoría: ${node.category}, dificultad intrínseca: ${node.difficulty_level}/5)\n` +
         `DESCRIPCION: ${node.description ?? '(sin descripción)'}\n` +
         `NIVEL ADAPTATIVO DEL USUARIO: ${difficulty.label}\n` +
         `EJES ACTUALES: Ejecución=${prof?.execution_score ?? 50}, Calidad=${prof?.quality_score ?? 50}, ` +
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
         'Genera un reto con este formato JSON EXACTO:\n' +
         '{\n' +
         '  "titulo": "nombre corto del reto",\n' +
-        '  "contexto": "situación real donde se aplica esta competencia (2-3 frases)",\n' +
+        '  "contexto": "situación real donde se aplica esta habilidad (2-3 frases)",\n' +
         '  "preguntas": [{"pregunta":"...","opciones":["a","b","c","d"],"correcta":0,"razon":"..."}],\n' +
         '  "caso_practico": {"enunciado":"descripción del problema a resolver","criterios":["criterio 1","criterio 2","criterio 3"]},\n' +
         '  "pista_adaptativa": "una pista calibrada al nivel del usuario que NO da la respuesta pero guía"\n' +
@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
         'Evalúa los 4 ejes del Gemelo Digital de 0 a 100. Responde SOLO en JSON válido.';
 
       const user =
-        `COMPETENCIA: ${node?.title ?? 'Desconocida'} (categoría: ${node?.category ?? '?'})\n` +
+        `HABILIDAD: ${node?.title ?? 'Desconocida'} (categoría: ${node?.category ?? '?'})\n` +
         `NIVEL ADAPTATIVO: ${difficulty?.label ?? 'intermedio'}\n` +
         `CASO: ${reto?.caso_practico?.enunciado ?? '(sin caso)'}\n` +
         `CRITERIOS: ${JSON.stringify(reto?.caso_practico?.criterios ?? [])}\n` +
@@ -329,4 +329,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Simulador Universal.', detail: String(e) }, 500);
   }
-});
+}));

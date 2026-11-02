@@ -7,7 +7,7 @@ import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { getGuestProfile, clearGuestProfile } from '@/shared/utils/guestMode';
 import { persistOnboardingProfile } from '@/shared/services/onboardingSync';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS, tint, ELEVATED } from '@/theme';
+import { HALO, BLUR, C, FONT, SIZE, RADIUS, tint, ELEVATED, UMBRAL, LETRA} from '@/theme';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -304,8 +304,11 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   // usuario. Sin reduce, el halo se intensifica al llenar; con reduce queda
   // estático en su valor base. NO es un borde: sigue siendo solo sombra.
   const glowAlpha = reduce ? '33' : Math.round((0.2 + charge * 0.4) * 255).toString(16).padStart(2, '0');
-  const glowBlur = reduce ? 30 : Math.round(30 + charge * 30);   // 30px -> 60px
-  const orbRingShadow = `0 0 ${glowBlur}px ${uc}${glowAlpha}, inset 0 0 20px ${uc}14`;
+  // El rampa del anillo se escribe sobre la escala: del resplandor al doble.
+  // Antes era 30px -> 60px escritos a mano; la forma (duplicar al llenar) se
+  // conserva, el tamaño se ciñe un paso.
+  const glowBlur = reduce ? HALO.resplandor : Math.round(HALO.resplandor * (1 + charge));
+  const orbRingShadow = `0 0 ${glowBlur}px ${uc}${glowAlpha}, inset 0 0 ${HALO.resplandor}px ${uc}14`;
 
   // ── "Encender tu Gemelo" (INC 3) — beat de éxito ────────────────────
   // Cuando la autenticación tiene éxito (authPulse), el orbe da UN solo
@@ -323,7 +326,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   // efectos (el handler va inline, no en un array de deps). Con reduce activo,
   // no hay escala ni desplazamiento: solo un breve reconocimiento por
   // opacidad/glow. El burst de glow reutiliza el lenguaje del halo (INC1).
-  const pulseGlow = `0 0 72px ${uc}cc, 0 0 24px ${uc}99, inset 0 0 24px ${uc}33`;
+  const pulseGlow = `0 0 ${HALO.escena}px ${uc}cc, 0 0 ${HALO.resplandor}px ${uc}99, inset 0 0 ${HALO.resplandor}px ${uc}33`;
   const orbBeatAnimate = authPulse
     ? reduce
       ? { boxShadow: [orbRingShadow, pulseGlow, orbRingShadow] }
@@ -338,7 +341,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
   const identifierPlaceholder = mode === 'login' ? 'Tu usuario o correo' : 'nodo@omicron.io';
 
   const submitLabel = loading
-    ? 'Procesando...'
+    ? 'Procesando…'
     : mode === 'login' ? 'Acceder a la Red'
     : mode === 'register' ? 'Unirse a Ómicrom'
     : 'Enviar enlace de recuperación';
@@ -575,7 +578,7 @@ const S: Record<string, CSSProperties> = {
     position: 'fixed', inset: 0, zIndex: 95,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '32px 24px', overflow: 'auto',
-    background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
+    background: UMBRAL.apertura,
   },
   halo: {
     position: 'absolute', top: '4%', left: '50%',
@@ -599,18 +602,18 @@ const S: Record<string, CSSProperties> = {
   brand: {
     margin: 0,
     fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl,
-    letterSpacing: -0.5, color: C.ink,
+    letterSpacing: LETRA.titulo, color: C.ink,
   },
   tagline: {
     margin: '6px 0 0',
-    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.4, color: C.mut,
+    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso, color: C.mut,
   },
   card: {
     position: 'relative', width: '100%',
     borderRadius: RADIUS.xl, padding: 24, overflow: 'hidden',
     background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
-    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
     boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
   },
   cardAccent: {
@@ -635,7 +638,7 @@ const S: Record<string, CSSProperties> = {
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   label: {
     display: 'block', marginBottom: 6,
-    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4,
+    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha,
     textTransform: 'uppercase', color: C.mut,
   },
   input: {
@@ -662,7 +665,7 @@ const S: Record<string, CSSProperties> = {
   submit: {
     width: '100%', padding: '15px 0', borderRadius: RADIUS.md, border: 'none',
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md,
-    letterSpacing: 0.2, color: '#fff',
+    letterSpacing: LETRA.denso, color: '#fff',
   },
   forgot: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -681,7 +684,7 @@ const S: Record<string, CSSProperties> = {
   ghost: {
     width: '100%', marginTop: 16, padding: '13px 0',
     borderRadius: RADIUS.md, background: 'transparent',
-    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.5,
+    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso,
     color: tint(C.ink, 70), cursor: 'pointer',
   },
 };

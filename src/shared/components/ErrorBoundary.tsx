@@ -1,7 +1,7 @@
 // components/shared/ErrorBoundary.tsx
 // Captura errores de render de cualquier pestaña/módulo y muestra un panel
 // holográfico en vez de dejar la app en pantalla blanca.
-import { C, tint } from '@/theme';
+import { BLUR, HALO, C, tint, LETRA} from '@/theme';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Icon } from '@/shared/components/icons';
 
@@ -65,20 +65,20 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%', maxWidth: 340, textAlign: 'center', padding: '24px 20px',
     borderRadius: 16, border: `1px solid ${tint(C.gold, 35)}`,
     background: `linear-gradient(145deg, ${C.surface}, ${C.overlay})`,
-    backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-    boxShadow: `0 0 30px ${tint(C.gold, 18)}, inset 0 1px 1px ${C.glass}`,
+    backdropFilter: `blur(${BLUR.esmeril}px)`, WebkitBackdropFilter: `blur(${BLUR.esmeril}px)`,
+    boxShadow: `0 0 ${HALO.resplandor}px ${tint(C.gold, 18)}, inset 0 1px 1px ${C.glass}`,
   },
   iconRing: {
     width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     border: `1px solid ${tint(C.gold, 50)}`, background: tint(C.gold, 8),
-    boxShadow: `0 0 18px ${tint(C.gold, 35)}`,
+    boxShadow: `0 0 ${HALO.marca}px ${tint(C.gold, 35)}`,
     animation: 'amberBreathe 2.8s ease-in-out infinite',
   },
-  title: { fontFamily: MONO, fontSize: 13, letterSpacing: 2, color: C.gold, fontWeight: 700 },
-  section: { fontFamily: MONO, fontSize: 11, letterSpacing: 1, color: tint(C.gold, 60), marginTop: 4, textTransform: 'uppercase' },
+  title: { fontFamily: MONO, fontSize: 13, letterSpacing: LETRA.anunciada, color: C.gold, fontWeight: 700 },
+  section: { fontFamily: MONO, fontSize: 11, letterSpacing: LETRA.etiqueta, color: tint(C.gold, 60), marginTop: 4, textTransform: 'uppercase' },
   msg: {
-    fontFamily: MONO, fontSize: 11, color: '#9fb3cc', margin: '14px 0 20px',
+    fontFamily: MONO, fontSize: 11, color: C.mut, margin: '14px 0 20px',
     lineHeight: 1.5, wordBreak: 'break-word',
   },
   btnRow: { display: 'flex', gap: 10 },
@@ -89,9 +89,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   btnPrimary: {
     flex: 1, padding: '10px 0', borderRadius: 8, cursor: 'pointer',
-    background: `linear-gradient(90deg, ${C.cyan}, ${C.tealDeep})`, border: 'none',
-    color: C.bg, fontFamily: RAJ, fontWeight: 700, fontSize: 13,
-    boxShadow: `0 0 15px ${tint(C.cyan, 35)}`,
+    background: `linear-gradient(90deg, ${C.gold}, ${C.amberDeep})`, border: 'none',
+    color: C.onAccent, fontFamily: RAJ, fontWeight: 700, fontSize: 13,
+    boxShadow: `0 0 ${HALO.marca}px ${tint(C.gold, 35)}`,
   },
-  hint: { fontFamily: MONO, fontSize: 9, color: 'rgba(159,179,204,0.5)', marginTop: 16, letterSpacing: 0.5 },
+  hint: { fontFamily: MONO, fontSize: 9, color: tint(C.mut, 50), marginTop: 16, letterSpacing: LETRA.denso },
 };

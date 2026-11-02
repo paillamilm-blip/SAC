@@ -12,21 +12,63 @@ import type { BrechaValidada } from './brechasValidar';
 
 const PUENTE_KEY = 'omicron.brechas.puente';
 
+// El puente se escribe desde el análisis del CV (a veces en otra pestaña del
+// árbol: el modal de convalidación) y se lee en la portada y en Aprendizaje.
+// Sin aviso, la portada seguía pintando la muestra del donante hasta la próxima
+// recarga: el usuario veía el mapa de otro justo después de subir su CV.
+type EscuchadorPuente = () => void;
+const escuchadores = new Set<EscuchadorPuente>();
+
+function notificarPuente(): void {
+  // Un efecto secundario de un suscriptor no puede dejar mudos a los demás: la
+  // portada y la cola son oyentes del mismo aviso.
+  for (const e of Array.from(escuchadores)) {
+    try { e(); } catch { /* el que falla pierde su aviso, no el resto */ }
+  }
+}
+
+// El crudo del localStorage al modelo, en un solo lugar: `leer()` y el hook
+// reactivo parsean la misma cadena, así no pueden diverger.
+export function puenteDesdeHuella(huella: string | null): BrechaValidada[] {
+  try {
+    return huella ? (JSON.parse(huella) as BrechaValidada[]) : [];
+  } catch { return []; }
+}
+
+/**
+ * El crudo tal cual, o null si la clave no existe. Es la foto que compara
+ * `useSyncExternalStore`: una cadena estable (parsear en cada render daría un
+ * array nuevo y React creería que siempre cambió). Que EXISTA ya dice algo:
+ * este navegador leyó un CV, aunque no haya producido ninguna brecha.
+ */
+function leerHuella(): string | null {
+  try { return localStorage.getItem(PUENTE_KEY); } catch { return null; }
+}
+
 export const puenteBrechasInvitado = {
   leer(): BrechaValidada[] {
-    try {
-      const raw = localStorage.getItem(PUENTE_KEY);
-      return raw ? (JSON.parse(raw) as BrechaValidada[]) : [];
-    } catch { return []; }
+    return puenteDesdeHuella(leerHuella());
   },
+  huella: leerHuella,
   escribir(brechas: BrechaValidada[]) {
-    try { localStorage.setItem(PUENTE_KEY, JSON.stringify(brechas)); } catch { /* llena o privada: el mapa pierde el puente, no la app */ }
+    try {
+      localStorage.setItem(PUENTE_KEY, JSON.stringify(brechas));
+      notificarPuente();
+    } catch { /* llena o privada: el mapa pierde el puente, no la app */ }
   },
   // Vacia la clave del puente. Lo va a necesitar la promocion
   // invitado->autenticado (Plan B): despues de subir las brechas a la BD hay que
   // borrarlas de aqui, o el proximo arranque las vuelve a ver como de invitado.
   limpiar(): void {
-    try { localStorage.removeItem(PUENTE_KEY); } catch { /* sin permisos: no hay puente que limpiar */ }
+    try {
+      localStorage.removeItem(PUENTE_KEY);
+      notificarPuente();
+    } catch { /* sin permisos: no hay puente que limpiar */ }
+  },
+  /** Devuelve la función para dejar de escuchar. */
+  suscribir(escuchador: EscuchadorPuente): () => void {
+    escuchadores.add(escuchador);
+    return () => { escuchadores.delete(escuchador); };
   },
 };
 
@@ -199,6 +241,13 @@ export async function analizarCvConFallback(
     const { analyzeCVWithGemini } = await import('@/infrastructure/ai/gemini');
     const g = await analyzeCVWithGemini(texto);
     if (g.ok && g.analysis?.axes) {
+      // Gemini no emite brechas, pero si puede dejar la marca de que ESTE navegador
+      // ya leyó un CV. Sin esa marca la portada del invitado seguía pintando la
+      // muestra del donante después de subir su propio CV. Solo sin sesión (el
+      // puente es del invitado) y solo si no hay puente previo: borrar el de un
+      // análisis anterior sería perder trabajo propio (el mismo cuidado que M6).
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session && puenteBrechasInvitado.huella() === null) puenteBrechasInvitado.escribir([]);
       return { fuente: 'gemini', analysis: g.analysis, brechas: [], guardado: null };
     }
     console.error('[Omicron] el fallback Gemini tampoco trajo un analisis:', g.error ?? 'sin motivo');

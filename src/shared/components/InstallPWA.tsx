@@ -5,7 +5,7 @@
 // la app ya está instalada (display-mode: standalone).
 import { useState, useEffect } from 'react';
 import { Download, X, Share } from 'lucide-react';
-import { C, FONT, RADIUS, tint, SIZE } from '@/theme';
+import { BLUR, HALO, C, FONT, RADIUS, tint, SIZE, LETRA} from '@/theme';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -74,8 +74,8 @@ export function InstallPWA() {
         display: 'flex', alignItems: 'center', gap: 12, maxWidth: '92vw',
         padding: '10px 12px 10px 16px', borderRadius: RADIUS.pill,
         background: C.surface, border: `1px solid ${C.cyanDim}`,
-        boxShadow: `0 12px 40px ${C.scrim}, 0 0 22px ${tint(C.cyan, 18)}`,
-        backdropFilter: 'blur(12px)',
+        boxShadow: `0 12px 40px ${C.scrim}, 0 0 ${HALO.resplandor}px ${tint(C.cyan, 18)}`,
+        backdropFilter: `blur(${BLUR.escarcha}px)`,
       }}
     >
       <span style={{ fontSize: 20, lineHeight: 1 }}>Ω</span>
@@ -93,8 +93,8 @@ export function InstallPWA() {
             onClick={install}
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: RADIUS.pill,
-              cursor: 'pointer', background: `linear-gradient(135deg, #8bd4ff, ${C.cyan})`, border: 'none',
-              color: C.bg, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 700,
+              cursor: 'pointer', background: `linear-gradient(135deg, ${C.ice}, ${C.cyan})`, border: 'none',
+              color: C.bg, fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.denso, textTransform: 'uppercase', fontWeight: 700,
             }}
           >
             <Download size={14} /> Instalar
@@ -104,7 +104,7 @@ export function InstallPWA() {
       <button
         onClick={dismiss}
         aria-label="Cerrar"
-        style={{ display: 'flex', background: 'none', border: 'none', color: 'rgba(234,242,255,0.5)', cursor: 'pointer', padding: 4 }}
+        style={{ display: 'flex', background: 'none', border: 'none', color: tint(C.ink, 50), cursor: 'pointer', padding: 4 }}
       >
         <X size={16} />
       </button>

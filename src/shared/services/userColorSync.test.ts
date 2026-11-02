@@ -9,13 +9,19 @@ import { resolveColorId } from './userColor';
 
 describe('resolveColorId (validación de color)', () => {
   it('mapea un id conocido a su id canónico', () => {
-    expect(resolveColorId('gold')).toBe('gold');
-    expect(resolveColorId('ice')).toBe('ice');
+    expect(resolveColorId('ambar')).toBe('ambar');
+    expect(resolveColorId('azul')).toBe('azul');
   });
 
   it('mapea un hex conocido al id canónico', () => {
-    expect(resolveColorId('#ffb02e')).toBe('gold');
-    expect(resolveColorId('#7dd3fc')).toBe('ice');
+    expect(resolveColorId('#f2b134')).toBe('ambar');
+    expect(resolveColorId('#6aa9ff')).toBe('azul');
+  });
+
+  it('retira un color que ya no está en la paleta', () => {
+    // El celeste del selector anterior: si sigue guardado en el dispositivo,
+    // getUserColor cae al ámbar de la marca en vez de pintar la app de azul.
+    expect(resolveColorId('#7dd3fc')).toBeNull();
   });
 
   it('devuelve null para una entrada desconocida', () => {

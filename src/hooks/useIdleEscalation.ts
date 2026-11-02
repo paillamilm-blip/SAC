@@ -1,13 +1,18 @@
 // hooks/useIdleEscalation.ts
 // ═══════════════════════════════════════════════════════════════════════
 // IDLE ESCALATION — Si el usuario no interactúa, escalamos engagement.
-// 10s → chips bounce | 20s → highlight nodo | 30s → "¿Necesitas ayuda?"
-// 60s → quiet mode (no molestar más).
+// 10s → chips bounce | 20s → highlight nodo | 30s → AYUDA_MS | 60s → quiet.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 export type IdleStage = 'active' | 'chips_bounce' | 'highlight_node' | 'help_offer' | 'quiet';
+
+// La oferta de ayuda se dibuja en la franja de 36 px que queda entre la leyenda
+// del mapa y la barra, a 485 px de ancho. Con 60 caracteres mono 11 px se parte
+// en dos renglones y la franja tapa los chips que la propia frase manda a tocar.
+// Lo comparte con el componente para que la prueba mida el mismo texto que se pinta.
+export const AYUDA_MS = '¿Te ayudo? Di "aprender una lección" o toca un chip.';
 
 interface IdleEscalationResult {
   stage: IdleStage;
@@ -72,9 +77,7 @@ export function useIdleEscalation(enabled: boolean = true): IdleEscalationResult
     };
   }, [enabled, stage]);
 
-  const helpMessage = stage === 'help_offer'
-    ? '¿Necesitas ayuda? Prueba diciendo "aprender una lección" o toca un chip abajo.'
-    : null;
+  const helpMessage = stage === 'help_offer' ? AYUDA_MS : null;
 
   return { stage, helpMessage, resetIdle };
 }

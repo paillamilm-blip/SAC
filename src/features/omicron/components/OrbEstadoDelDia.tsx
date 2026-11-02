@@ -19,7 +19,7 @@
 
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, RADIUS, SIZE, SP, tint } from '@/theme';
+import { BLUR, HALO, C, ELEVATED, FONT, RADIUS, SIZE, SP, LETRA} from '@/theme';
 
 export interface OrbEstadoDelDiaProps {
   /** La línea a mostrar; si es null el ribbon no se renderiza. */
@@ -70,15 +70,15 @@ export function OrbEstadoDelDia({ label, visible }: OrbEstadoDelDiaProps) {
               padding: '8px 14px',
               borderRadius: RADIUS.pill,
               background: C.surface,
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              backdropFilter: `blur(${BLUR.escarcha}px)`,
+              WebkitBackdropFilter: `blur(${BLUR.escarcha}px)`,
               border: `1px solid ${userColor}33`,
-              boxShadow: `0 2px 12px ${userColor}14, 0 4px 18px ${tint(C.black, 32)}`,
+              boxShadow: ELEVATED.tinte('sm', `${userColor}14`),
               fontFamily: FONT.body,
               fontSize: SIZE.xs,
               lineHeight: 1.4,
               fontWeight: 500,
-              letterSpacing: 0.1,
+              letterSpacing: LETRA.denso,
               color: C.mut,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -94,7 +94,7 @@ export function OrbEstadoDelDia({ label, visible }: OrbEstadoDelDiaProps) {
                 height: 6,
                 borderRadius: RADIUS.pill,
                 background: userColor,
-                boxShadow: `0 0 6px ${userColor}80`,
+                boxShadow: `0 0 ${HALO.ascua}px ${userColor}80`,
               }}
             />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>

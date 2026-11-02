@@ -10,6 +10,7 @@
 // Then: style={{ ...blurStyle }} on the section wrapper.
 // ═══════════════════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { VELO } from '@/theme';
 
 const STORAGE_KEY = 'omicron_visited_sections';
 
@@ -67,8 +68,8 @@ export function useProgressiveBlur(sectionId: string) {
   const blur = visited
     ? 'none'
     : clearing
-      ? 'blur(0px)'
-      : 'blur(1.5px)';
+      ? `blur(${VELO.nitido}px)`
+      : `blur(${VELO.apenas}px)`;
 
   // Style object ready to spread
   const blurStyle = visited

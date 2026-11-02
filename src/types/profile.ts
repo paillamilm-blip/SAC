@@ -13,7 +13,7 @@ export interface Profile {
   username: string;
   full_name: string;
   display_name?: string;   // ✅ nombre para mostrar (opcional; cae a full_name)
-  user_color?: string;     // ID del color elegido para el Gemelo: 'ice' | 'pink' | 'gold' | 'lime'
+  user_color?: string;     // ID del color elegido para el Gemelo: 'ambar' | 'azul' | 'verde' | 'violeta'
   avatar_url?: string;
   bio?: string;
   location?: string;       // ✅ añadido: ubicación del nodo

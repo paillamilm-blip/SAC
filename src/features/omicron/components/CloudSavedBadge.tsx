@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, RADIUS, LETRA} from '@/theme';
 
 /** Tiempo visible tras un guardado antes de desvanecerse. */
 const VISIBLE_MS = 3000;
@@ -65,12 +65,12 @@ export function CloudSavedBadge() {
             borderRadius: RADIUS.pill,
             border: `1px solid ${uc}33`,
             background: `${uc}14`,
-            boxShadow: `0 0 14px ${uc}22, inset 0 0 10px ${uc}0d`,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            boxShadow: `0 0 ${HALO.marca}px ${uc}22, inset 0 0 ${HALO.foco}px ${uc}0d`,
+            backdropFilter: `blur(${BLUR.vaho}px)`,
+            WebkitBackdropFilter: `blur(${BLUR.vaho}px)`,
             fontFamily: FONT.mono,
             fontSize: SIZE.xs,
-            letterSpacing: 0.4,
+            letterSpacing: LETRA.denso,
             color: C.ink,
             whiteSpace: 'nowrap',
             userSelect: 'none',

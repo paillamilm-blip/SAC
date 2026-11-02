@@ -11,8 +11,10 @@
 //      la excepción documentada.
 //   4. Toda animación que se pide por nombre existe en algún lado.
 //
-// El mapa neuronal (`src/features/mapa/**`) es un port 1:1 del donante y está
-// fuera de contrato, igual que en el resto del estándar.
+// El mapa radial (`src/features/mapa/**`) está fuera de contrato, pero no por
+// ser un port de nadie: es el único lugar de la app que anima trazado de líneas
+// (stroke-dash) y órbita, dos gestos que no pertenecen a la familia de la
+// interfaz. La excepción está documentada también en la cabecera de mapa.css.
 //
 // OJO CRLF: el checkout viene con \r\n (core.autocrlf); se quita antes de barrer.
 import { it, expect } from 'vitest';

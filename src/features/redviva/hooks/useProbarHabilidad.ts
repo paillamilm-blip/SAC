@@ -57,7 +57,7 @@ export function useProbarHabilidad(alAbrir?: () => void): ProbarHabilidadState {
         );
       } catch (e) {
         console.error('[Omicron] Falló al preparar el examen:', e);
-        setError('No pudimos preparar el examen. Probá de nuevo en un momento.');
+        setError('No pudimos preparar el examen. Prueba de nuevo en un momento.');
       } finally {
         setPreparando(false);
       }

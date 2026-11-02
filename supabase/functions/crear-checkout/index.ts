@@ -19,12 +19,12 @@ const PUBLIC_SITE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? '';
 const MIN_TOKENS = 1000;
 const MAX_TOKENS = 500000;
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!STRIPE_SECRET_KEY) {
@@ -87,4 +87,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ ok: false, error: 'Error inesperado creando el pago.', detail: String(e) }, 500);
   }
-});
+}));

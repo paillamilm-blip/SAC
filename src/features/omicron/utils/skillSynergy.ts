@@ -50,7 +50,7 @@ export const SYNERGY_GROUP_META: SynergyGroupMeta[] = [
   {
     id: 1,
     nombre: 'Datos e inteligencia artificial',
-    porque: 'Se potencian entre sí: con datos entrenás modelos y sacás conclusiones que se apoyan una en la otra.',
+    porque: 'Se potencian entre sí: con datos entrenas modelos y sacas conclusiones que se apoyan una en la otra.',
   },
   {
     id: 2,
@@ -60,7 +60,7 @@ export const SYNERGY_GROUP_META: SynergyGroupMeta[] = [
   {
     id: 3,
     nombre: 'Diseño de producto',
-    porque: 'Se potencian: pensás la experiencia y la dejás lista para construir.',
+    porque: 'Se potencian: piensas la experiencia y la dejas lista para construir.',
   },
   {
     id: 4,
@@ -70,7 +70,7 @@ export const SYNERGY_GROUP_META: SynergyGroupMeta[] = [
   {
     id: 5,
     nombre: 'Ventas y crecimiento',
-    porque: 'Se potencian: atraés interesados y cerrás acuerdos que hacen crecer el proyecto.',
+    porque: 'Se potencian: atraes interesados y cierras acuerdos que hacen crecer el proyecto.',
   },
 ];
 

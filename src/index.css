@@ -11,30 +11,108 @@
    CSS VARIABLES — Single source of truth (mirrors theme/tokens.ts)
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* --silver es C.cyan de theme/tokens.ts (silver ice). El cian de marca que
-     vivía aquí fue proscrito por el spec; contratoMapa.test.ts lo vigila. */
-  --silver:   #a0aec0;
-  --purple:   #5e5ce6;
-  --teal:     #3fd0c9;
-  --gold:     #ffb02e;
-  --red:      #ff5c7a;
-  --bg:       #000206;
-  --ink:      #eaf0fb;
-  --mut:      #76829d;
-  --line:     rgba(150,180,255,0.14);
-  --line-strong: rgba(150,180,255,0.28);
-  --surface:  rgba(12,16,30,0.86);
-  --glass:    rgba(255,255,255,0.045);
-  --glass-2:  rgba(255,255,255,0.08);
-  --sticky:   rgba(6,8,16,0.96);
+  /* --info es C.cyan de theme/tokens.ts. Se llamaba --silver mientras el
+     sistema era silver-ice; hoy vale #6aa9ff, el info del brief. */
+  --info:     #6aa9ff;
+  --purple:   #c084fc;
+  --teal:     #3ddc97;
+  --gold:     #f2b134;
+  --gold-deep: #c98a12;
+  --red:      #f87171;
+  --bg:       #0b0d10;
+  --ink:      #e9ecef;
+  --mut:      #98a2b0;
+  /* El terciario del brief (4,29:1): SOLO decorativo — guías, dashes, rayas.
+     Nunca texto legible: el estándar asistente pide 4,5:1 en todo el texto. */
+  --mut-soft: #6d7885;
+  --line:     #262c35;
+  --line-soft: #1f242c;
+  --line-strong: #3a424e;
+  --surface:  #14171c;
+  --surface-light: #1a1e25;
+  --glass:    #14171c;
+  --glass-2:  #1a1e25;
+  --sticky:   rgba(20, 23, 28, 0.86);
+  /* Tinta sobre un fondo VIVO (botón ámbar, raíz dorada del mapa, badge).
+     C.onAccent en theme/tokens.ts: el blanco puro sobre ámbar se lee lechoso. */
+  --on-accent: #1a1408;
+
+  /* Paleta del mapa radial: las 4 categorías de dato del brief (azul, ámbar,
+     verde, violeta), espejo de MAPA_CAT. Son FIJAS: el mapa nunca se pinta con
+     el color del usuario. contratoMapa.test.ts verifica que estas cuatro
+     coincidan con MAPA_CAT, así que el espejo no puede derivar. */
+  --mapa-dura:          var(--info);
+  --mapa-blanda:        var(--gold);
+  --mapa-conocimiento:  var(--teal);
+  --mapa-credencial:    var(--purple);
 
   /* El acento del usuario. App.tsx lo escribe una vez en el root y TODO el
-     andamio lo hereda (foco, botones, progreso, estado). El default es silver
-     para que nada dependa de que el JS alcance a ponerlo. El mapa neuronal
-     queda fuera: se pinta siempre con su paleta fija. */
-  --omi-accent: var(--silver);
-  --glow-omi:    0 0 16px color-mix(in srgb, var(--omi-accent) 45%, transparent);
-  --glow-teal:   0 0 16px rgba(63,208,201,0.45);
+     andamio lo hereda (foco, botones, progreso, estado). El default es el ámbar
+     de marca para que nada dependa de que el JS alcance a ponerlo. El mapa
+     queda fuera: se pinta siempre con su paleta fija de categorías. */
+  --omi-accent: var(--gold);
+  --glow-omi:    0 0 var(--halo-marca) color-mix(in srgb, var(--omi-accent) 45%, transparent);
+  --glow-teal:   0 0 var(--halo-marca) rgba(61, 220, 151, 0.45);
+
+  /* Escala de espaciado base 4 px, radios y ancho del brief. */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-6: 24px;
+  --e-8: 32px;
+  --e-12: 48px;
+  --r-card: 14px;
+  --r-control: 9px;
+  --ancho-max: 1200px;
+
+  /* Tracking: el espejo en CSS de LETRA (src/theme/typography.ts). Son los mismos
+     siete números escritos dos veces porque hay dos lenguajes que los piden —un
+     style en línea y una hoja—, y la vara de contratoAsistente compara las dos
+     listas: si un paso se mueve en un lado y no en el otro, el test falla. */
+  --letra-apretada:  -0.15px;
+  --letra-titulo:    -0.4px;
+  --letra-denso:      0.4px;
+  --letra-medido:     0.6px;
+  --letra-etiqueta:   1px;
+  --letra-ancha:      1.5px;
+  --letra-anunciada:  2px;
+
+  /* Luz: el espejo en CSS de HALO (src/theme/shadows.ts) y de BLUR
+     (src/theme/layout.ts). Mismos números, dos lenguajes, una sola vara:
+     contratoAsistente.test.ts compara las dos listas y falla si un paso se
+     mueve de un lado nada más. */
+  --halo-chispa:     4px;
+  --halo-ascua:      8px;
+  --halo-foco:      12px;
+  --halo-marca:     16px;
+  --halo-resplandor: 24px;
+  --halo-difusion:  40px;
+  --halo-escena:    72px;
+  --vidrio-vaho:     8px;
+  --vidrio-escarcha: 12px;
+  --vidrio-cristal:  16px;
+  --vidrio-esmeril:  20px;
+
+  /* Altura de una superficie: las dos capas de SHADOW y cada una suelta, para
+     que la hoja pida lo mismo que pide el código (src/theme/shadows.ts). Dos
+     lenguajes, una escala: contratoAsistente.test.ts compara texto a texto. */
+  --altura-sm-cercana: 0 1px 2px rgba(0,0,0,0.25);
+  --altura-sm-lejana:  0 4px 12px rgba(0,0,0,0.2);
+  --altura-sm:  var(--altura-sm-cercana), var(--altura-sm-lejana);
+  --altura-md-cercana: 0 1px 3px rgba(0,0,0,0.3);
+  --altura-md-lejana:  0 8px 24px rgba(0,0,0,0.35);
+  --altura-md:  var(--altura-md-cercana), var(--altura-md-lejana);
+  --altura-lg-cercana: 0 2px 6px rgba(0,0,0,0.35);
+  --altura-lg-lejana:  0 16px 48px rgba(0,0,0,0.45);
+  --altura-lg:  var(--altura-lg-cercana), var(--altura-lg-lejana);
+  --altura-xl-cercana: 0 4px 12px rgba(0,0,0,0.4);
+  --altura-xl-lejana:  0 24px 64px rgba(0,0,0,0.55);
+  --altura-xl:  var(--altura-xl-cercana), var(--altura-xl-lejana);
+
+  /* El filo de vidrio: la luz que golpea el borde superior de una superficie
+     elevada. Es una arista, no una altura, y por eso no vive en la pareja. */
+  --filo-vidrio: inset 0 1px 0 rgba(150,180,255,0.10);
 
   /* Motion tokens */
   --ease-default: cubic-bezier(0.32, 0.72, 0, 1);
@@ -74,7 +152,13 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  /* Base 15 px / interlineado 1.6 y cifras tabulares en todo el andamio: el
+     brief del laboratorio las pide por sistema, no por componente. Los números
+     de las métricas se apilan en columna y solo se leen como tabla si los
+     dígitos miden lo mismo. */
+  font-size: 15px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
   overscroll-behavior: none;
 }
 
@@ -88,16 +172,16 @@ body {
   padding-right: env(safe-area-inset-right);
   display: flex;
   flex-direction: column;
-  max-width: 430px;
+  /* Ancho máximo del laboratorio: 1200 px. El halo violeta/cian de la cabina
+     móvil se va con él — sobre un fondo plano, la profundidad la dan las
+     superficies escalonadas y los bordes, no un resplandor. */
+  max-width: var(--ancho-max);
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  box-shadow: 0 0 80px color-mix(in srgb, var(--purple) 10%, transparent), 0 0 140px color-mix(in srgb, var(--omi-accent) 6%, transparent);
-  background:
-    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--purple) 18%, transparent), transparent 60%),
-    radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--omi-accent) 10%, transparent), transparent 55%);
+  border-left: 1px solid var(--line-soft);
+  border-right: 1px solid var(--line-soft);
+  background: var(--bg);
 }
 
 .safe-bottom {
@@ -201,7 +285,7 @@ body::after {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(var(--silver), var(--purple));
+  background: linear-gradient(var(--info), var(--purple));
   border-radius: 3px;
 }
 
@@ -213,9 +297,9 @@ body::after {
   background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
   border: 1px solid var(--line);
   border-radius: 16px;
-  box-shadow: 0 12px 34px rgba(0,0,0,0.38), inset 0 1px 0 rgba(150,180,255,0.10);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--altura-md-lejana), var(--filo-vidrio);
+  backdrop-filter: blur(var(--vidrio-esmeril)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--vidrio-esmeril)) saturate(140%);
   overflow: hidden;
 }
 .bg-omicron-card::before {
@@ -232,7 +316,7 @@ body::after {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--silver), var(--teal), transparent);
+  background: linear-gradient(90deg, transparent, var(--info), var(--teal), transparent);
   opacity: 0.7;
 }
 
@@ -251,8 +335,8 @@ body::after {
   50%      { background-position: 100% 100%; }
 }
 @keyframes amberBreathe {
-  0%, 100% { box-shadow: 0 0 14px rgba(245,158,11,0.45); }
-  50%      { box-shadow: 0 0 26px rgba(245,158,11,0.7); }
+  0%, 100% { box-shadow: 0 0 var(--halo-marca) rgba(245,158,11,0.45); }
+  50%      { box-shadow: 0 0 var(--halo-resplandor) rgba(245,158,11,0.7); }
 }
 
 /* Entradas — 8 px hacia arriba y opacidad, en todas las superficies */
@@ -320,6 +404,15 @@ body::after {
 /* El halo del cargador necesita un rango de opacidad más tenue que el núcleo,
    por eso es el único gesto con valores propios. */
 @keyframes omi-ph-ring { 0%,100% { opacity:0.15; transform:scale(1); } 50% { opacity:0.45; transform:scale(1.12); } }
+/* El haz de lectura: recorre la silueta del documento de arriba a abajo y entra
+   y sale con opacidad, así que el reinicio del ciclo no se corta en seco. Los
+   valores están en unidades del viewBox (220×290) del escaneo. */
+@keyframes omi-barrido {
+  0%   { transform: translateY(-40px); opacity: 0; }
+  12%  { opacity: 0.95; }
+  88%  { opacity: 0.95; }
+  100% { transform: translateY(330px); opacity: 0; }
+}
 .omi-latido { animation: omi-latido 2.1s cubic-bezier(0.32,0.72,0,1) infinite; transform-origin:center; transform-box:fill-box; }
 .omi-ph-core { animation: omi-latido 1.6s cubic-bezier(0.4,0,0.2,1) infinite; transform-origin:center; transform-box:fill-box; }
 .omi-ph-ring { animation: omi-ph-ring 1.6s cubic-bezier(0.4,0,0.2,1) infinite; transform-origin:center; transform-box:fill-box; }
@@ -333,29 +426,13 @@ body::after {
 
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE LAYOUT
+   El marco de teléfono (un #root de 460 px centrado con esquinas de 30 px y
+   halo de acento) se jubiló con el brief del laboratorio: la app es una
+   cabina de escritorio que baja a una columna en el bolsillo, no un teléfono
+   dibujado dentro del navegador. El ancho lo fija --ancho-max y los targets
+   táctiles de 44 px ya están en cada superficie.
    ═══════════════════════════════════════════════════════════ */
-@media (min-width: 700px) {
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  #root {
-    width: min(460px, 100%);
-    height: min(920px, calc(100dvh - 48px));
-    border-radius: 30px;
-    overflow: hidden;
-    padding: 0;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--omi-accent) 22%, transparent),
-      0 40px 90px -24px rgba(0,0,0,0.9),
-      0 0 70px -14px color-mix(in srgb, var(--omi-accent) 22%, transparent);
-  }
-}
-@media (min-width: 1100px) {
-  #root { height: min(940px, calc(100dvh - 64px)); }
-}
+
 
 /* ═══════════════════════════════════════════════════════════
    ACCESSIBILITY: Respect reduced motion

@@ -192,7 +192,7 @@ describe('analizarCvConIA', () => {
 
   it('401 del servidor: el mensaje en español llega tal cual y el puente no se escribe', async () => {
     getSession.mockResolvedValue({ data: { session: null } });
-    const MENSAJE_401 = 'Para guardar tu análisis necesitás iniciar sesión. Volvé a intentarlo.';
+    const MENSAJE_401 = 'Para guardar tu análisis necesitas iniciar sesión. Vuelve a intentarlo.';
     mockFetch({ error: MENSAJE_401 }, false, 401);
 
     await expect(analizarCvConIA('texto', 'cv.pdf')).rejects.toThrow(MENSAJE_401);
@@ -289,6 +289,53 @@ describe('puenteBrechasInvitado', () => {
   it('limpiar() sin puente previo no lanza', () => {
     expect(() => puenteBrechasInvitado.limpiar()).not.toThrow();
   });
+
+  // El puente se escribe desde el análisis del CV y se lee en la portada. Si la
+  // escritura no avisa, el mapa de arriba sigue pintando la muestra del donante
+  // hasta la próxima recarga: el usuario ve el mapa de otro justo después de
+  // subir su propio CV.
+  it('avisar: escribir y limpiar despiertan a los suscriptores', () => {
+    const oidos = vi.fn();
+    const dejar = puenteBrechasInvitado.suscribir(oidos);
+
+    puenteBrechasInvitado.escribir([BRECHA]);
+    expect(oidos).toHaveBeenCalledTimes(1);
+    puenteBrechasInvitado.limpiar();
+    expect(oidos).toHaveBeenCalledTimes(2);
+
+    dejar();
+    puenteBrechasInvitado.escribir([BRECHA]);
+    expect(oidos).toHaveBeenCalledTimes(2);
+  });
+
+  it('dos suscriptores escuchan y cada uno se desuscribe solo', () => {
+    const a = vi.fn();
+    const b = vi.fn();
+    const dejarA = puenteBrechasInvitado.suscribir(a);
+    puenteBrechasInvitado.suscribir(b);
+    puenteBrechasInvitado.escribir([BRECHA]);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+    dejarA();
+    puenteBrechasInvitado.escribir([BRECHA]);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(2);
+  });
+
+  it('huella: el crudo de localStorage, para que useSyncExternalStore compare sin parsear', () => {
+    expect(puenteBrechasInvitado.huella()).toBeNull();
+    puenteBrechasInvitado.escribir([BRECHA]);
+    expect(puenteBrechasInvitado.huella()).toBe(localStorage.getItem(PUENTE_KEY));
+  });
+
+  it('un suscriptor que falla no deja mudos a los demás', () => {
+    const explota = () => { throw new Error('efecto secundario del test'); };
+    const entero = vi.fn();
+    puenteBrechasInvitado.suscribir(explota);
+    puenteBrechasInvitado.suscribir(entero);
+    expect(() => puenteBrechasInvitado.escribir([BRECHA])).not.toThrow();
+    expect(entero).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
@@ -344,7 +391,7 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
   const CAIDAS_MOTOR: { nombre: string; causa: { status?: number; error?: unknown } }[] = [
     { nombre: '500', causa: { status: 500, error: 'Boom interno del servidor.' } },
     { nombre: '502 con cuerpo no JSON', causa: { status: 502, error: undefined } },
-    { nombre: '502 sin los 4 ejes', causa: { status: 502, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Volvé a intentar.' } },
+    { nombre: '502 sin los 4 ejes', causa: { status: 502, error: 'La IA devolvió un análisis incompleto (faltan los 4 ejes del Gemelo). Vuelve a intentarlo.' } },
     { nombre: '504 saturado', causa: { status: 504, error: 'El modelo gratuito está saturado: ningún modelo respondió a tiempo. Reintentá en unos minutos.' } },
   ];
   for (const { nombre, causa } of CAIDAS_MOTOR) {
@@ -368,7 +415,7 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
   // por accidente y el test seguiria verde sin probar el tope.
   const BLOQUEOS_SERVIDOR: { nombre: string; status: number; error: string }[] = [
     { nombre: '429 (cupo del dia)', status: 429, error: 'Llegaste a los 10 análisis de hoy. El contador se renueva en ~6 h.' },
-    { nombre: '401 (sesion expirada)', status: 401, error: 'Tu sesión expiró. Volvé a iniciar sesión para analizar tu CV.' },
+    { nombre: '401 (sesion expirada)', status: 401, error: 'Tu sesión expiró. Vuelve a iniciar sesión para analizar tu CV.' },
     { nombre: '503 (sin origen)', status: 503, error: 'No pudimos identificar tu conexión para asignarte los análisis gratis del día. Iniciá sesión y te devolvemos el análisis.' },
   ];
   for (const { nombre, status, error } of BLOQUEOS_SERVIDOR) {
@@ -453,6 +500,42 @@ describe('analizarCvConFallback (motor primero, Gemini de respaldo)', () => {
     const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'fallback por analisis sin ejes');
 
     expect(r.fuente).toBe('gemini');
+  });
+
+  // El respaldo no emite brechas, pero el hecho de que este navegador LEYO un CV
+  // si existe. Sin esa marca la portada del invitado sigue pintando la muestra del
+  // donante despues de analizar el propio, que es exactamente lo que vio el dueño.
+  it('respaldo del invitado: deja la marca de CV leido (puente en []) sin inventar brechas', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    motorFallando({ status: 500, error: 'Boom interno del servidor.' });
+    gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+    const r = conAnalisis(await analizarCvConFallback('texto', 'cv.pdf'), 'fallback del invitado');
+
+    expect(r.brechas).toEqual([]);
+    expect(puenteBrechasInvitado.huella()).toBe('[]');
+    expect(puenteBrechasInvitado.leer()).toEqual([]);
+  });
+
+  it('respaldo del invitado con puente previo: no le borra sus brechas', async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    puenteBrechasInvitado.escribir([BRECHA]);
+    motorFallando({ status: 500, error: 'Boom interno del servidor.' });
+    gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+    await analizarCvConFallback('texto', 'cv.pdf');
+
+    expect(puenteBrechasInvitado.leer()).toEqual([BRECHA]);
+  });
+
+  it('respaldo autenticado: el puente del invitado no se toca', async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
+    motorFallando({ status: 500, error: 'Boom interno del servidor.' });
+    gemini.analyzeCVWithGemini.mockResolvedValue({ ok: true, analysis: ANALISIS_GEMINI });
+
+    await analizarCvConFallback('texto', 'cv.pdf');
+
+    expect(puenteBrechasInvitado.huella()).toBeNull();
   });
 
   it('fallback sin ejes o roto: devuelve null, nunca un analisis inventado', async () => {

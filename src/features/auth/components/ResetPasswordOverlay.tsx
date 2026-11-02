@@ -4,7 +4,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { Eye, EyeOff, CheckCircle, Shield } from 'lucide-react';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
-import { C, FONT, SIZE, RADIUS, tint, ELEVATED } from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, RADIUS, tint, ELEVATED, UMBRAL, LETRA} from '@/theme';
 
 // ═══════════════════════════════════════════════════════════════════════
 // CSS inyectado una sola vez para estados interactivos (:focus, :hover).
@@ -94,7 +94,7 @@ export function ResetPasswordOverlay({ onDone }: { onDone: () => void }) {
           transition={{ duration: 0.5 }}
           style={S.logoBlock}
         >
-          <div style={{ ...S.orbRing, boxShadow: `0 0 30px ${uc}33, inset 0 0 20px ${uc}14` }}>
+          <div style={{ ...S.orbRing, boxShadow: `0 0 ${HALO.resplandor}px ${uc}33, inset 0 0 ${HALO.resplandor}px ${uc}14` }}>
             <GeodesicOrb size={80} nodes={10} color={uc} spinning={20} intensity={0.6} />
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -184,7 +184,7 @@ export function ResetPasswordOverlay({ onDone }: { onDone: () => void }) {
                   cursor: loading ? 'default' : 'pointer',
                 }}
               >
-                {loading ? 'Guardando...' : 'Guardar nueva contraseña'}
+                {loading ? 'Guardando…' : 'Guardar nueva contraseña'}
               </button>
             </form>
           )}
@@ -207,7 +207,7 @@ const S: Record<string, CSSProperties> = {
     position: 'fixed', inset: 0, zIndex: 95,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '32px 24px', overflow: 'auto',
-    background: `radial-gradient(130% 95% at 50% 18%, #050813 0%, ${C.onAccent} 52%, #000003 100%)`,
+    background: UMBRAL.apertura,
   },
   halo: {
     position: 'absolute', top: '4%', left: '50%',
@@ -230,18 +230,18 @@ const S: Record<string, CSSProperties> = {
   brand: {
     margin: 0,
     fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xxl,
-    letterSpacing: -0.5, color: C.ink,
+    letterSpacing: LETRA.titulo, color: C.ink,
   },
   tagline: {
     margin: '6px 0 0',
-    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.4, color: C.mut,
+    fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso, color: C.mut,
   },
   card: {
     position: 'relative', width: '100%',
     borderRadius: RADIUS.xl, padding: 24, overflow: 'hidden',
     background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
-    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
     boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
   },
   cardAccent: {
@@ -250,7 +250,7 @@ const S: Record<string, CSSProperties> = {
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   label: {
     display: 'block', marginBottom: 6,
-    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4,
+    fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha,
     textTransform: 'uppercase', color: C.mut,
   },
   input: {
@@ -273,7 +273,7 @@ const S: Record<string, CSSProperties> = {
   submit: {
     width: '100%', padding: '15px 0', borderRadius: RADIUS.md, border: 'none',
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md,
-    letterSpacing: 0.2, color: '#fff', marginTop: 4,
+    letterSpacing: LETRA.denso, color: '#fff', marginTop: 4,
   },
   successBlock: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',

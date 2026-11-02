@@ -7,7 +7,7 @@
 // Cada paso lleva a la única pantalla donde se acciona. Gamificado con PE bonus.
 // ═══════════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { C, FONT, tint, SIZE, LETRA} from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { Icon, type IconRole } from '@/shared/components/icons';
 
@@ -42,7 +42,7 @@ export function JourneyProgress({ profile, onNavigate }: Props) {
       { id: 'profile', label: 'Crear perfil', icon: 'gemelo', completed: true }, // Si ve esto, ya tiene perfil
       { id: 'cv', label: 'Subir CV', icon: 'cv', completed: hasCv, action: 'perfil' },
       { id: 'leccion', label: 'Primera lección', icon: 'academia', completed: hasLesson, action: 'academia' },
-      { id: 'skill', label: 'Validar 1 skill', icon: 'meta', completed: hasPe, action: 'maxskill' },
+      { id: 'skill', label: 'Validar 1 habilidad', icon: 'meta', completed: hasPe, action: 'maxskill' },
     ];
   }, [profile]);
 
@@ -109,7 +109,7 @@ const S: Record<string, React.CSSProperties> = {
   title: {
     fontFamily: FONT.mono,
     fontSize: 9,
-    letterSpacing: 1.5,
+    letterSpacing: LETRA.ancha,
     textTransform: 'uppercase' as const,
     color: C.purple,
   },

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/store/AppContext';
 import { asegurarNodoDeExamen, tomarExamenPendiente } from '@/features/redviva/services/examenSkill';
-import { C, FONT, RADIUS, tint, SIZE, ELEVATED, ANIM } from '@/theme';
+import { C, FONT, RADIUS, tint, SIZE, ELEVATED, ANIM, LETRA} from '@/theme';
 import {
   oc, OmicronHeader, OmicronCard, ProgressBar,
   ProgressRing, SectionTitle, Chip, OmicronEyebrow,
@@ -226,7 +226,7 @@ export function MaxSkillTab() {
         activeTab: 'maxskill',
         displayName: profile?.display_name || profile?.username,
       };
-      const result = await askOmicron('Dame un consejo para mejorar mis skills', ctx);
+      const result = await askOmicron('Dame un consejo para mejorar mis habilidades', ctx);
       setCoachAdvice(result.text);
     } catch {
       setCoachAdvice('Error al consultar a Ómicrom. Intenta de nuevo.');
@@ -247,8 +247,8 @@ export function MaxSkillTab() {
       <OmicronHeader
         onBack={() => setActiveTab('perfil')}
         icon={<Brain size={17} />}
-        title="Skill Genome"
-        subtitle={`${totalSkills} competencias · ${profile?.cv_years_experience ?? 0} años XP`}
+        title="Genoma de habilidades"
+        subtitle={`${totalSkills} habilidades · ${profile?.cv_years_experience ?? 0} años de experiencia`}
       />
 
       <div style={oc.scroll}>
@@ -278,7 +278,7 @@ export function MaxSkillTab() {
                   </ProgressRing>
                   <div style={S.radarLabel}>
                     <span style={{ color: axis.color, display: 'flex' }}>{axis.icon}</span>
-                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.ink, letterSpacing: 0.4 }}>
+                    <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.ink, letterSpacing: LETRA.denso }}>
                       {axis.label}
                     </span>
                   </div>
@@ -288,19 +288,19 @@ export function MaxSkillTab() {
             {/* Resumen */}
             <div style={S.radarSummary}>
               <div style={S.radarStat}>
-                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>REPUTACIÓN</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: LETRA.etiqueta }}>REPUTACIÓN</span>
                 <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.ink }}>
                   {gemelo?.overallReputation ?? 0}
                 </span>
               </div>
               <div style={S.radarStat}>
-                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>DOMINIO PROM.</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: LETRA.etiqueta }}>DOMINIO PROM.</span>
                 <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.cyan }}>
                   {avgDominio}%
                 </span>
               </div>
               <div style={S.radarStat}>
-                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: 1 }}>PE TOTALES</span>
+                <span style={{ fontFamily: FONT.mono, fontSize: 9, color: C.mut, letterSpacing: LETRA.etiqueta }}>PE TOTALES</span>
                 <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: C.gold }}>
                   {profile?.pe_points ?? 0}
                 </span>
@@ -311,9 +311,9 @@ export function MaxSkillTab() {
 
           {/* ════════════ SECCIÓN 2: SKILLS DURAS ════════════ */}
           <SectionTitle icon={<Zap size={15} />} color={C.cyan}
-            right={<Chip color={C.cyan}>{skillsDetail.length} skills</Chip>}
+            right={<Chip color={C.cyan}>{skillsDetail.length} habilidades</Chip>}
           >
-            Competencias Técnicas
+            Habilidades técnicas
           </SectionTitle>
 
           {skillsDetail.length === 0 ? (
@@ -481,7 +481,7 @@ export function MaxSkillTab() {
               disabled={coachLoading}
             >
               {coachLoading ? (
-                <><Loader2 size={15} style={{ animation: ANIM.spin }} /> Analizando...</>
+                <><Loader2 size={15} style={{ animation: ANIM.spin }} /> Analizando…</>
               ) : (
                 <><Sparkles size={15} /> {coachAdvice ? 'Pedir otro consejo' : 'Pedir consejo de mejora'}</>
               )}
@@ -511,7 +511,7 @@ export function MaxSkillTab() {
                   Defiende tu Gemelo Digital
                 </div>
                 <div style={{ fontFamily: FONT.mono, fontSize: 11, color: C.mut, marginTop: 4, lineHeight: 1.5 }}>
-                  La IA evalúa tus competencias principales con un examen exigente.
+                  La IA evalúa tus habilidades principales con un examen exigente.
                   Valida tu reputación y sube tu Ejecución.
                 </div>
               </div>
@@ -598,7 +598,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   skillName: {
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md,
-    color: C.ink, letterSpacing: -0.2,
+    color: C.ink, letterSpacing: LETRA.apretada,
   },
   skillMeta: {
     display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap',

@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { HALO, C, FONT, tint, SIZE, LETRA} from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   getDailyChallenge,
@@ -138,7 +138,7 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 10,
   },
   headerText: { flex: 1, display: 'flex', flexDirection: 'column' as const },
-  label: { fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: 1.5, textTransform: 'uppercase' as const },
+  label: { fontFamily: FONT.mono, fontSize: 9, color: C.cyan, letterSpacing: LETRA.ancha, textTransform: 'uppercase' as const },
   time: { fontFamily: FONT.mono, fontSize: 9, color: C.mut },
   reward: {
     fontFamily: FONT.mono,
@@ -156,14 +156,14 @@ const S: Record<string, React.CSSProperties> = {
     padding: '11px',
     borderRadius: 8,
     border: 'none',
-    background: `linear-gradient(135deg, ${C.cyan}, ${C.tealDeep})`,
+    background: `linear-gradient(135deg, ${C.gold}, ${C.amberDeep})`,
     color: C.onAccent,
     fontFamily: FONT.mono,
     fontSize: 11,
     fontWeight: 700,
-    letterSpacing: 1,
+    letterSpacing: LETRA.etiqueta,
     cursor: 'pointer',
-    boxShadow: `0 0 14px ${tint(C.cyan, 30)}`,
+    boxShadow: `0 0 ${HALO.marca}px ${tint(C.cyan, 30)}`,
   },
   cardDone: {
     margin: '0 0 14px',

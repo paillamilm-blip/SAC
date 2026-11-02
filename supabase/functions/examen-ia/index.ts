@@ -12,7 +12,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -39,7 +39,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
   return data?.user?.id ?? null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ error: 'El Examinador IA no esta configurado (falta OPENROUTER_KEY).' }, 500);
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
 
       const sys =
         'Eres el Examinador IA de Omicrom, evaluador tecnico para estudiantes y tecnicos de ingenieria. ' +
-        'Generas examenes para VALIDAR competencias reales (no memorizacion). Responde SOLO en JSON valido. ' +
+        'Generas examenes para VALIDAR habilidades reales (no memorizacion). Responde SOLO en JSON valido. ' +
         'El examen debe ser sobre el tema del nodo, en espanol neutro-chileno, y calibrado al nivel del usuario.';
       const user =
         `NODO: "${node.title}" (categoria ${node.category}, dificultad ${node.difficulty_level}/5).\n` +
@@ -220,4 +220,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Examinador IA.', detail: String(e) }, 500);
   }
-});
+}));

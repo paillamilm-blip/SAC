@@ -18,10 +18,10 @@ const _admin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 );
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
   }
@@ -49,4 +49,4 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
-});
+}));

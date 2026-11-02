@@ -73,7 +73,7 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
         key: 'transcendence', val: gemelo.transcendence, tab: 'academia', accent: C.gold, label: 'Trascendencia',
         title: 'Cierra un ciclo de aprendizaje',
         actionLabel: 'Ir a Academia',
-        why: `Tu Trascendencia está en ${r(gemelo.transcendence)}. Termina un curso y aprueba su quiz: es el movimiento que deja evidencia en la red, no solo horas de lectura.`,
+        why: `Tu Trascendencia está en ${r(gemelo.transcendence)}. Termina un curso y aprueba su examen: es el movimiento que deja evidencia en la red, no solo horas de lectura.`,
       },
       {
         key: 'foundation', val: gemelo.foundation, tab: 'perfil', accent: C.green, label: 'Fundamento', cv: true,
@@ -102,9 +102,9 @@ export function computeSteps(profile: Profile | null, gemelo: GemeloDigital | nu
   if (gemelo && gemelo.overallReputation >= 45 && skills.length > 0) {
     steps.push({
       id: 'mastery', score: 42, tab: 'maxskill', accent: userColor, metric: `Reputación ${r(gemelo.overallReputation)}`,
-      title: 'Pon a prueba tu competencia más fuerte',
+      title: 'Pon a prueba tu habilidad más fuerte',
       actionLabel: 'Ir a Habilidades',
-      why: `Con reputación ${r(gemelo.overallReputation)} ya tenés nodos que sostienen tu perfil. Rendí el examen del nodo que mejor domines: un nodo probado pesa más que cinco declarados.`,
+      why: `Con reputación ${r(gemelo.overallReputation)} ya tienes nodos que sostienen tu perfil. Rinde el examen del nodo que mejor domines: un nodo probado pesa más que cinco declarados.`,
     });
   }
 

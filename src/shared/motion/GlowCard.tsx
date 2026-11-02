@@ -6,7 +6,7 @@
 // Anti-slop: no JS repaint — pure CSS radial-gradient on mousemove.
 // ═══════════════════════════════════════════════════════════════════════
 import { useRef, useCallback, type ReactNode, type CSSProperties } from 'react';
-import { C, RADIUS } from '@/theme';
+import { BLUR, C, RADIUS } from '@/theme';
 import { useReducedMotion } from './useReducedMotion';
 
 interface Props {
@@ -62,8 +62,8 @@ export function GlowCard({ children, color = C.cyan, intensity = 0.08, onClick, 
         padding: 16,
         background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
         border: `1px solid ${C.line}`,
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backdropFilter: `blur(${BLUR.cristal}px)`,
+        WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : undefined,
         '--glow-x': '0px',

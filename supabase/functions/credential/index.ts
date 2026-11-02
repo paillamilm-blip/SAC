@@ -15,7 +15,7 @@ const SIGNING_KEY = Deno.env.get('CREDENTIAL_SIGNING_KEY') ?? SERVICE_KEY;
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 const enc = new TextEncoder();
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -41,7 +41,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
   return data?.user?.id ?? null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
@@ -96,4 +96,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en el Pasaporte.', detail: String(e) }, 500);
   }
-});
+}));

@@ -1,3 +1,4 @@
+import { LETRA } from '@/theme';
 import { OrbShell } from '@/features/omicron/components/OrbShell';
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
@@ -173,7 +174,7 @@ function AppShell() {
               transition={{ duration: 0.6, ease: 'easeInOut' }}
               style={{ position: 'relative', width: 110, height: 110 }}
             >
-              <GeodesicOrb size={110} nodes={12} color={uc} spinning={25} intensity={0.7} />
+              <GeodesicOrb size={110} nodes={12} color={uc} spinning={0} intensity={0.7} />
             </motion.div>
             {/* El texto y el botón se desvanecen más rápido que el orbe (~0.25s). */}
             <motion.div
@@ -181,7 +182,7 @@ function AppShell() {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, position: 'relative' }}
             >
-              <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: 2.5, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom...</p>
+              <p style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.anunciada, color: uc, textTransform: 'uppercase', margin: 0 }}>Conectando a la Red Ómicrom…</p>
               <button onClick={() => setForceGuest(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '8px 16px', borderRadius: 999, background: 'transparent', border: `1px solid ${uc}44`, color: uc, fontFamily: FONT.mono, fontSize: SIZE.xxs, cursor: 'pointer' }}>
                 {GUEST_CTA_LABEL} <Icon role="siguiente" size={12} />
               </button>

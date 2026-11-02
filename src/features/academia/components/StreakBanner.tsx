@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { HALO, C, FONT, tint, SIZE, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 import { useApp } from '@/store/AppContext';
 import { streakDays } from '@/features/gemelo/services/profile';
@@ -66,7 +66,7 @@ export function StreakBanner() {
   return (
     <div style={S.banner} onClick={() => setShowDetail(!showDetail)}>
       <div style={S.row}>
-        <Icon role="racha" size={20} color={C.flame} style={{ filter: 'drop-shadow(0 0 6px rgba(255, 100, 50, 0.6))', flexShrink: 0 }} />
+        <Icon role="racha" size={20} color={C.flame} style={{ filter: `drop-shadow(0 0 ${HALO.ascua}px ${tint(C.flame, 60)})`, flexShrink: 0 }} />
         <span style={S.streakNum}>{streak}</span>
         <span style={S.days}>día{streak > 1 ? 's' : ''}</span>
         <span style={S.mult}>{label} PE</span>
@@ -82,7 +82,7 @@ export function StreakBanner() {
           {daysToNext > 0 && (
             <div style={S.detailRow}>
               <span style={S.detailLabel}>Próximo nivel:</span>
-              <span style={S.detailValue}>en {daysToNext} día{daysToNext > 1 ? 's' : ''} llegás a x{mult + 0.25}</span>
+              <span style={S.detailValue}>en {daysToNext} día{daysToNext > 1 ? 's' : ''} llegas a x{mult + 0.25}</span>
             </div>
           )}
           <div style={S.progress}>
@@ -136,10 +136,10 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 20,
     fontWeight: 700,
     color: C.gold,
-    textShadow: `0 0 10px ${tint(C.gold, 40)}`,
+    textShadow: `0 0 ${HALO.foco}px ${tint(C.gold, 40)}`,
     fontVariantNumeric: 'tabular-nums',
   },
-  days: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, letterSpacing: 1 },
+  days: { fontFamily: FONT.mono, fontSize: 11, color: C.mut, letterSpacing: LETRA.etiqueta },
   mult: {
     fontFamily: FONT.mono,
     fontSize: 11,
@@ -159,7 +159,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: '2px 8px',
     borderRadius: 4,
     marginLeft: 'auto',
-    letterSpacing: 1,
+    letterSpacing: LETRA.etiqueta,
     textTransform: 'uppercase' as const,
   },
   text0: { fontFamily: FONT.mono, fontSize: 11, color: C.mut },
@@ -195,6 +195,6 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     fontFamily: FONT.mono,
     fontSize: SIZE.xxs,
-    letterSpacing: 0.5,
+    letterSpacing: LETRA.denso,
   },
 };

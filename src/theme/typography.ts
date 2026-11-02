@@ -40,23 +40,57 @@ export const SIZE = {
 } as const;
 
 export const FONT_STYLE = {
-  /** Tags, badges, eyebrows (ÓMICROM, CÓMO MEJORAR, etc.) */
-  label:    { fontFamily: MONO, fontSize: SIZE.xxs, letterSpacing: 1.4, textTransform: 'uppercase' as const },
+  /** Etiquetas de sección, eyebrows, tags. El brief del dueño las fija:
+      12 px, mayúsculas, gris tenue y letter-spacing 0.08em. Antes eran mono de
+      9 px con tracking de 1.4 px — demasiado chico para leerse y con tipografía
+      de terminal, que no es la voz del laboratorio. */
+  label:    { fontFamily: SANS, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
   /** Code, counters */
   mono:     { fontFamily: MONO, fontSize: SIZE.sm },
   /** Card titles, section headers */
   title:    { fontFamily: SANS, fontWeight: 700 as const, fontSize: SIZE.xl, letterSpacing: -0.3 },
   /** Subtítulos, metadata  */
   subtitle: { fontFamily: MONO, fontSize: SIZE.xs, letterSpacing: 0.5 },
-  /** Body text */
-  body:     { fontFamily: SANS, fontSize: SIZE.md, lineHeight: 1.5 },
+  /** Body text — interlineado 1.6: el brief lo pide y el anterior (1.5) venía
+      apretando las tarjetas de la cabina. */
+  body:     { fontFamily: SANS, fontSize: SIZE.md, lineHeight: 1.6 },
   /** Chips, small interactive text */
   chip:     { fontFamily: MONO, fontSize: SIZE.xs, letterSpacing: 0.4 },
   /** Input text */
   input:    { fontFamily: SANS, fontSize: SIZE.md },
-  /** Stat values (big numbers) */
-  stat:     { fontFamily: SANS, fontWeight: 800 as const, fontSize: SIZE.xl, letterSpacing: -0.5 },
+  /** Stat values (big numbers) — tabulares: en una columna de métricas los
+      dígitos deben alinearse en vertical, no bailar según su forma. */
+  stat:     { fontFamily: SANS, fontWeight: 800 as const, fontSize: SIZE.xl, letterSpacing: -0.5, fontVariantNumeric: 'tabular-nums' },
 } as const;
 
 // Re-export raw values for use in BASE styles
 export { SANS, MONO };
+
+/**
+ * La escala de tracking. Existían DIECIOCHO valores escritos a mano en 151 sitios
+ * (letterSpacing: 0.5 acá, 1.4 allá, 2.5 en el aviso de arranque…), que es la
+ * misma enfermedad de los 28 rgba que se convirtieron en cinco paneles: un
+ * inventario donde tenía que haber una familia. Siete pasos. 91 sitios caen
+ * exactos y 139 a 0.1 px o menos — la escala ordena, no rediseña. Los doce
+ * restantes son dos remates que se pueden justificar: el aviso del arranque baja
+ * de 2.5 a 2 (ese cuarto de px era aire de más, no una decisión) y un 0.1
+ * escrito positivo sube a 0.4, porque un número positivo nunca pidió que las
+ * letras se pegaran.
+ *
+ *   apretada  -0.15 px  títulos chicos (topbar, métrica de tarjeta)
+ *   titulo    -0.4  px  display, stat y hero: el brief pide tracking negativo
+ *   denso      0.4  px  chips y metadata monoespaciada
+ *   medido     0.6  px  cuerpo de datos y subtítulos mono
+ *   etiqueta   1.0  px  la etiqueta de sección en mayúsculas (0.08em a 12 px)
+ *   ancha      1.5  px  eyebrows y rótulos que se leen de lejos
+ *   anunciada  2.0  px  el aviso del arranque y el takeover del orbe
+ */
+export const LETRA = {
+  apretada:  -0.15,
+  titulo:    -0.4,
+  denso:      0.4,
+  medido:     0.6,
+  etiqueta:   1,
+  ancha:      1.5,
+  anunciada:  2,
+} as const;

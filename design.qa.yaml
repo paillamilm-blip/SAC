@@ -26,6 +26,7 @@ code:
     - src/theme/** # C / SIZE / RADIUS / SHADOW / BASE: la definición de tokens
     - src/index.css # las variables CSS globales (--ink, --silver, --line...)
     - src/shared/components/ColorPicker.tsx # las 4 opciones de color del usuario
+    - src/infrastructure/** # PWA, service worker y clientes: no pintan interfaz
     - src/features/mapa/** # port 1:1 del donante: su escala propia es el contrato
 
 debt:
@@ -36,3 +37,29 @@ debt:
     - '#000'
     - '#fff'
     - transparent
+  # Excepción documentada, no permiso silencioso. Son números de DIBUJO: el valor
+  # es el dibujo, no una decisión del sistema. Un lienzo, una silueta SVG o un
+  # breakpoint de CSS no pueden leer var() y no tienen escala que los contenga.
+  # Cada línea dice dónde vive y por qué no es tokenizable; si el dibujo cambia,
+  # la línea se borra y el valor vuelve a ser hallazgo.
+  acceptedValues:
+    - 340px # alto de la silueta del documento (EscaneoDocumento) y ancho del aviso proactivo: dos dibujos que coinciden
+    - 280px # segundo paso del degradado de la hoja escaneada
+    - 78px  # alto de línea del lienzo de la credencial (credencialCanvas)
+    - 92px  # ancho de la banda de la credencial impresa
+    - 6.5px # tamaño de glifo dentro del SVG de RedViva: es geometría del trazo
+    - 70px  # OrbShell · órbita interior
+    - 76px  # OrbShell · anillo del núcleo
+    - 84px  # OrbShell · órbita media
+    - 88px  # OrbShell · separación del anillo
+    - 96px  # OrbShell · órbita exterior
+    - 104px # OrbShell · salto de nodo
+    - 216px # OrbShell · diámetro del orbe en la portada
+    - 772px # OrbShell · altura de la escena
+    - 372px # columna de la cola de trabajo en el workspace de dos columnas
+    - 72px  # radio del halo del orbe en auth (un blur no tiene escala de espaciado)
+    - 100px # calado inferior de la pestaña: hueco reservado para la barra flotante
+    - 380px # ancho del toast, propio del aviso corto
+    - 420px # ancho de la pastilla de presencia
+    - 640px # breakpoint de responsive.css: una media query no lee var()
+    - 720px # container query del workspace: un @container no lee var()

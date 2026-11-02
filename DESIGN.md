@@ -147,9 +147,9 @@ components:
 > **Fuente de verdad: `src/theme/`.** Este archivo describe lo que ya existe en código. Si los dos discrepan, el código gana y este archivo está desactualizado. Nunca escribas un valor acá que no exista en `src/theme/`.
 >
 > - `tokens.ts` → colores (`C`), `statusColor()`, `categoryColor()`
-> - `typography.ts` → `FONT`, `SIZE`, `FONT_STYLE`
-> - `layout.ts` → `SP`, `SPACING`, `RADIUS`, `Z`, `BLUR`, `BORDER`, `BASE`
-> - `shadows.ts` → `SHADOW`, `GLOW`
+> - `typography.ts` → `FONT`, `SIZE`, `FONT_STYLE`, `LETRA`
+> - `layout.ts` → `SP`, `SPACING`, `RADIUS`, `Z`, `BLUR`, `VELO`, `BORDER`, `BASE`
+> - `shadows.ts` → `HALO`, `SHADOW`, `ELEVATED`, `GLOW`
 > - `animations.ts` → `EASE`, `TIMING`, `SPRING`, `KEYFRAMES`
 
 ## Overview
@@ -247,6 +247,8 @@ Escala armónica ratio ~1.25 (Major Third), en px, de `SIZE`:
 
 Los 8 estilos compuestos de `FONT_STYLE` (`label`, `mono`, `title`, `subtitle`, `body`, `chip`, `input`, `stat`) ya combinan familia + tamaño + tracking. Usalos enteros en vez de rearmarlos.
 
+Cuando hace falta **sólo el tracking** (el estilo compuesto no cierra porque el tamaño es propio del componente), se pide a `LETRA`: `apretada` (-0.15), `titulo` (-0.4), `denso` (0.4), `medido` (0.6), `etiqueta` (1), `ancha` (1.5), `anunciada` (2). Antes de la escala había **dieciocho números escritos a mano en 151 sitios** —0.5 acá, 1.4 allá, 2.5 en el aviso de arranque—, que es exactamente lo que la regla 4 prohíbe para el color pero aplicado al aire entre letras. 91 de esos 151 caen exactos en su paso y 139 a 0.1 px o menos; los 12 restantes son dos decisiones explícitas: el aviso del arranque baja de 2.5 a 2 y un 0.1 positivo sube a 0.4. Un `letterSpacing: 1.2` suelto hoy es hallazgo del contrato. La hoja CSS tiene la misma escala escrita como variables (`--letra-apretada` … `--letra-anunciada` en `src/index.css`), porque `var()` no entra en un style en línea y el número tampoco entra dos veces: los nueve `letter-spacing` que quedaban en `aprendizaje.css` se pidieron al espejo, y el test verifica que los siete pasos de un idioma sean los siete del otro.
+
 ### Named Rules
 
 - **No inventes tamaños.** Si el que necesitás no está en `SIZE`, usá el más cercano. Un `fontSize: 14` suelto es deuda.
@@ -270,9 +272,23 @@ Grillas de stats: `1fr 1fr` con `gap: 8`.
 
 La profundidad se construye con **vidrio + blur + borde de 1px**, no con sombras duras.
 
-`BLUR`: `sm` 8px, `md` 16px, `lg` 24px. Siempre en pareja `backdropFilter` + `WebkitBackdropFilter` — sin el prefijo, Safari en iOS no lo aplica y la tarjeta queda plana.
+Dos fenómenos ópticos distintos viven acá y se piden por separado: la luz que **atraviesa** una superficie (`BLUR`) y la luz que una superficie **emite** (`HALO`). Confundirlos es lo que produjo los 21 radios sin dueño.
 
-Blur real por superficie: tarjeta 14px, header 20px, panel de detalle 24px, tarjeta glass premium de auth 16px.
+### Vidrio — `BLUR`
+
+`vaho` 8, `escarcha` 12, `cristal` 16, `esmeril` 20. Cuatro pasos de la grilla de 4px; empate hacia arriba, porque más escarcha sigue siendo vidrio y menos escarcha ya es otra superficie. Estaban escritos **44 veces en siete radios** (6/8/12/14/16/18/20); se mueven 14 sitios, todos 2px.
+
+- **El número pierde la unidad.** Un desenfoque es `blur(16px)`, nunca `16px`. El token anterior (`BLUR = { sm: '8px', md: '16px', lg: '24px' }`) era dos errores juntos: sus valores llevaban la unidad escrita y se inyectaban en `backdropFilter` sin la función, así que la barra, las tarjetas y el header emitían `backdrop-filter: 16px` — una declaración inválida que el navegador descarta en silencio. **El vidrio de esas tres superficies nunca se desenfocó.** Hoy se escribe `backdropFilter: \`blur(${BLUR.cristal}px)\`` y `sm`/`lg`, que no usaba nadie, se fueron.
+- **Siempre en pareja** `backdropFilter` + `WebkitBackdropFilter`: sin el prefijo, Safari en iOS no lo aplica y la tarjeta queda plana.
+- **`VELO` no es vidrio.** El velo de lectura de `useProgressiveBlur` (1.5px sobre contenido todavía no visitado) subido a `BLUR.vaho` (8px) ocultaría texto en vez de insinuarlo: es una escala propia de dos pasos (`apenas` 1.5, `nitido` 0) y está declarada como excepción, no como olvido.
+
+### Luz emitida — `HALO`
+
+`chispa` 4 (glifos, chips, badges), `ascua` 8 (un control encendido), `foco` 12 (tarjeta o píldora flotando), `marca` 16 (el halo canónico de la marca, `--glow-omi`), `resplandor` 24 (superficie grande: CTA, banda), `difusion` 40 (baño de luz de un panel), `escena` 72 (el orbe como escena, no como control). Siete pasos sobre la grilla de 4px, para un inventario de **126 halos escritos a mano en 21 radios** (0, 1, 3, 4, 5, 6, 7, 8, 10, 12, 14, 15, 16, 18, 20, 22, 24, 26, 30, 40, 72). Ninguno de esos números era una decisión; sólo 16 de los 126 se mueven más de 2px en el radio de un desenfoque, que es el cambio menos visible que existe en esta app. Empate hacia arriba: una luz que se achica deja de contar estado, y el brief prohíbe que un estado sea sólo color.
+
+- **Un anillo no es un halo.** `0 0 0 1px` es offset, offset, **ancho**, radio: un borde. Le pide a `BORDER`, no a `HALO`, y quien lo confunda convierte un borde de 1px en una luz de 4px.
+- **`0 0 0px` es la ausencia de luz**, el `initial` de un beat que crece hasta su halo; el cero no es un paso de la escala.
+- **El espejo CSS existe** porque `var()` no entra en un style en línea y el número tampoco entra dos veces: `--halo-chispa` … `--halo-escena` y `--vidrio-vaho` … `--vidrio-esmeril` en `src/index.css`, verificados línea a línea contra `HALO` y `BLUR` por el contrato.
 
 ### Shadow Vocabulary
 
@@ -284,13 +300,15 @@ Blur real por superficie: tarjeta 14px, header 20px, panel de detalle 24px, tarj
 | `md` | `0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35)` |
 | `lg` | `0 2px 6px rgba(0,0,0,0.35), 0 16px 48px rgba(0,0,0,0.45)` |
 | `xl` | `0 4px 12px rgba(0,0,0,0.4), 0 24px 64px rgba(0,0,0,0.55)` |
-| `glow` | `0 0 16px rgba(160,174,192,0.25), 0 8px 24px rgba(0,0,0,0.3)` |
+| `glow` | `0 0 ${HALO.marca}px rgba(106,169,255,0.25), 0 8px 24px rgba(0,0,0,0.3)` |
+| `glowGold` | `0 0 ${HALO.marca}px rgba(242,177,52,0.25), 0 8px 24px rgba(0,0,0,0.3)` |
 
-`GLOW` da el halo de color por token (`cyan`, `gold`, `purple`, `green`, `red`, `toast`), todos `0 0 18px` con alpha ~0.45.
+`GLOW` quedó en **una sola entrada viva** (`cyan`, `0 0 ${HALO.marca}px` al 0.42); `gold`, `purple`, `green`, `red` y `toast` eran código muerto escrito con un 18px que era un 16 mal medido.
 
 ### Named Rules
 
 - **Una sombra de una sola capa es un defecto.** Usá `SHADOW`.
+- **El halo se pide a `HALO`, el desenfoque a `BLUR`.** Un `0 0 18px` o un `blur(14px)` suelto hoy es hallazgo del contrato, en el style en línea y en la hoja CSS.
 - **El glow reemplaza al borde, no lo acompaña.** En los wrappers del orbe se conserva el `boxShadow` suave y se quitó el `border` sólido (PRs #326–#328).
 - **`BORDER.default` es `1px solid rgba(150,180,255,0.14)`.** Las variantes de color (`gold`, `purple`, `green`, `red`) van a `0.30`.
 
@@ -355,7 +373,7 @@ Reglas duras:
 
 ## El estándar asistente (aplica a TODA la app)
 
-Ómicrom no es un tablero: es un asistente que vive en un bolsillo. Estas siete reglas son la vara con la
+Ómicrom no es un tablero: es un asistente que vive en un bolsillo. Estas nueve reglas son la vara con la
 que se juzga cualquier pantalla; no se renegocian caso por caso.
 
 1. **Una barra por pantalla, de una sola fila.** Título + estado + el progreso como línea inferior. La
@@ -363,6 +381,8 @@ que se juzga cualquier pantalla; no se renegocian caso por caso.
    avisos adentro se come el 39% de la pantalla antes de mostrar nada.
 2. **Habla, no etiqueta.** "Preparando tu gemelo…" y no "INICIALIZANDO PROTOCOLO". Un código de nivel se
    escribe como palabra ("Fundamento", no `FOUNDATION`). Si hay que explicar la sigla, la sigla sobra.
+   **El remate de un aviso de carga es un carácter (`…`), no tres puntos (`...`):** son el mismo estado con
+   dos tipografías, y en las etiquetas monoespaciadas los tres puntos se ven sueltos.
 3. **Los cuatro estados o la pantalla no existe:** vacío con acción, cargando visible, error con causa y
    salida, y listo con confirmación. Un botón que no cambia de aspecto al tocar no es un botón.
 4. **Cero repetición.** `src/shared/components/OmicronChrome.tsx` es la ÚNICA biblioteca de andamio que
@@ -381,11 +401,27 @@ que se juzga cualquier pantalla; no se renegocian caso por caso.
    oscuro del degradado silver→teal de los botones grandes) y `C.flame` (#ff6432, el naranja de la racha,
    que StreakBanner escribía tres veces). Para la sombra teñida —la de un elemento cuyo color es la
    marca— existe `ELEVATED.cta(color)`: `SHADOW` es negro y no sirve ahí.
+   Y hay **dos rampas de umbral** —lo que se ve antes de que exista el contenido—: `UMBRAL.apertura`
+   (auth y takeover del orbe: negro frío → tinta del ámbar → casi negro) y `UMBRAL.credencial` (la misma
+   rampa con el centro frío, porque la tarjeta se pinta sobre el navy impreso). La primera estaba copiada
+   palabra por palabra en cuatro componentes.
 6. **Se toca con el pulgar.** Blancos de 44×44, 8px entre ellos, foco visible en el color del usuario, y
    nada de glifos unicode o emojis como iconos: se dibujan con CSS o con SVG.
 7. **Un solo gesto firma.** El orbe respira con el estado real de la persona, y ese mismo latido (mismo
    `ANIM.breathe`, mismo color de acento) es el que heredan las barras de progreso, los puntos de estado y
    el indicador de "guardando". Una animación que no comunica estado es decoración y se borra.
+8. **Una sola persona gramatical: el tú neutro.** "Sube tu CV", "Prueba de nuevo", "Vuelve a intentarlo".
+   El voseo rioplatense ("Subí", "Probá", "tenés", "Volvé") convivió con el tú en las tres capas —componente,
+   Edge Function y los `raise exception` de las RPC, que PostgREST devuelve como P0001 y el navegador muestra
+   tal cual— y se leían las dos voces en la misma pantalla de error. Rige el tú porque es el registro del
+   cromo de estados y porque es el único que no marca una región. Se perdona el acento sólo en los nombres
+   propios y en las palabras que no son vos ("podrás", "estás", "Andrés").
+9. **Un concepto, una palabra.** La unidad de capacidad se llama **habilidad** (la barra ya decía
+   "Habilidades"), la prueba que la valida se llama **examen**, y lo que falta aprender es **brecha**.
+   "skill", "competencia", "quiz", "expertise" y "XP" estaban repartidos por pantalla llamando a la misma
+   cosa de tres maneras, y eso es tres oportunidades de que el usuario crea que son tres cosas. Quedan
+   admitidas sólo donde nombran un campo de la máquina —una columna, la clave de un JSON del motor—, y eso
+   está listado con su coordenada en el guard, no eximido por carpeta.
 
 **Excepción documentada y única:** `src/features/mapa/**` es un port 1:1 del donante. Su escala (17/14/12px,
 radio 10, sus `#1a1408`/`#2a313b`) y su coreografía de 4 actos son el contrato y se prueban contra un
@@ -412,11 +448,26 @@ golden; no se normalizan con estas reglas.
   definen las familias (`--silver`, `--line`, `--glass`, `--sticky`, `--omi-accent`); cualquier otra hoja
   usa `var(--…)` o `color-mix(in srgb, var(--oro) 30%, transparent)`. Las sombras negras (`rgba(0,0,0,…)`)
   son la excepción aceptada: no son un tono de marca, son profundidad.
-- **El contrato se vela solo.** `src/theme/contratoAsistente.test.ts` barre el repo y falla si vuelve el
-  cian del prototipo fuera del mapa, si alguien reabre un `const C = {}` propio (el espejo del simulador) o
-  si copia un vidrio de blanco crudo en vez de pedirlo al tema. `design.qa.yaml` + `scripts/design/audit-debt.mjs`
-  (métrica) y `scripts/design/codemod-dedupe.mjs` (barrido, simula si no le pasás `--apply`) son la medida;
-  el test es la reja.
+- **El contrato se vela solo.** `src/theme/contratoAsistente.test.ts` (diecinueve pruebas sobre dieciséis
+  afirmaciones) barre el repo y falla
+  si vuelve el cian del prototipo fuera del mapa, si alguien reabre un `const C = {}` propio (el espejo del
+  simulador), si copia un vidrio de blanco crudo en vez de pedirlo al tema, si la credencial tiene dos
+  dibujantes, si un carácter hace de icono, si una frase tuya vuelve al voseo, si la unidad de capacidad
+  vuelve a llamarse "skill" en texto que se lee, si un aviso de carga vuelve a teclear `...` en vez de `…`,
+  si la rampa de umbral vuelve a escribirse en un componente, si el tracking vuelve a ser un número suelto
+  en vez de `LETRA`, o si la luz vuelve a ser un número suelto en vez de `HALO` y `BLUR` — y las dos varas
+  pesaban sobre los dos idiomas: `letterSpacing: 1.2` en un style en
+  línea y `letter-spacing: 1.4px` en una hoja son la misma fuga escrita dos veces, igual que `0 0 18px` y
+  `box-shadow: 0 0 18px`. Así que `src/index.css` declara los espejos `--letra-*`, `--halo-*` y `--vidrio-*`
+  y el test compara los números de un lado contra los del dueño. La vara de la luz lleva dos precisiones que
+  la hacen: sin el lookbehind, `0 0 0 1px` (un anillo: offset, offset, **ancho**, radio) casa desde el segundo
+  cero y se convierte en un halo de 4px; y `0 0 0px` se perdona porque es la ausencia de luz con la que
+  arranca un beat, no un paso de la escala.
+  Las varas de voz y léxico barren 292 archivos
+  (cliente, Edge Functions y migraciones) con redes morfológicas y literales extraídos del código, no con
+  una lista de palabras ya vistas; las excepciones se pagan con coordenada exacta. `design.qa.yaml` +
+  `scripts/design/audit-debt.mjs` (métrica) y `scripts/design/codemod-dedupe.mjs` (barrido, simula si no le
+  pasás `--apply`) son la medida; el test es la reja.
 - Escribí estilos con los tokens `C` / `FONT` / `SIZE` / `RADIUS` en las pantallas premium (auth, credencial, reveal). Esas pantallas son **cero clases Tailwind** — objetos de estilo inline con tokens.
 - Emparejá siempre `backdropFilter` con `WebkitBackdropFilter`.
 - Mostrá la escala completa en cada número: `65/100`, `87/100`. Con su unidad y su contexto.
@@ -427,7 +478,7 @@ golden; no se normalizan con estas reglas.
 - **No propongas un mundo visual nuevo.** Ómicrom ya tiene identidad, tokens y 4 colores de usuario. Un `--design-system` que sugiera fondo claro, serif display o un accent nuevo está fuera de mundo: tomá de ahí solo lo que no contradiga este archivo.
 - **No uses `#5cc8ff`.** Eliminado del repo.
 - **No uses cian saturado** como color de marca. Se lee genérico y pelea con el color del usuario.
-- **No inventes valores.** Ni `fontSize: 14`, ni `cubic-bezier` de memoria, ni una sombra de una capa.
+- **No inventes valores.** Ni `fontSize: 14`, ni `cubic-bezier` de memoria, ni una sombra de una capa, ni un `0 0 18px` o un `blur(14px)` a mano: la luz se pide a `HALO` y el vidrio a `BLUR`.
 - **No pongas `C.cyan` en un orbe.** Es el gris de marca.
 - **No escribas jerga.** "Nodo Senior" → "Nivel: Senior". "Fundamento +15" → "Tu Excel está en 45/100 — este empleo pide 60/100". Cada pantalla se tiene que entender sin ambigüedad para un abogado, un ingeniero, un médico o un técnico. Explicá siempre **qué** hacer, **por qué** y **qué gana**.
 - **No digas "ADN"** en UI. La identidad del usuario es el **Gemelo Digital**; la vista compartible es la **Credencial Ómicrom**. ("ADN" solo sobrevive en el system prompt interno de la IA, que el usuario no ve.)

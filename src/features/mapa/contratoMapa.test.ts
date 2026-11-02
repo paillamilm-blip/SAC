@@ -3,15 +3,23 @@
 // leídas desde el disco (canon del estilo casa: contratoEspejos.test.ts compara
 // texto, no comportamiento):
 //   1. MAPA_CAT tiene exactamente las 4 categorias del donante y sus hex fijos
-//      (nunca el color del usuario — D5 del dueno).
-//   2. El cian de marca prohibido (terminado 5cc8ff) y el ambar del donante
-//      (terminado f2b134) no existen en ningun archivo de texto bajo src/.
-//      Se nombran por su terminacion porque este archivo cae dentro de su
-//      propio barrido: escribir el literal '#' + aqui mismo violaria el contrato.
+//      (nunca el color del usuario).
+//   2. El cian de marca viejo (terminado 5cc8ff) no existe en ningun archivo de
+//      texto bajo src/. Se nombra por su terminacion porque este archivo cae
+//      dentro de su propio barrido: escribir el literal '#' + aqui mismo
+//      violaria el contrato.
 //   3. Ningun archivo de logica del mapa (src/features/mapa/*.ts*) escribe un
 //      hex literal: el pintado viene de tokens y de ROLES. Los JSON de
 //      __golden__ y __fixtures__ tampoco llevan hex — llevan roles ("cat:dura",
-//      "nodo-hueco", ...), que es lo que el modulo del mapa emite.
+//      "nodo-hueco", ...), que es lo que el modulo del mapa emite. Hoy solo
+//      queda __fixtures__: el golden del donante se jubilo con el port 1:1.
+//
+// DEROGADO 2026-11-01 (ruling del dueño, plan 2026-10-26 §"La portada es el
+// mapa"): la regla D5 —"el mapa no usa el ambar, el mapa es verde"— murió junto
+// con el port 1:1 del donante. El mapa entra al tema laboratorio: raiz ambar
+// (el oro de la casa, C.gold), blanda ambar, conocimiento verde azulado. Por
+// eso el barrido ya no veda el ambar: lo exige, y lo hace contra el token madre
+// para que nadie deje el color suelto.
 //
 // OJO CRLF: en este checkout los archivos vienen con \r\n (core.autocrlf). Todo
 // patron con anclas ^/$ o \s de fin de linea se aplica despues de quitar los \r
@@ -27,7 +35,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { MAPA_CAT } from '../../theme/tokens';
 
 const hex = (terminacion: string): string => `#${terminacion}`;
-const PROHIBIDOS = [hex('5cc8ff'), hex('f2b134')];
+// El unico proscrito: el cian de marca que la app ya no usa.
+const PROHIBIDOS = [hex('5cc8ff')];
 
 const sinCR = (s: string): string => s.replace(/\r/g, '');
 
@@ -50,13 +59,14 @@ const TEXTO = /\.(ts|tsx|css|json|md|html)$/;
 const archivosSrc = caminar(SRC).filter((r) => TEXTO.test(r));
 
 const archivosMapa = caminar('src/features/mapa').filter(
-  (r) => !r.includes('__golden__') && !r.includes('__fixtures__') && /\.tsx?$/.test(r),
+  (r) => !r.includes('__fixtures__') && /\.tsx?$/.test(r),
 );
 
-const jsonDeReferencia = [
-  'src/features/mapa/__golden__/mapa-8-brechas.json',
-  'src/features/mapa/__fixtures__/analisis-donante.json',
-];
+// La muestra etiquetada con la que se pinta la app sin sesion. El golden del
+// donante (__golden__/mapa-8-brechas.json) se jubilo el 2026-11-01 junto con el
+// port 1:1: el radial de la Cabina es el dibujo propio y su contrato es
+// mapaLayout.test.ts, no un volcado de otra app.
+const jsonDeReferencia = ['src/features/mapa/__fixtures__/analisis-donante.json'];
 
 // Un hex literal: '#' + 3/4/6/8 digitos-hex con borde no-hex despues. 'url(#brillo)'
 // no pega porque 'r','i','l','o' no son hex; '#a' suelto tampoco (minimo 3).
@@ -69,22 +79,26 @@ describe('MAPA_CAT: los 4 colores fijos del mapa, nunca el color del usuario', (
     expect(Object.keys(MAPA_CAT).sort()).toEqual(['blanda', 'conocimiento', 'credencial', 'dura']);
   });
 
-  it('fija los hex gobernados por el dueno (D5: el ambar del donante muere)', () => {
+  it('fija los hex del tema laboratorio (raiz y blanda en el ambar de la casa)', () => {
     expect(MAPA_CAT.dura).toBe(hex('6aa9ff'));
-    expect(MAPA_CAT.blanda).toBe(hex('84cc16'));
-    expect(MAPA_CAT.conocimiento).toBe(hex('3fd0c9'));
+    expect(MAPA_CAT.blanda).toBe(hex('f2b134'));
+    expect(MAPA_CAT.conocimiento).toBe(hex('3ddc97'));
     expect(MAPA_CAT.credencial).toBe(hex('c084fc'));
   });
 
-  it('conocimiento es literalmente C.green (mismo token, no un clon con deriva)', () => {
+  it('blanda y conocimiento apuntan al token madre, no a un clon con deriva', () => {
     const tokensRaw = leer('src/theme/tokens.ts');
-    // La linea de conocimiento apunta a C.green, no a un hex suelto que puede
-    // divergir del token madre.
+    expect(sinCR(tokensRaw)).toMatch(/blanda:\s*C\.gold\b/);
     expect(sinCR(tokensRaw)).toMatch(/conocimiento:\s*C\.green\b/);
+  });
+
+  it('la raiz dorada se pinta con el token del ambar, no con un hex suelto', () => {
+    const cssRaw = sinCR(leer('src/features/mapa/mapa.css'));
+    expect(cssRaw).toMatch(/\[data-rol-fill="raiz"\]\s*\{\s*fill:\s*var\(--gold\)/);
   });
 });
 
-describe('los dos hex prohibidos no existen bajo src/', () => {
+describe('el cian de marca jubilado no existe bajo src/', () => {
   it('el barrido encontro archivos suficientes para ser creible', () => {
     expect(archivosSrc.length).toBeGreaterThan(50);
     expect(archivosSrc.some((r) => r.endsWith('index.css')), 'el barrido debe cubrir src/index.css').toBe(true);

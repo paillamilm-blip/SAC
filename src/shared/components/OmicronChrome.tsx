@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { ReactNode, CSSProperties } from 'react';
 import { Icon } from './icons';
-import { C, FONT, SIZE, RADIUS, SP, BLUR, SHADOW, EASE, TIMING, ANIM, ACCENT, tint } from '@/theme';
+import { HALO, C, FONT, SIZE, RADIUS, SP, BLUR, SHADOW, EASE, TIMING, ANIM, ACCENT, tint, LETRA} from '@/theme';
 
 export const oc: Record<string, CSSProperties> = {
   // Pantalla transparente: deja ver el fondo Ómicrom de la shell.
@@ -30,7 +30,7 @@ export const oc: Record<string, CSSProperties> = {
   card: {
     borderRadius: RADIUS.xl, padding: SP[4],
     background: C.glass, border: `1px solid ${C.line}`,
-    backdropFilter: BLUR.md, WebkitBackdropFilter: BLUR.md,
+    backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
   },
 };
 
@@ -57,14 +57,14 @@ export function OmicronHeader({ title, subtitle, icon, onBack, action, accent = 
         <div style={{
           ...S.iconBadge,
           background: `linear-gradient(135deg, ${accent}, ${C.purple})`,
-          boxShadow: `0 0 16px ${tint(accent, 34)}`,
+          boxShadow: `0 0 ${HALO.marca}px ${tint(accent, 34)}`,
         }}>
           {icon}
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         {subtitle && (
-          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.6, textTransform: 'uppercase', color: C.cyan }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, textTransform: 'uppercase', color: C.cyan }}>
             {subtitle}
           </div>
         )}
@@ -87,7 +87,7 @@ export function OmicronAction({ children, onClick }: { children: ReactNode; onCl
 // Etiqueta de sección (eyebrow) mono.
 export function OmicronEyebrow({ children, color = C.cyan, style }: { children: ReactNode; color?: string; style?: CSSProperties }) {
   return (
-    <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1.6, textTransform: 'uppercase', color, padding: `${SP[1]}px ${SP[0]}px ${SP[2]}px`, ...style }}>
+    <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.ancha, textTransform: 'uppercase', color, padding: `${SP[1]}px ${SP[0]}px ${SP[2]}px`, ...style }}>
       {children}
     </div>
   );
@@ -99,7 +99,7 @@ const S: Record<string, CSSProperties> = {
     padding: `${SP[2]}px ${SP[3]}px`, marginBottom: SP[1],
     borderRadius: RADIUS.lg,
     background: C.glass, border: `1px solid ${C.line}`,
-    backdropFilter: BLUR.md, WebkitBackdropFilter: BLUR.md,
+    backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
   },
   back: {
     flexShrink: 0, width: 44, height: 44, borderRadius: RADIUS.md,
@@ -113,7 +113,7 @@ const S: Record<string, CSSProperties> = {
   },
   title: {
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink,
-    letterSpacing: -0.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    letterSpacing: LETRA.titulo, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   },
   action: { display: 'flex', alignItems: 'center', gap: SP[2], flexShrink: 0 },
   actionBtn: {
@@ -176,8 +176,8 @@ export function OmicronCard({ children, onClick, accent, glow, style, className 
         padding: SP[4],
         background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
         border: `1px solid ${C.line}`,
-        backdropFilter: BLUR.md, WebkitBackdropFilter: BLUR.md,
-        boxShadow: glow && accent ? `${SHADOW.lg}, 0 0 22px ${tint(accent, 14)}` : SHADOW.md,
+        backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
+        boxShadow: glow && accent ? `${SHADOW.lg}, 0 0 ${HALO.resplandor}px ${tint(accent, 14)}` : SHADOW.md,
         overflow: 'hidden',
         ...style,
       }}
@@ -198,7 +198,7 @@ export function Chip({ children, color = ACCENT, filled, icon }: { children: Rea
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: SP[1], padding: `${SP[1]}px ${SP[3]}px`,
-      borderRadius: RADIUS.pill, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 0.4,
+      borderRadius: RADIUS.pill, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.denso,
       color: filled ? C.onAccent : color, background: filled ? color : tint(color, 11),
       border: `1px solid ${filled ? color : tint(color, 33)}`, whiteSpace: 'nowrap', fontWeight: 600,
     }}>
@@ -211,8 +211,8 @@ export function Chip({ children, color = ACCENT, filled, icon }: { children: Rea
 export function Stat({ label, value, color = C.ink, icon }: { label: string; value: ReactNode; color?: string; icon?: ReactNode }) {
   return (
     <div style={{ padding: SP[3], borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], color: C.mut, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1, textTransform: 'uppercase' }}>{icon}{label}</div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color, marginTop: SP[1], letterSpacing: -0.5 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], color: C.mut, fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.etiqueta, textTransform: 'uppercase' }}>{icon}{label}</div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color, marginTop: SP[1], letterSpacing: LETRA.titulo }}>{value}</div>
     </div>
   );
 }
@@ -233,7 +233,7 @@ export function ProgressBar({ pct, color = ACCENT, height = 7, label }: { pct: n
       <div style={{
         height: '100%', width: '100%', transform: `scaleX(${p / 100})`, transformOrigin: 'left',
         borderRadius: RADIUS.pill, background: `linear-gradient(90deg, ${color}, ${C.purple})`,
-        boxShadow: `0 0 12px ${tint(color, 40)}`,
+        boxShadow: `0 0 ${HALO.foco}px ${tint(color, 40)}`,
         transition: `transform ${TIMING.slow} ${EASE.default}`,
       }} />
     </div>
@@ -259,7 +259,7 @@ export function ProgressRing({ pct, size = 46, stroke = 4, color = ACCENT, label
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ - (circ * p) / 100}
-          style={{ transition: `stroke-dashoffset ${TIMING.slow} ${EASE.default}`, filter: `drop-shadow(0 0 4px ${tint(color, 53)})` }}
+          style={{ transition: `stroke-dashoffset ${TIMING.slow} ${EASE.default}`, filter: `drop-shadow(0 0 ${HALO.chispa}px ${tint(color, 53)})` }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT.mono, fontSize: SIZE.xs, fontWeight: 700, color }}>{children}</div>
@@ -272,7 +272,7 @@ export function SectionTitle({ children, icon, right, color = ACCENT }: { childr
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], padding: `${SP[4]}px ${SP[0]}px ${SP[2]}px` }}>
       {icon && <span style={{ color, display: 'flex' }}>{icon}</span>}
-      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, letterSpacing: -0.2 }}>{children}</span>
+      <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, letterSpacing: LETRA.apretada }}>{children}</span>
       {right && <span style={{ marginLeft: 'auto' }}>{right}</span>}
     </div>
   );
@@ -307,7 +307,7 @@ export function OmicronLoading({ message = 'Un momento, lo estoy preparando…',
           animation: ANIM.spin,
         }} />
       </div>
-      <p style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.cyan, letterSpacing: 1.2, textTransform: 'uppercase', margin: 0 }}>
+      <p style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.cyan, letterSpacing: LETRA.etiqueta, textTransform: 'uppercase', margin: 0 }}>
         {message}
       </p>
     </div>
@@ -335,7 +335,7 @@ export function OmicronError({ cause, title = 'No pude hacerlo ahora', ctaLabel,
       }}>
         <Icon role="error" size={24} />
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: -0.2 }}>{title}</div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: LETRA.apretada }}>{title}</div>
       <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.6, color: C.mut, margin: `${SP[1]}px 0 0`, maxWidth: 280 }}>{cause}</p>
       {ctaLabel && onCta && (
         <button onClick={onCta} style={{
@@ -370,14 +370,14 @@ export function OmicronDone({ title, detail, ctaLabel, onCta }: OmicronDoneProps
       }}>
         <Icon role="exito" size={24} />
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: -0.2 }}>{title}</div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.lg, color: C.ink, letterSpacing: LETRA.apretada }}>{title}</div>
       {detail && <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.6, color: C.mut, margin: `${SP[1]}px 0 0`, maxWidth: 280 }}>{detail}</p>}
       {ctaLabel && onCta && (
         <button onClick={onCta} style={{
           marginTop: SP[4], minHeight: 44, padding: `0 ${SP[5]}px`, borderRadius: RADIUS.md,
           border: 'none', cursor: 'pointer', color: C.onAccent,
           background: `linear-gradient(135deg, ${C.green}, ${tint(C.green, 67)})`,
-          boxShadow: `0 0 18px ${tint(C.green, 33)}`,
+          boxShadow: `0 0 ${HALO.marca}px ${tint(C.green, 33)}`,
           fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
         }}>{ctaLabel}</button>
       )}
@@ -402,12 +402,12 @@ export function OmicronEmpty({ icon, title, hint, ctaLabel, onCta, accent = ACCE
         width: 72, height: 72, borderRadius: '50%', marginBottom: SP[3],
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         border: `1px solid ${tint(accent, 40)}`, color: accent,
-        background: tint(accent, 4), boxShadow: `0 0 26px ${tint(accent, 20)}`,
+        background: tint(accent, 4), boxShadow: `0 0 ${HALO.resplandor}px ${tint(accent, 20)}`,
         animation: ANIM.float,
       }}>
         {icon}
       </div>
-      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: -0.3 }}>{title}</div>
+      <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.xl, color: C.ink, letterSpacing: LETRA.titulo }}>{title}</div>
       {hint && <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, lineHeight: 1.6, color: C.mut, margin: `${SP[1]}px 0 0`, maxWidth: 260 }}>{hint}</p>}
       {ctaLabel && onCta && (
         <button
@@ -416,7 +416,7 @@ export function OmicronEmpty({ icon, title, hint, ctaLabel, onCta, accent = ACCE
             marginTop: SP[4], minHeight: 44, padding: `0 ${SP[5]}px`, borderRadius: RADIUS.md,
             border: 'none', cursor: 'pointer', color: C.onAccent,
             background: `linear-gradient(135deg, ${accent}, ${tint(accent, 67)})`,
-            boxShadow: `0 0 18px ${tint(accent, 33)}`,
+            boxShadow: `0 0 ${HALO.marca}px ${tint(accent, 33)}`,
             fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
           }}
         >

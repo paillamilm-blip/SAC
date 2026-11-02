@@ -1,4 +1,4 @@
-// supabase/functions/carta-ia/index.ts — Carta de Competencias de Ómicrom.
+// supabase/functions/carta-ia/index.ts — Carta de Habilidades de Ómicrom.
 // La IA lee el Gemelo Digital + las Actas de Evidencia del usuario y redacta
 // un resumen profesional VERIFICABLE (respaldado por evidencia, no auto-declarado)
 // pensado para que una empresa lo lea de un vistazo.
@@ -13,7 +13,7 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders, withCors } from '../_shared/cors.ts';
 const CORS = corsHeaders();
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -25,7 +25,7 @@ async function getUserId(authHeader: string): Promise<string | null> {
   return data?.user?.id ?? null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withCors(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     if (!hasKey()) return json({ error: 'La Carta IA no esta configurada (falta OPENROUTER_KEY).' }, 500);
@@ -53,13 +53,13 @@ Deno.serve(async (req) => {
     const validadas = (actas ?? []).filter((a: any) => a.veredicto === 'APROBADO');
 
     const evidencia = validadas.length === 0
-      ? '(El usuario aun no tiene competencias validadas por examen.)'
+      ? '(El usuario aun no tiene habilidades validadas por examen.)'
       : validadas.map((a: any) =>
-          `- ${a.nodo?.title ?? 'Competencia'}: ${a.puntaje_global}% (ejecucion ${a.ejecucion}, calidad ${a.calidad}, trascendencia ${a.trascendencia}, fundamento ${a.fundamento})`,
+          `- ${a.nodo?.title ?? 'Habilidad'}: ${a.puntaje_global}% (ejecucion ${a.ejecucion}, calidad ${a.calidad}, trascendencia ${a.trascendencia}, fundamento ${a.fundamento})`,
         ).join('\n');
 
     const sys =
-      'Eres redactor profesional de Omicrom. Escribes una "Carta de Competencias" breve y creible ' +
+      'Eres redactor profesional de Omicrom. Escribes una "Carta de Habilidades" breve y creible ' +
       'para que una EMPRESA evalue a un candidato. Regla de oro: basate SOLO en la evidencia que te paso ' +
       '(Gemelo Digital + actas validadas por IA). NO inventes experiencia ni titulos. Si hay poca evidencia, ' +
       'dilo con honestidad y enfocate en el potencial demostrado. Espanol profesional, calido y directo. ' +
@@ -70,8 +70,8 @@ Deno.serve(async (req) => {
       `GEMELO DIGITAL (0-100): ejecucion ${Math.round(prof.execution_score ?? 0)}, calidad ${Math.round(prof.quality_score ?? 0)}, ` +
       `trascendencia ${Math.round(prof.transcendence_score ?? 0)}, fundamento ${Math.round(prof.foundation_score ?? 0)}. ` +
       `Reputacion ${Math.round(prof.reputation_score ?? 0)}/100. PE ${prof.pe_points ?? 0}.\n` +
-      `COMPETENCIAS VALIDADAS POR IA (${validadas.length}):\n${evidencia}\n\n` +
-      'Redacta la Carta de Competencias.';
+      `HABILIDADES VALIDADAS POR IA (${validadas.length}):\n${evidencia}\n\n` +
+      'Redacta la Carta de Habilidades.';
 
     const carta = await callLLM([
       { role: 'system', content: sys },
@@ -86,4 +86,4 @@ Deno.serve(async (req) => {
   } catch (e) {
     return json({ error: 'Error inesperado en la Carta IA.', detail: String(e) }, 500);
   }
-});
+}));

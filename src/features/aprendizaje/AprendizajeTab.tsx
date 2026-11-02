@@ -6,36 +6,27 @@
 // <MapaCapacidades> por props.
 //
 // Honestidad sin motor (brief §2, §4 y spec §8):
-//  - Fuente 1 puente, Fuente 2 muestra (solo si el puente está vacío) siempre con
-//    el aviso "Análisis de muestra · sin IA conectada". Nunca se pasa la muestra
-//    por análisis propio.
+//  - Fuente con sesión: las filas propias de `brechas_aprendizaje` (RLS dueña).
+//    Sin sesión: Fuente 1 puente, Fuente 2 muestra (solo si el puente está vacío)
+//    y siempre con el aviso "Análisis de muestra · sin IA conectada". Nunca se
+//    pasa la muestra por análisis propio, ni a un usuario que sí tiene sesión.
 //  - Confirmar/dominar/rechazar aplican en memoria y llaman marcarBrecha(). Si el
 //    RPC falla (motor sin desplegar), se ve el motivo y el estado VUELVE al
-//    anterior: cero optimismo huérfano.
+//    anterior: cero optimismo huérfano. Si el RPC responde, se avisa a la lectura
+//    para que la fila real vuelva a pintar el mapa.
 //  - Vocabulario: Pendiente / Reconocida / Dominada / Descartada. Nunca
 //    "Verificada", nunca "ADN", nunca jerga de scores.
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import MapaCapacidades, { type ModoMapa } from '@/features/mapa/MapaCapacidades';
 import { Icon } from '@/shared/components/icons';
-import { puenteBrechasInvitado } from '@/features/gemelo/services/aprendizaje';
+import { OmicronEmpty, OmicronError, OmicronLoading } from '@/shared/components/OmicronChrome';
 import { transicionValida, type EstadoBrecha } from '@/features/gemelo/services/brechas';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { MAPA_CAT } from '@/theme/tokens';
-import {
-  aBrechaDeMapa,
-  resolverFuente,
-  ETIQUETA_ESTADO,
-  type BrechaDeTrabajo,
-  type MuestraAnalisis,
-} from './abrirBrechas';
+import { aBrechaDeMapa, AVISO_MUESTRA, AVISO_VACIO, ETIQUETA_ESTADO, type BrechaDeTrabajo } from './abrirBrechas';
 import { marcarBrecha } from './marcarBrecha';
-import muestraRaw from '../mapa/__fixtures__/analisis-donante.json?raw';
+import { useVistaBrechas } from './useVistaBrechas';
 import './aprendizaje.css';
-
-const MUESTRA = JSON.parse(muestraRaw) as MuestraAnalisis;
-
-// Literal del donante (PanelReporte.tsx L113): la cabecera y el badge lo dicen igual.
-const AVISO_MUESTRA = 'Análisis de muestra · sin IA conectada';
 
 // El botón "Reproducir el nacimiento" y la leyenda viven dentro de
 // MapaCapacidades (no se tocan). La cola define el orden de las filas como el
@@ -47,11 +38,19 @@ const fechaCorta = (iso: string) =>
   new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
 
 export default function AprendizajeTab() {
-  // La fuente se resuelve UNA vez al montar (el puente se lee del localStorage;
-  // no muta durante la sesión en B4 — la persistencia del estado es B8+).
-  const fuente = useMemo(() => resolverFuente(puenteBrechasInvitado.leer(), MUESTRA), []);
+  // La verdad de las brechas la lee UN solo lector (useVistaBrechas): el home es
+  // el mapa y esta pestaña es su cola; dos lectores de la misma fuente volverían
+  // a separar la app en dos.
+  const vista = useVistaBrechas();
+  const { trabajo, recargar } = vista;
+  const leida = vista.brechas;
 
-  const [brechas, setBrechas] = useState<BrechaDeTrabajo[]>(fuente.brechas);
+  // El BORRADOR es la escritura optimista: vive hasta que llega una lectura nueva.
+  // Si el RPC guardó, la base reenvía la fila y el mapa repinta con datos reales.
+  const [borrador, setBorrador] = useState<BrechaDeTrabajo[] | null>(null);
+  useEffect(() => setBorrador(null), [leida]);
+  const brechas = borrador ?? leida;
+
   const [modo, setModo] = useState<ModoMapa>('naciendo');
   const [recienId, setRecienId] = useState<string | null>(null);
   const [guardando, setGuardando] = useState<string | null>(null);
@@ -89,16 +88,17 @@ export default function AprendizajeTab() {
     };
 
     setError(null);
-    setBrechas((prev) => prev.map((x) => (x.id === id ? aplicado : x)));
+    setBorrador((prev) => (prev ?? leida).map((x) => (x.id === id ? aplicado : x)));
     setModo('vivo'); // el mapa no se reinventa: los cambios van en modo vivo
     setGuardando(id);
     setConfirmando(null);
 
     try {
       await marcarBrecha(id, siguiente);
+      recargar(); // la base es la autoridad: después de escribir, se vuelve a leer
       pulsar(id);
     } catch (e) {
-      setBrechas(anterior); // revertir: nada de optimismo huérfano
+      setBorrador(anterior); // revertir: nada de optimismo huérfano
       setError(e instanceof Error ? e.message : 'No se pudo guardar tu respuesta.');
     } finally {
       setGuardando(null);
@@ -112,6 +112,58 @@ export default function AprendizajeTab() {
       ),
     [brechas],
   );
+
+  // El puntero de la cola: la primera pendiente EN EL ORDEN QUE VE EL USUARIO (el
+  // de `filas`), no la primera que llegó de la base.
+  const pendientes = useMemo(() => filas.filter((b) => b.estado === 'detectada'), [filas]);
+  const siguiente = pendientes[0] ?? null;
+
+  // Abrir y llevar la vista a la fila son dos pasos: el scroll tiene que correr
+  // DESPUÉS del render que expande el cuerpo, si no mide sobre el cierre.
+  const [llevaAId, setLlevaAId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!llevaAId) return;
+    document.getElementById(`brecha-${llevaAId}`)?.scrollIntoView?.({
+      block: 'nearest',
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+    setLlevaAId(null);
+  }, [llevaAId]);
+
+  // Los tres estados antes del mapa (hook ya resuelto, así que es seguro salir
+  // temprano): adelantar la muestra mientras la sesión se resuelve, o pintar el
+  // análisis del donante a un usuario real, es exactamente la mentira del spec §8.
+  if (trabajo.tipo === 'cargando') {
+    return (
+      <div className="aprendizaje-workspace" style={{ '--omi-accent': uc, '--omi-accent-soft': `${uc}33` } as CSSProperties}>
+        <OmicronLoading message="Buscando tu mapa…" />
+      </div>
+    );
+  }
+
+  if (trabajo.tipo === 'error') {
+    return (
+      <div className="aprendizaje-workspace" style={{ '--omi-accent': uc, '--omi-accent-soft': `${uc}33` } as CSSProperties}>
+        <OmicronError cause={trabajo.mensaje} title="Tu mapa no llegó" ctaLabel="Intentarlo de nuevo" onCta={recargar} />
+      </div>
+    );
+  }
+
+  if (trabajo.tipo === 'vacio') {
+    // Las palabras salen de AVISO_VACIO (única voz de los dos vacíos, misma que
+    // lee la portada). Sin botón acá: el modal del CV vive en OrbShell, y un CTA
+    // que no abre nada es ruido. La acción está en el home.
+    const aviso = AVISO_VACIO[trabajo.motivo];
+    return (
+      <div className="aprendizaje-workspace" style={{ '--omi-accent': uc, '--omi-accent-soft': `${uc}33` } as CSSProperties}>
+        <OmicronEmpty
+          icon={<Icon role="aprendizaje" size={30} />}
+          title={aviso.titulo}
+          hint={aviso.hint}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -132,16 +184,15 @@ export default function AprendizajeTab() {
         </span>
       </header>
 
-      {fuente.simulado && (
-        <span className="aprendizaje-badge aprendizaje-chip" data-tipo="muestra">
-          {AVISO_MUESTRA}
-        </span>
-      )}
-
-      {fuente.simulado && (
-        <p className="aprendizaje-aviso">
-          Es una <strong>muestra fija</strong>: no sale de tu CV. Con el motor conectado, acá aparece tu análisis.
-        </p>
+      {vista.simulado && (
+        <>
+          <span className="aprendizaje-badge aprendizaje-chip" data-tipo="muestra">
+            {AVISO_MUESTRA}
+          </span>
+          <p className="aprendizaje-aviso">
+            Son habilidades de ejemplo, <strong>no son tuyas</strong>. Sube tu CV y aquí aparecen tus brechas reales.
+          </p>
+        </>
       )}
 
       {error && (
@@ -150,20 +201,53 @@ export default function AprendizajeTab() {
         </p>
       )}
 
+      {siguiente ? (
+        <button
+          type="button"
+          className="aprendizaje-siguiente"
+          aria-controls={`brecha-${siguiente.id}`}
+          onClick={() => {
+            setAbiertaId(siguiente.id);
+            setLlevaAId(siguiente.id);
+          }}
+        >
+          <span className="siguiente-etiqueta">Siguiente</span>
+          <span className="siguiente-titulo">{siguiente.titulo}</span>
+          <span className="siguiente-cuenta">Quedan {pendientes.length} en la cola</span>
+          <Icon role="siguiente" size={16} />
+        </button>
+      ) : (
+        <p className="aprendizaje-siguiente" data-estado="libre" role="status">
+          <span className="siguiente-etiqueta">Cola libre</span>
+          <span className="siguiente-titulo">
+            No queda ninguna brecha por responder. Cuando subas un CV nuevo, aquí vuelve la cola.
+          </span>
+        </p>
+      )}
+
       <div className="aprendizaje-grid">
         <div className="aprendizaje-mapa">
           <MapaCapacidades
-            ocupacion={fuente.ocupacion}
+            ocupacion={vista.ocupacion}
             brechas={filas.map(aBrechaDeMapa)}
             modo={modo}
             recienId={recienId}
           />
         </div>
 
-        <aside className="aprendizaje-cola" aria-label="Cola de revisión de brechas">
+        <aside
+          className="aprendizaje-cola"
+          aria-label="Cola de revisión de brechas"
+          onKeyDown={(e) => {
+            // Escape cierra la fila SOLO con el foco dentro de la cola. Un listener
+            // de documento sería un segundo dueño de la tecla: el modal de activación
+            // también la usa y se cerrarían las dos cosas de una vez.
+            if (e.key === 'Escape' && abiertaId !== null) setAbiertaId(null);
+          }}
+        >
           <h3 className="cola-titulo">
             Cola de revisión{' '}
-            <b>{brechas.filter((b) => b.estado === 'detectada').length} pendientes</b>
+            <b>{pendientes.length} pendientes</b>
           </h3>
 
           {filas.length === 0 && (
@@ -177,7 +261,7 @@ export default function AprendizajeTab() {
             const puedeRechazar = transicionValida(b.estado, 'rechazada');
             const puedeDominar = transicionValida(b.estado, 'dominada');
             return (
-              <div className="cola-item" data-testid="cola-item" data-estado={b.estado} key={b.id}>
+              <div className="cola-item" id={`brecha-${b.id}`} data-testid="cola-item" data-estado={b.estado} key={b.id}>
                 <button
                   type="button"
                   className="cola-toggle"

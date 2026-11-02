@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
 import { useToast } from '@/shared/components/Toast';
-import { C, FONT, RADIUS, tint } from '@/theme';
+import { C, FONT, RADIUS, tint, LETRA} from '@/theme';
 import { Icon as OmicronIcon } from '@/shared/components/icons';
 
 interface Pending {
@@ -74,7 +74,7 @@ export function CredentialReview() {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)` }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <ShieldCheck size={15} style={{ color: C.gold }} />
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, letterSpacing: 2, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.gold, letterSpacing: LETRA.anunciada, textTransform: 'uppercase' }}>
           PANEL DE VALIDADOR · DOCENTE
         </span>
       </div>
@@ -124,13 +124,13 @@ export function CredentialReview() {
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   padding: '8px', borderRadius: 8, cursor: 'pointer',
                   background: `${C.green}18`, border: `1px solid ${C.green}`, color: C.green,
-                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
                 }}><Check size={13} /> APROBAR</button>
                 <button onClick={() => review(c.id, false)} disabled={busy === c.id} style={{
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   padding: '8px', borderRadius: 8, cursor: 'pointer',
                   background: `${C.red}14`, border: `1px solid ${C.red}`, color: C.red,
-                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, fontWeight: 700, opacity: busy === c.id ? 0.5 : 1,
                 }}><X size={13} /> RECHAZAR</button>
               </div>
             </div>

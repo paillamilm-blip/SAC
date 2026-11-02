@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { C, FONT, tint, SIZE } from '@/theme';
+import { C, FONT, tint, SIZE, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 import { useApp } from '@/store/AppContext';
 import { supabase } from '@/infrastructure/supabase/client';
@@ -117,7 +117,7 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.mono,
     fontSize: SIZE.xxs,
     color: C.mut,
-    letterSpacing: 1,
+    letterSpacing: LETRA.etiqueta,
     textTransform: 'uppercase' as const,
     marginTop: 2,
   },

@@ -88,8 +88,8 @@ function buildSystemPrompt(ctx: OmicronContext): string {
   ].filter(Boolean).join(' · ');
 
   const skillsLine = ctx.skills?.length
-    ? `Skills: ${ctx.skills.slice(0, 8).join(', ')}.`
-    : 'Sin skills registradas aún.';
+    ? `Habilidades: ${ctx.skills.slice(0, 8).join(', ')}.`
+    : 'Sin habilidades registradas aún.';
 
   const cvLine = ctx.cv_summary
     ? `Resumen CV: ${ctx.cv_summary.slice(0, 300)}`
@@ -243,12 +243,12 @@ function generateOfflineFallback(message: string, ctx: OmicronContext): string {
   if (/consejo|mejoro|brecha|débil|recomienda/.test(t)) {
     const weakest = Math.min(ctx.execution ?? 50, ctx.quality ?? 50, ctx.transcendence ?? 50, ctx.foundation ?? 50);
     const weakName = weakest === ctx.execution ? 'Ejecución' : weakest === ctx.quality ? 'Calidad' : weakest === ctx.transcendence ? 'Trascendencia' : 'Fundamento';
-    return `${name}, tu eje más débil es ${weakName} (${weakest}/100). Para subirlo: valida una skill con un examen o completa un proyecto. Haz esto ahora: toca "Habilidades" y rinde un examen rápido.`;
+    return `${name}, tu eje más débil es ${weakName} (${weakest}/100). Para subirlo: valida una habilidad con un examen o completa un proyecto. Haz esto ahora: toca "Habilidades" y rinde un examen rápido.`;
   }
 
   // Default
   if (ctx.reputation && ctx.reputation > 0) {
-    return `${name}, tu reputación va en ${Math.round(ctx.reputation)}/100. Pregúntame lo que necesites — carrera, skills, empleos, o lo que sea. Estoy aquí para empujarte.`;
+    return `${name}, tu reputación va en ${Math.round(ctx.reputation)}/100. Pregúntame lo que necesites — carrera, habilidades, empleos, o lo que sea. Estoy aquí para empujarte.`;
   }
 
   return `¡Estoy aquí, ${name}! Pregúntame lo que necesites. Si quieres empezar fuerte: sube tu CV y te activo el Gemelo completo.`;

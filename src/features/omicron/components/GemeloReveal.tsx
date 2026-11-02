@@ -14,9 +14,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Zap, TrendingUp, Shield, Target, Clock, ChevronRight, Sparkles } from 'lucide-react';
-import { C, FONT, SIZE, RADIUS } from '@/theme';
+import { HALO, C, FONT, SIZE, RADIUS, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
-import { getUserColor } from '@/shared/components/ColorPicker';
+import { getUserColor } from '@/shared/services/userColor';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import type { AnalyzedProfile } from '@/features/gemelo/services/cvAnalyzer';
 import { useCountUp } from './CountUp';
@@ -118,7 +118,7 @@ function VerdictSeal({ uc, reduceMotion = false }: { uc: string; reduceMotion?: 
       animate={
         reduceMotion
           ? { scale: 1, opacity: 1, boxShadow: `0 0 0 1px ${uc}55` }
-          : { scale: 1, opacity: 1, boxShadow: [`0 0 0 1px ${uc}55`, `0 0 18px 2px ${uc}66`, `0 0 0 1px ${uc}55`] }
+          : { scale: 1, opacity: 1, boxShadow: [`0 0 0 1px ${uc}55`, `0 0 ${HALO.marca}px 2px ${uc}66`, `0 0 0 1px ${uc}55`] }
       }
       transition={reduceMotion ? { duration: 0 } : { duration: 0.38, ease: BEAT_EASE }}
       style={{
@@ -133,7 +133,7 @@ function VerdictSeal({ uc, reduceMotion = false }: { uc: string; reduceMotion?: 
       }}
     >
       <Shield size={12} color={uc} />
-      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.2, color: uc, textTransform: 'uppercase' }}>
+      <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.etiqueta, color: uc, textTransform: 'uppercase' }}>
         Credencial emitida por Ómicrom
       </span>
     </motion.div>
@@ -175,7 +175,7 @@ function RepTravelBar({ repToday, repFuture, uc, reduceMotion = false }: { repTo
               transition={{ duration: 0.9, ease: BEAT_EASE }}
               style={{ position: 'absolute', top: 0, right: 0, width: '100%', height: 12 }}
             >
-              <div style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: uc, boxShadow: `0 0 12px 3px ${uc}` }} />
+              <div style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: uc, boxShadow: `0 0 ${HALO.foco}px 3px ${uc}` }} />
             </motion.div>
           </div>
         )}
@@ -329,7 +329,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
           {/* ── ACT 1: LA ORBE TE LEE ────────────────────────────────── */}
           {currentAct === 'reading' && (
             <motion.div key="reading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1 }}>
-              <TerminalLine text="Detectando identidad..." delay={200} color={C.mut} reduceMotion={!!reduceMotion} />
+              <TerminalLine text="Detectando identidad…" delay={200} color={C.mut} reduceMotion={!!reduceMotion} />
               <TerminalLine text={analyzed.name || analyzed.seniorLabel || 'Profesional detectado'} delay={800} color={C.ink} reduceMotion={!!reduceMotion} />
               <TerminalLine text={analyzed.seniorLabel} delay={1400} color={uc} reduceMotion={!!reduceMotion} />
               <TerminalLine text={`${analyzed.years > 0 ? analyzed.years + ' años' : 'Experiencia'} en entornos productivos`} delay={2000} color={C.ink} reduceMotion={!!reduceMotion} />
@@ -339,14 +339,14 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                   nuevos en el padre) y aterriza toda antes de la línea
                   'calibrado' (3600ms) y muy antes del auto-avance (4500ms):
                   base 2200 + i*280 → última en 3320ms para N=5. Si no hay
-                  labels reales, cae con gracia a 'Analizando competencias…'
+                  labels reales, cae con gracia a 'Analizando habilidades…'
                   (nunca se inventan competencias). */}
               {analyzed.labels.length > 0
                 ? analyzed.labels.slice(0, 5).map((label, i) => (
                     <TerminalLine key={i} text={`Detectado: ${label}`} delay={2200 + i * 280} color={C.gold} reduceMotion={!!reduceMotion} />
                   ))
-                : <TerminalLine text="Analizando competencias…" delay={2600} color={C.gold} reduceMotion={!!reduceMotion} />}
-              <TerminalLine text={`Gemelo Digital calibrado. ${analyzed.labels.length} competencias detectadas.`} delay={3600} color={C.green} reduceMotion={!!reduceMotion} />
+                : <TerminalLine text="Analizando habilidades…" delay={2600} color={C.gold} reduceMotion={!!reduceMotion} />}
+              <TerminalLine text={`Gemelo Digital calibrado. ${analyzed.labels.length} habilidades detectadas.`} delay={3600} color={C.green} reduceMotion={!!reduceMotion} />
             </motion.div>
           )}
 
@@ -394,13 +394,13 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                 transition={reduceMotion ? { duration: 0 } : { duration: 0.5, ease: BEAT_EASE }}
                 style={{ textAlign: 'center', marginBottom: 18 }}
               >
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: C.mut, textTransform: 'uppercase', marginBottom: 4 }}>Tu arquetipo</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: C.mut, textTransform: 'uppercase', marginBottom: 4 }}>Tu arquetipo</div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.xl, color: uc, marginBottom: 4 }}>{archetype.name}</div>
                 <p style={{ fontFamily: FONT.body, fontSize: SIZE.sm, color: C.mut, lineHeight: 1.5, margin: 0 }}>{archetype.line}</p>
               </motion.div>
 
               {/* 4 Axes visual — con descripción */}
-              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.5, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tus 4 ejes del Gemelo Digital</div>
+              <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tus 4 ejes del Gemelo Digital</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
                 {Object.entries(analyzed.axes).map(([key, val], i) => {
                   const info = AXIS_LABELS[key];
@@ -416,7 +416,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                     <div key={key} style={{ padding: 12, borderRadius: RADIUS.lg, background: isWeak ? `${C.red}12` : C.glass, border: `1px solid ${isWeak ? C.red + '44' : C.line}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <Icon size={12} color={info?.color || C.cyan} />
-                        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textTransform: 'uppercase', letterSpacing: 1 }}>{info?.name || key}</span>
+                        <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, textTransform: 'uppercase', letterSpacing: LETRA.etiqueta }}>{info?.name || key}</span>
                       </div>
                       <AxisValue to={val} color={isWeak ? C.red : info?.color || C.cyan} delayMs={i * 70} />
                       <span style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, lineHeight: 1.3 }}>{descriptions[key] || ''}</span>
@@ -431,7 +431,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Sparkles size={14} color={uc} />
-                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 1.4, color: uc, textTransform: 'uppercase' }}>Ómicrom dice</span>
+                    <span style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.ancha, color: uc, textTransform: 'uppercase' }}>Ómicrom dice</span>
                   </div>
                   {/* Sello vivo: se estampa una sola vez al aterrizar el veredicto */}
                   <VerdictSeal uc={uc} reduceMotion={!!reduceMotion} />
@@ -468,7 +468,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                       {/* HOY */}
                       <div style={{ padding: 14, borderRadius: RADIUS.lg, background: C.glass, border: `1px solid ${C.line}` }}>
-                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Ahora mismo</div>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.mut, marginBottom: 8, textTransform: 'uppercase', letterSpacing: LETRA.etiqueta }}>Ahora mismo</div>
                         <RepValue to={repToday} color={C.gold} delayMs={0} />
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Tu reputación actual</div>
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink, lineHeight: 1.4 }}>
@@ -478,7 +478,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
 
                       {/* EN 2 SEMANAS */}
                       <div style={{ padding: 14, borderRadius: RADIUS.lg, background: `${C.green}0a`, border: `1px solid ${C.green}33` }}>
-                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>En 2 semanas</div>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, marginBottom: 8, textTransform: 'uppercase', letterSpacing: LETRA.etiqueta }}>En 2 semanas</div>
                         <RepValue to={repFuture} color={C.green} delayMs={120} />
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xxs, color: C.mut, marginBottom: 10 }}>Si completas los 3 pasos</div>
                         <div style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.green, lineHeight: 1.4 }}>
@@ -551,7 +551,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
           {currentAct === 'cta' && (
             <motion.div key="cta" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ padding: '0 24px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: 2, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tu Gemelo Digital está vivo</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, letterSpacing: LETRA.anunciada, color: C.mut, textTransform: 'uppercase', marginBottom: 8 }}>Tu Gemelo Digital está vivo</div>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.hero, color: C.ink, marginBottom: 4 }}>{analyzed.seniorLabel}</div>
                 {isAuthenticated ? (
                   <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: C.mut }}>Tu Gemelo Digital queda guardado en tu perfil.</div>
@@ -576,8 +576,8 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                     <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.green, textTransform: 'uppercase', marginBottom: 8 }}>Con cuenta</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontFamily: FONT.body, fontSize: SIZE.xs, color: C.ink }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Tu perfil queda guardado para siempre</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Cada prueba que aprobás sube tu reputación (0-100)</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Tu Red Viva muestra qué tenés probado y qué no</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Cada prueba que apruebas sube tu reputación (0-100)</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Tu Red Viva muestra qué tienes probado y qué no</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icon role="probada" size={13} /> Recibes pasos concretos para mejorar cada semana</span>
                     </div>
                   </div>

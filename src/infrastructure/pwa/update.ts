@@ -52,23 +52,27 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
 
   const bar = document.createElement('div');
   bar.id = 'omi-update';
+  // El aviso se inyecta fuera de React, así que no puede traer los tokens de
+  // theme/*.ts: se cuelga de las variables del documento. Un hex escrito acá es
+  // una marca que se desincroniza la próxima vez que el tema cambie.
   bar.style.cssText =
-    'position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
-    'z-index:99999;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:16px;' +
-    'background:rgba(10,16,30,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);' +
-    'border:1px solid rgba(160,174,192,0.4);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 22px rgba(160,174,192,.25);' +
-    "font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;color:#eaf0fb;" +
+    'position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
+    'z-index:99999;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;' +
+    'background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(var(--vidrio-cristal));-webkit-backdrop-filter:blur(var(--vidrio-cristal));' +
+    'border:1px solid var(--line-strong);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 var(--halo-resplandor) color-mix(in srgb, var(--gold) 25%, transparent);' +
+    'color:var(--ink);' +
     `max-width:calc(100vw - 32px);animation:${ANIM.riseFixed}`;
 
   const txt = document.createElement('span');
-  txt.textContent = 'Hay una nueva versión de Ómicrom. Tocá para actualizarla.';
+  txt.textContent = 'Hay una nueva versión de Ómicrom. Toca para actualizarla.';
   txt.style.cssText = 'font-size:13px;font-weight:600';
 
   const btn = document.createElement('button');
   btn.textContent = 'Actualizar';
   btn.style.cssText =
-    'flex-shrink:0;padding:8px 15px;border-radius:11px;border:none;cursor:pointer;font-weight:700;font-size:13px;' +
-    'color:#fff;background:linear-gradient(135deg,#a0aec0,#5e5ce6);box-shadow:0 6px 16px rgba(160,174,192,.4)';
+    'flex-shrink:0;min-height:44px;padding:10px 16px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:13px;' +
+    'color:var(--on-accent);background:linear-gradient(135deg,var(--gold),var(--gold-deep));' +
+    'box-shadow:0 6px 16px color-mix(in srgb, var(--gold) 40%, transparent)';
   btn.onclick = () => {
     btn.textContent = 'Actualizando…';
     btn.disabled = true;

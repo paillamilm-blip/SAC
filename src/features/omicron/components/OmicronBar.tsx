@@ -17,7 +17,7 @@
 // visible usa la marca 'Ómicrom'.
 
 import { useReducedMotion } from 'framer-motion';
-import { C, FONT, tint, ANIM } from '@/theme';
+import { BLUR, HALO, LEJANA, C, FONT, tint, ANIM, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 
 /** Placeholder EXACTO en reposo (home) y en fullscreen. No cambiar los textos. */
@@ -81,7 +81,7 @@ export function OmicronBar({
           <p
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              margin: 0, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 0.8,
+              margin: 0, fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta,
               textTransform: 'uppercase', color: C.mut,
             }}
           >
@@ -89,7 +89,7 @@ export function OmicronBar({
               aria-hidden="true"
               style={{
                 width: 7, height: 7, borderRadius: '50%', background: orbColor,
-                boxShadow: `0 0 6px ${orbColor}`, animation: presenceAnimation,
+                boxShadow: `0 0 ${HALO.ascua}px ${orbColor}`, animation: presenceAnimation,
               }}
             />
             Ómicrom · activo
@@ -101,7 +101,7 @@ export function OmicronBar({
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 9, padding: '11px 13px',
               borderRadius: '14px 14px 14px 4px', border: `1px solid ${C.line}`,
-              background: C.surface, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+              background: C.surface, backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
               minWidth: 0,
             }}
           >
@@ -109,7 +109,7 @@ export function OmicronBar({
               aria-hidden="true"
               style={{
                 flex: '0 0 auto', marginTop: 4, width: 8, height: 8, borderRadius: '50%',
-                background: orbColor, boxShadow: `0 0 7px ${orbColor}`, animation: presenceAnimation,
+                background: orbColor, boxShadow: `0 0 ${HALO.ascua}px ${orbColor}`, animation: presenceAnimation,
               }}
             />
             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, lineHeight: 1.5, color: C.ink, minWidth: 0 }}>
@@ -133,14 +133,14 @@ export function OmicronBar({
           border: `1px solid ${inputFocused ? orbColor + '77' : C.line}`,
           borderRadius: 999,
           padding: inputFocused ? '10px 16px' : '8px 12px',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          backdropFilter: `blur(${BLUR.cristal}px)`,
+          WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
           boxShadow: inputFocused
-            ? `0 0 20px ${orbColor}33, 0 0 8px ${orbColor}22, 0 8px 32px ${tint(C.black, 30)}`
+            ? `0 0 ${HALO.resplandor}px ${orbColor}33, 0 0 ${HALO.ascua}px ${orbColor}22, ${LEJANA.md}`
             // En reposo la barra es el CONTROL PRIMARIO: halo de color de
             // usuario un poco más presente (solo box-shadow, sin nuevos
             // loops; el breathe existente ya lo neutraliza reduced-motion).
-            : (!inputText && !hasResponse ? `0 0 18px ${orbColor}33, 0 0 6px ${orbColor}1a, 0 4px 20px ${tint(C.black, 28)}` : 'none'),
+            : (!inputText && !hasResponse ? `0 0 ${HALO.marca}px ${orbColor}33, 0 0 ${HALO.ascua}px ${orbColor}1a, ${LEJANA.sm}` : 'none'),
           transform: inputFocused ? 'scale(1.02)' : 'scale(1)',
           transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
           animation: !inputText && !hasResponse && !inputFocused ? ANIM.breathe : 'none',

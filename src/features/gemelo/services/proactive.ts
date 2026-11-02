@@ -133,7 +133,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
         return {
           type: 'milestone',
           priority: 4,
-          message: '¡Subiste a Nodo 2! Tu reputación es 50+. Ya podés rendir el examen de tu habilidad más fuerte.',
+          message: '¡Subiste a Nodo 2! Tu reputación es 50+. Ya puedes rendir el examen de tu habilidad más fuerte.',
           emotion: 'celebrating',
           timestamp: Date.now(),
         };
@@ -146,7 +146,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
         return {
           type: 'milestone',
           priority: 5,
-          message: '¡NODO 3 ALCANZADO! Eres élite: tu Gemelo Digital está sostenido por evidencia, no por lo que dijiste de vos.',
+          message: '¡NODO 3 ALCANZADO! Eres élite: tu Gemelo Digital está sostenido por evidencia, no por lo que dijiste de ti.',
           emotion: 'celebrating',
           timestamp: Date.now(),
         };
@@ -170,7 +170,7 @@ export function detectMilestone(context: ProactiveContext): ProactiveEvent | nul
           return {
             type: 'milestone',
             priority: 3,
-            message: `¡${currentPE.toLocaleString()} PE acumulados! Cada prueba que aprobás suma al Gemelo, no al discurso.`,
+            message: `¡${currentPE.toLocaleString()} PE acumulados! Cada prueba que apruebas suma al Gemelo, no al discurso.`,
             emotion: 'celebrating',
             timestamp: Date.now(),
           };

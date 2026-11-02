@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { useApp } from '@/store/AppContext';
-import { C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE, ANIM, LETRA} from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
@@ -69,7 +69,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
 
   return (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: 'blur(6px)',
+      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: `blur(${BLUR.vaho}px)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -113,7 +113,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
           })}
           {loading && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.gold, fontFamily: FONT.mono, fontSize: 11 }}>
-              <Loader2 size={14} className="animate-spin" /> El tutor está pensando...
+              <Loader2 size={14} className="animate-spin" /> El tutor está pensando…
             </div>
           )}
         </div>
@@ -134,7 +134,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
             type="text" value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) ask(); }}
-            placeholder="Escribe tu duda..."
+            placeholder="Escribe tu duda…"
             style={{ flex: 1, padding: '11px 14px', borderRadius: 11, background: C.glass, border: `1px solid ${C.cyanFaint}`, color: C.ink, fontFamily: FONT.body, fontSize: 13, outline: 'none' }}
           />
           <button onClick={() => ask()} disabled={!input.trim() || loading}
@@ -175,7 +175,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: 'blur(6px)',
+      position: 'fixed', inset: 0, zIndex: 1000, background: C.overlay, backdropFilter: `blur(${BLUR.vaho}px)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -200,7 +200,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '30px 0' }}>
               <Loader2 size={24} style={{ color: C.cyan }} className="animate-spin" />
-              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: 1 }}>ANALIZANDO TU PERFIL...</span>
+              <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyanDim, letterSpacing: LETRA.etiqueta }}>ANALIZANDO TU PERFIL…</span>
             </div>
           ) : (
             <p style={{ margin: 0, fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{advice}</p>
@@ -210,7 +210,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
         <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.cyanFaint}` }}>
           <button onClick={run} disabled={loading} style={{
             width: '100%', padding: '12px', borderRadius: RADIUS.lg, cursor: loading ? 'wait' : 'pointer',
-            background: C.cyan, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
+            background: C.cyan, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.etiqueta, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.5 : 1,
           }}><Sparkles size={15} /> VOLVER A ANALIZAR</button>
         </div>
@@ -341,7 +341,7 @@ export function AcademiaTab() {
         audioAscend(); firePulse('success'); await refreshProfile();
       }
     } catch (e) {
-      toast('No se pudo enviar el quiz: ' + ((e as Error).message ?? e), 'error');
+      toast('No se pudo enviar el examen: ' + ((e as Error).message ?? e), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -374,7 +374,7 @@ export function AcademiaTab() {
               background: C.glass, border: `1px solid ${C.cyan}44`,
             }}>
               <span style={{ fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, flex: 1, minWidth: 160, lineHeight: 1.4 }}>
-                Estás como invitado: podés leer los cursos, pero crear tu cuenta es lo que guarda tu progreso en el Gemelo.
+                Estás como invitado: puedes leer los cursos, pero crear tu cuenta es lo que guarda tu progreso en el Gemelo.
               </span>
               <button onClick={() => window.dispatchEvent(new Event('omicron:request-auth'))} style={{
                 padding: '8px 12px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
@@ -455,7 +455,7 @@ export function AcademiaTab() {
                   </div>
                 );
               })()}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: 2, color: uc, marginBottom: 12 }}><Icon role="aprendizaje" size={11} /> NÚCLEO DE APRENDIZAJE</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center', fontFamily: FONT.mono, fontSize: 9, letterSpacing: LETRA.anunciada, color: uc, marginBottom: 12 }}><Icon role="aprendizaje" size={11} /> NÚCLEO DE APRENDIZAJE</div>
 
               {/* Sistema Solar del Aprendizaje · mismo Núcleo de partículas de toda la app (Ómicrom unificado) */}
               <div style={{ position: 'relative', width: 110, height: 110, margin: '0 auto 6px' }}
@@ -463,9 +463,9 @@ export function AcademiaTab() {
                 <GeodesicOrb size={110} nodes={totalAll && totalDone >= totalAll ? 42 : 12} color={uc} spinning={20} intensity={totalAll && totalDone >= totalAll ? 0.9 : 0.5} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
-                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: 2 }}>NÚCLEO</span>
-                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 18px ${uc}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
-                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: tint(C.white, 75), letterSpacing: 1 }}>{completed}/{courses.length} CURSOS</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: uc, letterSpacing: LETRA.anunciada }}>NÚCLEO</span>
+                    <span style={{ display: 'block', fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: '#ffffff', margin: '3px 0', textShadow: `0 0 ${HALO.marca}px ${uc}` }}>{totalAll ? Math.round((totalDone / totalAll) * 100) : 0}%</span>
+                    <span style={{ display: 'block', fontFamily: FONT.mono, fontSize: SIZE.xxs, color: tint(C.white, 75), letterSpacing: LETRA.etiqueta }}>{completed}/{courses.length} CURSOS</span>
                   </div>
                 </div>
               </div>
@@ -484,19 +484,19 @@ export function AcademiaTab() {
                   const left = i % 2 === 0;
                   return (
                     <div key={c.id} style={{ position: 'relative', minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: left ? 'flex-start' : 'flex-end' }}>
-                      <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 6px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
-                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: `2px solid ${C.bg}`, boxShadow: `0 0 10px ${accent}`, zIndex: 3, animation: inProgress ? ANIM.breathe : undefined }} />
+                      <span style={{ position: 'absolute', top: '50%', height: 2, background: accent, boxShadow: `0 0 ${HALO.ascua}px ${accent}`, left: left ? '44%' : '50%', width: '6%' }} />
+                      <span style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 13, height: 13, borderRadius: '50%', background: accent, border: `2px solid ${C.bg}`, boxShadow: `0 0 ${HALO.foco}px ${accent}`, zIndex: 3, animation: inProgress ? ANIM.breathe : undefined }} />
                       <button onClick={() => openCourse(c)} className="oc-card oc-pressable oc-rise" style={{
                         width: '44%', textAlign: 'left', cursor: 'pointer', position: 'relative', zIndex: 2,
                         borderRadius: 14, padding: 11,
                         background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
-                        border: `1px solid ${accent}66`, boxShadow: `0 0 16px ${accent}26`,
+                        border: `1px solid ${accent}66`, boxShadow: `0 0 ${HALO.marca}px ${accent}26`,
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ fontSize: SIZE.xl, flexShrink: 0 }}>{c.cover_emoji}</span>
                           <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm, color: C.ink, lineHeight: 1.15 }}>{c.title}</span>
                         </div>
-                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: accent, letterSpacing: 0.5, marginTop: 6 }}>{statusLabel} · {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total}</div>
+                        <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xxs, color: accent, letterSpacing: LETRA.denso, marginTop: 6 }}>{statusLabel} · {DIFF_LABEL[c.difficulty] ?? 'Curso'} · {lc.done}/{lc.total}</div>
                         <div style={{ marginTop: 5 }}><Bar pct={pct} color={accent} /></div>
                       </button>
                     </div>
@@ -563,7 +563,7 @@ export function AcademiaTab() {
                     <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 12px' }}>{l.content}</p>
                     {!done ? (
                       <button onClick={() => completeLesson(l.id)} style={{
-                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.onAccent,
+                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, color: C.onAccent,
                         background: C.cyan, border: 'none', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontWeight: 700,
                         display: 'inline-flex', alignItems: 'center', gap: 8,
                       }}><CheckCircle2 size={14} /> MARCAR LEÍDA</button>
@@ -574,7 +574,7 @@ export function AcademiaTab() {
                     )}
                     <div style={{ marginTop: 10 }}>
                       <button onClick={() => setTutor(l)} style={{
-                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, color: C.gold,
+                        fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, color: C.gold,
                         background: `${C.gold}14`, border: `1px solid ${C.gold}55`, borderRadius: 8, padding: '8px 14px',
                         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
                       }}><Sparkles size={14} /> PREGÚNTALE AL TUTOR IA</button>
@@ -592,7 +592,7 @@ export function AcademiaTab() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <Sparkles size={16} style={{ color: allDone ? C.gold : C.cyanDim }} />
-              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: allDone ? C.gold : C.cyanDim }}>Quiz final</span>
+              <span style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 13, color: allDone ? C.gold : C.cyanDim }}>Examen final</span>
             </div>
             <p style={{ margin: '0 0 12px', fontFamily: FONT.body, fontSize: SIZE.xs, color: C.cyanDim, lineHeight: 1.4 }}>
               Aprueba con {course.passing_score}% para validar {course.node_id && nodes.get(course.node_id)
@@ -602,10 +602,10 @@ export function AcademiaTab() {
             <button onClick={startQuiz} disabled={!allDone} style={{
               width: '100%', padding: '13px', borderRadius: RADIUS.lg, cursor: allDone ? 'pointer' : 'not-allowed',
               background: allDone ? C.gold : 'transparent', border: `1px solid ${allDone ? C.gold : C.cyanFaint}`,
-              color: allDone ? C.onAccent : C.cyanDim, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
+              color: allDone ? C.onAccent : C.cyanDim, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.etiqueta, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              {allDone ? <><Award size={15} /> RENDIR QUIZ FINAL</> : <><Lock size={14} /> COMPLETA LAS LECCIONES</>}
+              {allDone ? <><Award size={15} /> RENDIR EXAMEN FINAL</> : <><Lock size={14} /> COMPLETA LAS LECCIONES</>}
             </button>
           </div>
         </div>
@@ -621,7 +621,7 @@ export function AcademiaTab() {
         onBack={() => setView('course')}
         icon={<Sparkles size={17} />}
         accent={C.gold}
-        title="Quiz final"
+        title="Examen final"
         subtitle={course?.title}
       />
 
@@ -638,7 +638,7 @@ export function AcademiaTab() {
               {result.passed ? <CheckCircle2 size={40} style={{ color: C.green }} /> : <Lock size={36} style={{ color: C.red }} />}
             </div>
             <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 32, color: result.passed ? C.green : C.red }}>{result.score}%</div>
-            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: result.passed ? C.green : C.red, letterSpacing: 1, marginTop: 4 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: SIZE.xs, color: result.passed ? C.green : C.red, letterSpacing: LETRA.etiqueta, marginTop: 4 }}>
               {result.passed ? '¡APROBADO!' : 'NO APROBADO'}
             </div>
             <p style={{ fontFamily: FONT.body, fontSize: 13, color: C.cyanDim, marginTop: 12, maxWidth: 280, marginInline: 'auto', lineHeight: 1.5 }}>
@@ -651,14 +651,14 @@ export function AcademiaTab() {
                 <button onClick={() => setActiveTab('maxskill')} style={{
                   padding: '11px 22px', borderRadius: 12, cursor: 'pointer',
                   background: C.gold, border: 'none', color: C.onAccent,
-                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
+                  fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, fontWeight: 700,
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                 }}><Target size={14} /> VER EN EL ÁRBOL</button>
               )}
               <button onClick={result.passed ? backToList : () => setView('course')} style={{
                 padding: '11px 22px', borderRadius: 12, cursor: 'pointer',
                 background: `${C.cyan}18`, border: `1px solid ${C.cyan}`, color: C.cyan,
-                fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1, fontWeight: 700,
+                fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta, fontWeight: 700,
               }}>{result.passed ? 'VOLVER A CURSOS' : 'REINTENTAR'}</button>
             </div>
           </div>
@@ -693,7 +693,7 @@ export function AcademiaTab() {
             <button onClick={submit} disabled={submitting || Object.keys(answers).length < questions.length} style={{
               width: '100%', marginTop: 8, padding: '13px', borderRadius: 12,
               cursor: (submitting || Object.keys(answers).length < questions.length) ? 'not-allowed' : 'pointer',
-              background: C.gold, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: 1, fontWeight: 700,
+              background: C.gold, border: 'none', color: C.onAccent, fontFamily: FONT.mono, fontSize: SIZE.xs, letterSpacing: LETRA.etiqueta, fontWeight: 700,
               opacity: (submitting || Object.keys(answers).length < questions.length) ? 0.5 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>

@@ -17,7 +17,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 import type { EstadoBrecha } from '@/features/gemelo/services/brechas';
 
 const CODE_DEL_SQL = 'P0001';
-const FALLBACK = 'No se pudo guardar tu respuesta. Probá de nuevo.';
+const FALLBACK = 'No se pudo guardar tu respuesta. Prueba de nuevo.';
 
 export async function marcarBrecha(id: string, state: EstadoBrecha): Promise<void> {
   const { error } = await supabase.rpc('marcar_brecha', { p_brecha: id, p_state: state });

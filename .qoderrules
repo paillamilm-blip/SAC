@@ -1,0 +1,8 @@
+# Protocolo operativo de Sistema Ómicrom
+
+## Reglas de ejecución en Qoder
+1. Actuar únicamente sobre los archivos explícitamente indicados; no alterar rutas ni archivos ajenos a la tarea.
+2. Todo criterio de aceptación debe ser binario y verificable (comando de terminal que pase en verde o código de respuesta HTTP exacto).
+3. Entregar código limpio: sin console.log, sin funciones comentadas y sin importaciones no utilizadas.
+4. Regla de dos intentos: si una solución falla dos veces consecutivas, detener la edición inmediatamente y solicitar intervención con DeepSeek.
+5. Cada vez que se resuelva un error o incidencia, registrar la fecha, hora, causa raíz y regla aprendida al final de docs/error_log.md antes de cerrar la tarea.

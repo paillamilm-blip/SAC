@@ -10,7 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp } from '@/store/AppContext';
-import { C, FONT, RADIUS, SIZE, tint } from '@/theme';
+import { C, FONT, RADIUS, SIZE, tint, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export function CredentialsPanel() {
   };
   const labelStyle: React.CSSProperties = {
     fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim,
-    letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, display: 'block',
+    letterSpacing: LETRA.etiqueta, textTransform: 'uppercase', marginBottom: 4, display: 'block',
   };
 
   return (
@@ -170,7 +170,7 @@ export function CredentialsPanel() {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, letterSpacing: 2, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: FONT.mono, fontSize: 11, color: C.cyan, letterSpacing: LETRA.anunciada, textTransform: 'uppercase' }}>
           CREDENCIALES DEL GEMELO
         </span>
         {!adding && (
@@ -178,7 +178,7 @@ export function CredentialsPanel() {
             display: 'flex', alignItems: 'center', gap: 4,
             background: C.cyanGhost, border: `1px solid ${C.cyanDim}`,
             borderRadius: 8, padding: '5px 10px', color: C.cyan,
-            cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
+            cursor: 'pointer', fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta,
           }}>
             <Plus size={13} /> AGREGAR
           </button>
@@ -186,7 +186,7 @@ export function CredentialsPanel() {
       </div>
 
       {/* Aporte a la reputación */}
-      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginBottom: 12, letterSpacing: 0.3 }}>
+      <div style={{ fontFamily: FONT.mono, fontSize: 9, color: C.cyanDim, marginBottom: 12, letterSpacing: LETRA.denso }}>
         Aporte verificado al 20% tradicional: <span style={{ color: C.green }}>{verifiedPts}</span> / 100 pts
       </div>
 
@@ -283,18 +283,18 @@ export function CredentialsPanel() {
             <button onClick={resetForm} style={{
               flex: 1, padding: '9px', borderRadius: RADIUS.md, cursor: 'pointer',
               background: 'transparent', border: `1px solid ${C.cyanFaint}`,
-              color: C.cyanDim, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
+              color: C.cyanDim, fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta,
             }}>CANCELAR</button>
             <button onClick={submit} disabled={saving} style={{
               flex: 1, padding: '9px', borderRadius: RADIUS.md, cursor: 'pointer',
               background: `${C.cyan}18`, border: `1px solid ${C.cyan}`,
-              color: C.cyan, fontFamily: FONT.mono, fontSize: 11, letterSpacing: 1,
+              color: C.cyan, fontFamily: FONT.mono, fontSize: 11, letterSpacing: LETRA.etiqueta,
               opacity: saving ? 0.6 : 1,
             }}>{saving ? 'GUARDANDO…' : 'GUARDAR'}</button>
           </div>
 
           {meta.needsUrl && (
-            <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 8, letterSpacing: 0.2 }}>
+            <p style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontFamily: FONT.mono, fontSize: SIZE.xxs, color: C.cyanDim, marginTop: 8, letterSpacing: LETRA.denso }}>
               <Icon role="exito" size={12} color={C.green} style={{ marginTop: 2, flexShrink: 0 }} />
               Las credenciales con QR/link se aprueban al instante. Las demás quedan pendientes de revisión.
             </p>
@@ -336,7 +336,7 @@ export function CredentialsPanel() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 3,
-                    fontFamily: FONT.mono, fontSize: SIZE.xxs, color: sm.color, letterSpacing: 0.5,
+                    fontFamily: FONT.mono, fontSize: SIZE.xxs, color: sm.color, letterSpacing: LETRA.denso,
                     padding: '1px 6px', borderRadius: 12,
                     background: `${sm.color}14`, border: `1px solid ${sm.color}44`,
                   }}>

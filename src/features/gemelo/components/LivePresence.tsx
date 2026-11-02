@@ -9,7 +9,7 @@ import { useRealtime } from '@/store/RealtimeContext';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { audioPing } from '@/shared/utils/spatialAudio';
 import type { LiveEvent, LiveEventKind } from '@/hooks/useRealtimeNetwork';
-import { C, FONT, SIZE, ANIM } from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, ANIM, LETRA} from '@/theme';
 
 const KIND_STYLE: Record<LiveEventKind, { color: string; tag: string }> = {
   join:   { color: C.cyan,  tag: 'RED EN VIVO' },
@@ -57,9 +57,9 @@ export function LiveNetworkFeed() {
         borderRadius: 12,
         background: `linear-gradient(180deg, ${C.surface}, ${C.overlay})`,
         border: `1px solid ${ks.color}55`,
-        boxShadow: `0 12px 34px ${C.scrim}, 0 0 22px ${ks.color}22`,
-        backdropFilter: 'blur(18px)',
-        WebkitBackdropFilter: 'blur(18px)',
+        boxShadow: `0 12px 34px ${C.scrim}, 0 0 ${HALO.resplandor}px ${ks.color}22`,
+        backdropFilter: `blur(${BLUR.esmeril}px)`,
+        WebkitBackdropFilter: `blur(${BLUR.esmeril}px)`,
         animation: ANIM.riseFixed,
         pointerEvents: 'none',
       }}
@@ -71,7 +71,7 @@ export function LiveNetworkFeed() {
           gap: 8,
           fontFamily: FONT.mono,
           fontSize: SIZE.xxs,
-          letterSpacing: 1,
+          letterSpacing: LETRA.etiqueta,
           color: ks.color,
         }}
       >
@@ -81,7 +81,7 @@ export function LiveNetworkFeed() {
             height: 6,
             borderRadius: '50%',
             background: ks.color,
-            boxShadow: `0 0 8px ${ks.color}`,
+            boxShadow: `0 0 ${HALO.ascua}px ${ks.color}`,
             animation: ANIM.breathe,
           }}
         />
