@@ -2,7 +2,7 @@
 // Aviso global de estado de conexión. Útil en móvil con señal inestable
 // (complementa la PWA): muestra una barra cuando se pierde internet y un
 // "reconectado" breve al recuperarlo.
-import { C, tint, SIZE, ANIM, ANCHO, LETRA } from '@/theme';
+import { C, tint, SIZE, ELEVATED, ANIM, ANCHO, LETRA } from '@/theme';
 import { useEffect, useState } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
 
@@ -56,7 +56,7 @@ const S: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     padding: '6px 12px',
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif", fontWeight: 700, fontSize: SIZE.sm, letterSpacing: LETRA.denso,
-    boxShadow: `0 4px 16px ${tint(C.black, 40)}`,
+    boxShadow: ELEVATED.lejana('sm', tint(C.black, 40)),
     animation: ANIM.drop,
   },
   txt: { whiteSpace: 'nowrap' },

@@ -89,10 +89,15 @@ export const SHADOW = {
 } as const;
 
 /**
- * Elevación teñida: la sombra de un elemento cuyo color ES la marca (el color
- * personal del usuario, un tinte del tema). SHADOW es negro y no sirve acá.
- * La forma vivía escrita a mano en cuatro archivos, con dos geometrías casi
- * iguales (0 8px 28px y 0 10px 28px).
+ * Una capa lejana con el color que el sitio elija. Sirve para el negro de
+ * profundidad (`tint(C.black, 30)`) y para la sombra teñida —la de un elemento
+ * cuyo color ES la marca: el color personal del usuario, el ámbar del brief—,
+ * que SHADOW no puede dar porque es negro.
+ *
+ * Existía sólo `cta`, escrita a mano en cuatro archivos con dos geometrías casi
+ * iguales (0 8px 28px y 0 10px 28px). Con el barrido de la altura (treinta capas
+ * en diecinueve archivos) se vio que la geometría era siempre la misma pregunta
+ * —¿a qué altura cae esto?— y el color una pregunta aparte.
  */
 export const ELEVATED = {
   /** La altura de un paso, en el color de la superficie: sombra propia teñida. */

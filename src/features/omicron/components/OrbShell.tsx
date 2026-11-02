@@ -38,7 +38,7 @@ import { streakDays } from '@/features/gemelo/services/profile';
 import { getNextProfileQuestion, hasAskedToday, markAskedToday } from '@/features/gemelo/services/progressive';
 import { evaluateProactiveEvents } from '@/features/gemelo/services/proactive';
 import { motion, useReducedMotion } from 'framer-motion';
-import { BLUR, HALO, C, FONT, FONT_STYLE, tint, SIZE, ANIM, BASE, UMBRAL, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, FONT_STYLE, tint, SIZE, ELEVATED, ANIM, BASE, UMBRAL, LETRA} from '@/theme';
 import { hapticMedium, hapticLight } from '@/shared/utils/haptics';
 import { audioSweep, audioTick } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
@@ -1174,7 +1174,7 @@ export function OrbShell() {
               zIndex: 10,
               backdropFilter: `blur(${BLUR.esmeril}px)`,
               WebkitBackdropFilter: `blur(${BLUR.esmeril}px)`,
-              boxShadow: `0 20px 60px ${C.scrim}, 0 0 ${HALO.resplandor}px ${C.cyanFaint}`,
+              boxShadow: `${ELEVATED.lejana('xl', C.scrim)}, 0 0 ${HALO.resplandor}px ${C.cyanFaint}`,
               animation: ANIM.pop,
               touchAction: 'pan-y',
             }}
@@ -1245,7 +1245,7 @@ export function OrbShell() {
                 animate={{
                   opacity: 1,
                   transform: 'scale(1)',
-                  boxShadow: `0 8px 24px ${orbColor}22`,
+                  boxShadow: ELEVATED.lejana('md', `${orbColor}22`),
                 }}
                 transition={
                   prefersReducedMotion
@@ -1288,7 +1288,7 @@ export function OrbShell() {
                 width: '100%', padding: '12px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${orbColor}, ${C.purple})`,
                 color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: 13,
-                boxShadow: `0 8px 24px ${orbColor}4d`,
+                boxShadow: ELEVATED.lejana('md', `${orbColor}4d`),
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >

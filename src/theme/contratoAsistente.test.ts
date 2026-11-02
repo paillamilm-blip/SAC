@@ -791,6 +791,19 @@ describe('contrato asistente — una sola forma de hacer cada cosa', () => {
       expect(espejo.get(`${paso}-cercana`), `--altura-${paso}-cercana`).toBe(CERCANA[paso]);
       expect(espejo.get(`${paso}-lejana`), `--altura-${paso}-lejana`).toBe(LEJANA[paso]);
     }
+    // El espejo también lleva la caída sola, sin pigmento: es lo único que puede
+    // pedir un CSS inyectado (el banner de la PWA), que no importa el tema y pone
+    // sólo su color. Misma geometría que la capa lejana, verificada texto a texto.
+    const caida = new Map(
+      [...css.matchAll(/--caida-(sm|md|lg|xl):\s*([^;]+);/g)].map(
+        (m) => [m[1], m[2].trim()] as const,
+      ),
+    );
+    expect([...caida.keys()].sort()).toEqual([...PASOS].sort());
+    for (const paso of PASOS) {
+      const geometria = caida.get(paso) ?? '';
+      expect(LEJANA[paso].startsWith(`${geometria} `), `--caida-${paso} ≠ ${LEJANA[paso]}`).toBe(true);
+    }
   });
 
   it('la vara de la altura pesca capas y respeta halos, aristas y espejos', () => {

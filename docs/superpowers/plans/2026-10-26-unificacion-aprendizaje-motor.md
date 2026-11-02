@@ -2743,3 +2743,195 @@ Queda la tercera familia de números de profundidad: **las sombras de elevación
 `0 8px 32px` ×4, `0 16px 48px` ×3). Es #68, con el mismo método: medir, decidir
 escala con desempate declarado, barrer con snapshot y diff, y poner la vara antes
 de creerse el 0 de la métrica.
+
+---
+
+## #68 · La altura de un cuerpo (2026-11-02)
+
+### La medición anterior estaba mal, y este bloque empieza diciendo cuántos eran
+
+El párrafo de arriba anunciaba **50 sitios con ~20 parejas**. Lo que había, medido
+con la misma lógica que la vara (contexto de propiedad + los tres permisos), son
+**30 capas en 19 archivos, 12 geometrías distintas**. Los 50 venían de un grep que
+contaba `0 Npx Npx` en cualquier lado: mezclaba márgenes (`margin: 0 -16px 12px`),
+las líneas del espejo que yo mismo estaba escribiendo en `index.css`, y valores de
+`theme/` que son el dueño. Es el mismo error de #67 en miniatura —**contar ocurrencias
+no es medir hallazgos**— y esta vez lo cometí antes de publicar el número, no después.
+
+Y el inventario que sí midió bien tuvo su propio accidente: el script marcaba
+**todas** las líneas como `:1`, porque usé `findIndex` para buscar la línea de un
+offset cuando lo que buscaba era la última línea que empieza antes del offset
+(`findLastIndex`). No lo arreglé de memoria: lo detecté porque el resultado era
+imposible, y un resultado imposible se lee antes de usarse.
+
+### El dueño: dos capas por paso, y el color se elige aparte
+
+`theme/shadows.ts` tenía `SHADOW` escrito a mano en cuatro literales. Ahora la
+geometría y el pigmento están separados, y la pareja es el átomo:
+
+| Paso | `CERCANA` (define el borde) | `LEJANA` (da la altura) |
+|---|---|---|
+| `sm` | `0 1px 2px` · α 0.25 | `0 4px 12px` · α 0.2 |
+| `md` | `0 1px 3px` · α 0.3 | `0 8px 24px` · α 0.35 |
+| `lg` | `0 2px 6px` · α 0.35 | `0 16px 48px` · α 0.45 |
+| `xl` | `0 4px 12px` · α 0.4 | `0 24px 64px` · α 0.55 |
+
+- `SHADOW.<paso>` = la pareja (lo que pide una superficie asentada).
+- `ELEVATED.lejana(paso, color)` = **una** capa lejana con el color del sitio: sirve
+  para el negro (`tint(C.black, 30)`) y para la sombra teñida (color personal del
+  usuario, ámbar de la marca), que `SHADOW` no puede dar porque es negro.
+- `ELEVATED.tinte(paso, color)` = la teñida que además necesita el negro para asentarse.
+- `SHADOW.glow` y `glowGold` ahora componen `LEJANA.md` en vez de repetirla literal.
+
+**Cómo cae un valor huérfano — dos reglas, y la segunda es al revés que en la luz.**
+
+- **Un estado es un paso.** Donde hay dos estados, las capas caen a pasos
+  CONSECUTIVOS: si reposo y foco comparten paso, la altura deja de contar el estado
+  y el brief prohíbe que un estado sea sólo color. La prueba ya existía en la app:
+  `.cola-item` en reposo pide `--altura-sm` y en `:hover`, `--altura-md`; y en
+  `OmicronBar` el reposo va a `LEJANA.sm` y el foco a `LEJANA.md`.
+- **Un paso solo va al más cercano en desenfoque; ante un empate, HACIA ABAJO.**
+  Es el inverso del desempate de `HALO` (hacia arriba) y la asimetría es deliberada,
+  no descuido: una luz que se achica deja de contar estado; una sombra que se
+  agranda sí puede tapar la superficie de abajo. Este mundo construye la profundidad
+  con superficies escalonadas y vidrio, no con sombras pesadas.
+
+Las doce geometrías barrieron así (regla: desenfoque más cercano):
+`0 4px 12px`·`0 4px 16px`·`0 6px 16px` → `sm` · `0 4px 20px`·`0 4px 24px`·`0 6px 20px`·
+`0 8px 20px`·`0 8px 24px`·`0 8px 32px`·`0 12px 34px` → `md` · `0 12px 40px`·`0 16px 48px` → `lg` ·
+`0 20px 60px` → `xl`.
+
+### El espejo, y por qué hizo falta una segunda familia
+
+`src/index.css` declara `--altura-<paso>-cercana`, `--altura-<paso>-lejana`,
+`--altura-<paso>` (la pareja) y **`--caida-<paso>`** —la geometría sola, sin pigmento.
+`--caida-*` no es un adorno: el banner de actualización de la PWA (`infrastructure/pwa/update.ts`)
+se inyecta como cadena de CSS dentro de un `<style>` y **no puede importar el tema**.
+Sin una var de geometría, ese escrito tenía que elegir entre dos defectos: copiar
+`0 12px 40px` a mano o perder su color. Pide `var(--caida-lg)` y pone su `rgba(0,0,0,.6)`.
+El contrato verifica los doce `--altura-*` y los cuatro `--caida-*` **texto a texto**
+contra `CERCANA`/`LEJANA`, igual que los espejos de `--halo-*` y `--vidrio-*`.
+
+### Los cuatro errores del barrido (ninguno lo agarró un test; los agarró leer)
+
+1. **Falsa pareja.** `GemeloTab` tenía `0 4px 20px` en tres tarjetas. Al desenfoque
+   es `md`, pero la geometría `y` salta de 4 a 8. Aceptado y declarado: la vara es la
+   escala, no el píxel exacto, y el delta se lista abajo en «lo visible».
+2. **El negativo que me escribí mal.** En el test de control puse
+   `alturasSueltas('boxShadow: \`0 4px 24px ${c}, ${LEJANA.md}\`') → []`. Falso: una capa
+   suelta dentro de una plantilla sigue siendo una capa suelta, y la vara la pesca bien
+   —el que estaba mal era mi expect, no la red. Lo cambié a `['0 4px 24px']` y agregué
+   el negativo verdadero (`${SHADOW.md}, 0 0 ${HALO.ascua}px …`).
+3. **`expect(…).startsWith(…)` no existe en este `Assertion`.** El typecheck lo frenó
+   (TS2339) antes de que se volviera un test verde por accidente; se reemplazó por
+   `LEJANA[paso].startsWith(…)` comparado contra `true`.
+4. **Finale de línea.** El codemod normalizaba CRLF/LF del archivo entero. Sobre un
+   checkout mixado eso reescribe cada línea y el diff deja de ser legible: se sacó la
+   normalización (ningún par tocaba un salto de línea) y se escribió el texto tal cual.
+
+### El defecto que sólo apareció al verificar en el navegador
+
+`GeodesicOrb` (el núcleo del orbe, la pieza que más mirás) calculaba sus dos halos
+multiplicando: `0 0 ${30 * intensity}px` y `0 0 ${60 * intensity}px`, con `intensity`
+entre 0.5 y 0.9 según el estado. En pantalla eso es **21px y 42px**, dos números que
+no están en `HALO`. La vara 16 no los podía ver: no son literales en el código, son
+geometría fabricada en runtime. Medido con `getComputedStyle` sobre los 249 elementos
+renderizados, era lo único fuera de escala que quedaba.
+
+Se resolvió pidiendo dos pasos (`HALO.resplandor` 24 y `HALO.difusion` 40) y dejando
+que `intensity` siga haciendo lo que su propia documentación dice que hace —
+**brillo** (ya gobierna el alfa del halo y la opacidad de los vértices)—. El estado del
+orbe no queda sólo en color: sigue teniendo conteo de nodos (12 → 42 al completar todo),
+giro y brillo. Es, además, lo que el brief pide para el movimiento: transform y opacidad.
+
+Después del cambio, la sonda del navegador da: **0 capas fuera de escala, 0 sombras
+rotas (`undefined`/`NaN`), desenfoques de vidrio {16, 20}** —dos pasos de `BLUR`— y
+consola limpia. Cobertura declarada: la pantalla renderizada es la de arranque; las
+que requieren sesión no se recorrieron, porque no toco tu login ni tus credenciales.
+La garantía completa de esas pantallas es la vara sobre el código fuente, no esta sonda.
+
+### La vara 17, y por qué la métrica no alcanzaba otra vez
+
+`audit-debt.mjs` midió `0 valores fuera de token` antes de este bloque y también
+después: su detector compara **números contra la lista del tema**, así que un
+`0 12px 34px` que casualmente coincide con algo de `theme/` no es deuda para él.
+La propiedad (quién es el dueño de ese número) la vela `contratoAsistente.test.ts`.
+Tres permisos, cada uno un defecto que alguien podría cometer creyendo que hace bien:
+
+- `0 0 Npx` con dos offsets ceros **es luz**, y la cobra la vara 16 — si las dos redes
+  la pescaran, un halo podría moverse de escala sin que nadie lo decida.
+- Una capa `inset` **es una arista** (el filo del vidrio, `--filo-vidrio`), no un cuerpo
+  elevado: no se mide.
+- Una línea `--altura-md-lejana: …` o `--caida-lg: …` **es el espejo**, y el espejo se
+  vela texto a texto, no se lo perdona en silencio. Se vacían las definiciones
+  conservando los saltos, como los comentarios en #67.
+- Y manda la **propiedad más cercana hacia atrás en el archivo**, no en la línea:
+  `margin: 0 -16px 12px` no es una caída, y una sombra larga partida en varias líneas
+  no repite la propiedad.
+
+### Un defecto de documentación que la métrica estaba protegiendo
+
+`DESIGN.md`, sección Buttons, seguía describiendo botones que ya no existen:
+`padding: '13px 0'`, `borderRadius: 15`, `fontSize: 15.5`, `letterSpacing: 0.2` y
+`boxShadow: 0 12px 32px rgba(160,174,192,0.42)`. Ninguno de esos valores vive en el
+código (`BASE.btnPrimary` es ámbar con `RADIUS.sm`, `fontSize: 15` y `LETRA.apretada`).
+Y como `audit-debt.mjs` lee `DESIGN.md` para armar su lista de valores conocidos,
+**el párrafo viejo blanqueaba sus propios números muertos**: la doc instructiva y el
+permiso de la métrica eran el mismo texto rancio. Se reescribió contra lo que hay, y
+la regla «una sombra de una capa es un defecto» se corrigió por su versión verdadera:
+la pareja es la forma por defecto, y una capa lejana sola es correcta cuando el sitio
+ya vivía con una (viaja bajo un halo, sobre una escena) — **la escala cambia la
+geometría, no la composición**.
+
+### Medición
+
+| Prueba | Antes | Después |
+|---|---|---|
+| Capas de altura escritas a mano fuera de `theme/` | **30 en 19 archivos · 12 geometrías** | **0 en 0 · 0 geometrías** |
+| Capas de los 3 sitios de hoja CSS (`aprendizaje.css`, `.bg-omicron-card`) | 3 literales copiados de `SHADOW` | `var(--altura-*)` |
+| Sombras del banner PWA inyectado | 2 literales | `var(--caida-lg)` / `var(--caida-sm)` |
+| Halos calculados en runtime (orbe) | 21px y 42px, fuera de escala | 24px y 40px, dos pasos |
+| Pruebas del contrato asistente | 19 · 16 afirmaciones | **21 · 17 afirmaciones** |
+| `npm run typecheck` · `npm run lint` | limpios | limpios |
+| `npx vitest --run` | 45 · 609 | 45 · **609** |
+| `audit-debt.mjs` · fuera de token | 0 | 0 (y ahora con dueño, no con coincidencia) |
+| Sombras renderizadas fuera de escala (navegador) | 1 (el orbe) | **0** |
+
+### Lo visible, para que lo decidas vos
+
+Ocho sitios mueven geometría; el resto se fue a un paso que ya era el suyo.
+
+1. **Las cuatro tarjetas del Gemelo**: `0 4px 20px` → `0 8px 24px` (más altura, se
+   asientan un poco más).
+2. **La tarjeta de presencia en vivo**: `0 12px 34px` → `0 8px 24px` (−10px de
+   desenfoque; es el mayor movimiento del barrido).
+3. **Los cinco paneles modales** (academia ×2, credencial, red social, verificación):
+   `0 20px 60px` → `0 24px 64px`.
+4. **El orbe**: su halo pasa de 21/42 a 24/40 px — 3px de luz de más adentro, 2px de
+   baño de luz de menos afuera.
+5. **Chip de conexión y tarjeta del desafío diario**: `0 4px 16px` → `0 4px 12px`.
+6. **El botón primario del orbe** (`BASE.btnPrimary`): su sombra ámbar se tiñe ahora
+   con `color-mix` del oro del tema en vez de un `rgba(242,177,52,0.28)` literal.
+7. **`SHADOW.glow`/`glowGold`**: la capa lejana adopta el α de la escala (0.3 → 0.35).
+8. **Las tres superficies grandes de auth** (`0 16px 48px`) no se mueven: ya estaban
+   en el paso `lg`.
+
+Si el 2 o el 4 te molestan al mirar, se revierten cambiando un paso de la escala en
+`theme/shadows.ts` — no en el componente, que es el punto entero de #67 y #68.
+
+### Lo que quedó abierto, con nombre
+
+- **`DESIGN.md` todavía nombra colores que ya no son los del tema** en la sección de
+  paleta: dice que el índigo `#5e5ce6` es «la segunda mitad del gradiente de
+  `btnPrimary`» (el gradiente es ámbar desde la derogación de D5) y lista `#ffb02e` /
+  `#ff5c7a` para `C.gold` / `C.red`, que valen `#f2b134` / `#f87171`. Es escombro de
+  #66, no de #68, y lo dejo escrito en vez de tocarlo de paso: la regla que acabamos
+  de firmar en `.qoderrules` dice que se actúa sobre lo indicado.
+- **La vara 17 no ve geometrías fabricadas en runtime** (`${30 * intensity}px`). La
+  sonda de navegador que corrí acá es la única que las agarra. Si vuelve a aparecer
+  una, la defensa natural es una prueba de styles computados sobre un render con jsdom
+  o una captura del navegador en CI, no otra red sobre el fuente.
+- **Un `console.log` vivo** en `src/shared/utils/analytics.ts:19` (tres si se cuentan
+  las repeticiones del arrastre). La regla 3 de `.qoderrules` lo prohíbe hacia
+  adelante; sacarlo es una tarea aparte, no un cambio de diseño.
+

@@ -280,7 +280,7 @@ export default function ConvalidaOmicron({ onClose }: { onClose: () => void }) {
           onClick={() => void activateGemeloCompleto()}
           disabled={!canActivate}
           whileTap={{ scale: 0.97 }}
-          style={{ width: '100%', padding: '16px 0', borderRadius: RADIUS.lg, border: 'none', cursor: canActivate ? 'pointer' : 'default', opacity: canActivate ? 1 : 0.5, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: canActivate ? `0 8px 32px ${uc}44` : 'none', minHeight: 52 }}
+          style={{ width: '100%', padding: '16px 0', borderRadius: RADIUS.lg, border: 'none', cursor: canActivate ? 'pointer' : 'default', opacity: canActivate ? 1 : 0.5, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, color: '#fff', fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.md, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: canActivate ? ELEVATED.lejana('md', `${uc}44`) : 'none', minHeight: 52 }}
         >
           <Zap size={18} /> Activar Gemelo Completo <ArrowRight size={17} />
         </motion.button>

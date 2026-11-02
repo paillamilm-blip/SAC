@@ -149,7 +149,7 @@ components:
 > - `tokens.ts` → colores (`C`), `statusColor()`, `categoryColor()`
 > - `typography.ts` → `FONT`, `SIZE`, `FONT_STYLE`, `LETRA`
 > - `layout.ts` → `SP`, `SPACING`, `RADIUS`, `Z`, `BLUR`, `VELO`, `BORDER`, `BASE`
-> - `shadows.ts` → `HALO`, `SHADOW`, `ELEVATED`, `GLOW`
+> - `shadows.ts` → `HALO`, `SHADOW`, `CERCANA`, `LEJANA`, `ELEVATED`, `GLOW`
 > - `animations.ts` → `EASE`, `TIMING`, `SPRING`, `KEYFRAMES`
 
 ## Overview
@@ -290,24 +290,40 @@ Dos fenómenos ópticos distintos viven acá y se piden por separado: la luz que
 - **`0 0 0px` es la ausencia de luz**, el `initial` de un beat que crece hasta su halo; el cero no es un paso de la escala.
 - **El espejo CSS existe** porque `var()` no entra en un style en línea y el número tampoco entra dos veces: `--halo-chispa` … `--halo-escena` y `--vidrio-vaho` … `--vidrio-esmeril` en `src/index.css`, verificados línea a línea contra `HALO` y `BLUR` por el contrato.
 
+### Elevation — la altura de un cuerpo
+
+La **caída** responde a una sola pregunta: ¿a qué altura flota esto? Cuatro pasos, dueño `theme/shadows.ts`, espejos `--altura-*` (las capas completas) y `--caida-*` (la geometría sin pigmento) en `src/index.css`.
+
+| Paso | Capa cercana — define el borde | Capa lejana — da la altura |
+|---|---|---|
+| `sm` | `CERCANA.sm` · `0 1px 2px rgba(0,0,0,0.25)` | `LEJANA.sm` · `0 4px 12px rgba(0,0,0,0.2)` |
+| `md` | `CERCANA.md` · `0 1px 3px rgba(0,0,0,0.3)` | `LEJANA.md` · `0 8px 24px rgba(0,0,0,0.35)` |
+| `lg` | `CERCANA.lg` · `0 2px 6px rgba(0,0,0,0.35)` | `LEJANA.lg` · `0 16px 48px rgba(0,0,0,0.45)` |
+| `xl` | `CERCANA.xl` · `0 4px 12px rgba(0,0,0,0.4)` | `LEJANA.xl` · `0 24px 64px rgba(0,0,0,0.55)` |
+
+- **`SHADOW.<paso>`** — la pareja completa. Es lo que pide una superficie asentada, y es la forma por defecto.
+- **`ELEVATED.lejana(paso, color)`** — **una** capa lejana con el color que el sitio elija. Sirve para el negro de profundidad (`tint(C.black, 30)`) y para la sombra teñida —la de un elemento cuyo color es la marca: el color personal del usuario, el ámbar del brief—, que `SHADOW` no puede dar porque es negro.
+- **`ELEVATED.tinte(paso, color)`** — la teñida que además necesita el negro para asentarse: dos capas, misma geometría, dos pigmentos.
+- **`--caida-<paso>`** — la geometría sola, sin pigmento. Existe porque el CSS inyectado (el banner de actualización de la PWA) no puede importar el tema: pide la caída y pone su propio color.
+
+**Cómo cae un valor huérfano.** Treinta capas escritas a mano en diecinueve archivos (doce geometrías distintas) se barrieron con dos reglas, y están escritas acá porque ninguna es obvia:
+
+- **Un estado es un paso.** Donde hay dos estados (reposo/foco, calma/alarma) las capas caen a pasos **consecutivos**, no al mismo: si el reposo y el foco comparten paso, la altura deja de contar el estado, y el brief prohíbe que un estado sea sólo color. La prueba viva es la cola de trabajo: `.cola-item` en reposo pide `--altura-sm` y en `:hover`, `--altura-md`.
+- **Un paso solo se va al más cercano en desenfoque, y ante un empate se va HACIA ABAJO.** Es el criterio inverso al de `HALO` (empate hacia arriba) y la asimetría es deliberada: una luz que se achica deja de contar estado; una sombra que se agranda sí puede tapar la superficie que está debajo. Este mundo construye la profundidad con superficies escalonadas y vidrio, no con sombras pesadas.
+
 ### Shadow Vocabulary
-
-`SHADOW` usa **dos capas** siempre: una cercana que define el borde, una lejana que da profundidad ambiental.
-
-| Token | Valor |
-|---|---|
-| `sm` | `0 1px 2px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.2)` |
-| `md` | `0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35)` |
-| `lg` | `0 2px 6px rgba(0,0,0,0.35), 0 16px 48px rgba(0,0,0,0.45)` |
-| `xl` | `0 4px 12px rgba(0,0,0,0.4), 0 24px 64px rgba(0,0,0,0.55)` |
-| `glow` | `0 0 ${HALO.marca}px rgba(106,169,255,0.25), 0 8px 24px rgba(0,0,0,0.3)` |
-| `glowGold` | `0 0 ${HALO.marca}px rgba(242,177,52,0.25), 0 8px 24px rgba(0,0,0,0.3)` |
 
 `GLOW` quedó en **una sola entrada viva** (`cyan`, `0 0 ${HALO.marca}px` al 0.42); `gold`, `purple`, `green`, `red` y `toast` eran código muerto escrito con un 18px que era un 16 mal medido.
 
+| Token | Valor |
+|---|---|
+| `glow` | `0 0 ${HALO.marca}px rgba(106,169,255,0.25), LEJANA.md` |
+| `glowGold` | `0 0 ${HALO.marca}px rgba(242,177,52,0.25), LEJANA.md` |
+
 ### Named Rules
 
-- **Una sombra de una sola capa es un defecto.** Usá `SHADOW`.
+- **Una superficie asentada pide la pareja.** `SHADOW.<paso>` son dos capas y así se usan. Una capa lejana sola (`ELEVATED.lejana`) es correcta cuando el sitio ya vivía con una —viaja bajo un halo, sobre una escena—: la escala cambia la geometría, no la composición.
+- **La altura se pide a la escala, en los dos idiomas.** Un `0 12px 34px` suelto fuera de `theme/` es hoy hallazgo del contrato, igual que `0 0 18px` lo era de la luz. Tres cosas no son altura y están perdonadas por nombre: los offsets ceros (`0 0 Npx` es luz y lo cobra la vara de `HALO`), una capa `inset` (es el filo del vidrio, no un cuerpo elevado) y la línea `--altura-*:` del espejo, que se vela texto a texto contra el dueño.
 - **El halo se pide a `HALO`, el desenfoque a `BLUR`.** Un `0 0 18px` o un `blur(14px)` suelto hoy es hallazgo del contrato, en el style en línea y en la hoja CSS.
 - **El glow reemplaza al borde, no lo acompaña.** En los wrappers del orbe se conserva el `boxShadow` suave y se quitó el `border` sólido (PRs #326–#328).
 - **`BORDER.default` es `1px solid rgba(150,180,255,0.14)`.** Las variantes de color (`gold`, `purple`, `green`, `red`) van a `0.30`.
@@ -324,11 +340,11 @@ El lenguaje de forma es **rectángulo redondeado generoso**, nunca esquina viva.
 
 ### Buttons
 
-Los tres viven en `BASE` (`layout.ts`), los tres son `width: 100%`, `padding: '13px 0'`, `borderRadius: 15`, `fontWeight: 700`, `fontSize: 15.5`, `letterSpacing: 0.2`, y centran su contenido con `gap: 8`.
+Los tres viven en `BASE` (`layout.ts`), los tres son `width: 100%`, `padding: '12px 0'`, `borderRadius: RADIUS.sm`, `fontWeight: 700`, `fontSize: 15`, `letterSpacing: LETRA.apretada`, y centran su contenido con `gap: 8` y un `minHeight` táctilde de 44px en el sitio de uso.
 
-- **Primary** — `linear-gradient(135deg, #a0aec0, #5e5ce6)`, texto blanco, `boxShadow: 0 12px 32px rgba(160,174,192,0.42)`. Es el único gradiente del sistema.
-- **Secondary** — `rgba(160,174,192,0.10)`, borde `rgba(160,174,192,0.35)`, texto Silver Ice, blur 12px.
-- **Danger** — `rgba(255,92,122,0.12)`, borde `rgba(255,92,122,0.35)`, texto rosa.
+- **Primary** — `linear-gradient(135deg, C.gold, C.amberDeep)` sobre `C.onAccent` (tinta oscura, nunca blanco), sin borde, y su caída es `ELEVATED.lejana('md', tint(C.gold, 28))`: la escala de altura con el pigmento de la marca.
+- **Secondary** — `C.surfaceLight`, borde `1px solid C.line`, texto `C.ink`. Sin sombra: es la superficie asentada, no la que flota.
+- **Danger** — `rgba(248,113,113,0.12)`, borde `rgba(248,113,113,0.35)`, texto `C.red`.
 
 > En las superficies de auth el primary se tiñe con el color del usuario en vez del gradiente de marca. Es intencional: ahí el botón representa a la persona.
 
@@ -399,8 +415,9 @@ que se juzga cualquier pantalla; no se renegocian caso por caso.
    Antes de este contrato había 28 rgba casi iguales haciendo esos cinco papeles.
    Dos tonos se promovieron porque ya estaban circulando sin nombre: `C.tealDeep` (#008b9e, el extremo
    oscuro del degradado silver→teal de los botones grandes) y `C.flame` (#ff6432, el naranja de la racha,
-   que StreakBanner escribía tres veces). Para la sombra teñida —la de un elemento cuyo color es la
-   marca— existe `ELEVATED.cta(color)`: `SHADOW` es negro y no sirve ahí.
+   que StreakBanner escribía tres veces). Para una capa de caída en un color que no es negro existe
+   `ELEVATED.lejana(paso, color)` —la sombra teñida de un elemento cuyo color es la marca—: `SHADOW` es
+   negro y no sirve ahí. `ELEVATED.cta(color)` queda como atajo del paso `md`.
    Y hay **dos rampas de umbral** —lo que se ve antes de que exista el contenido—: `UMBRAL.apertura`
    (auth y takeover del orbe: negro frío → tinta del ámbar → casi negro) y `UMBRAL.credencial` (la misma
    rampa con el centro frío, porque la tarjeta se pinta sobre el navy impreso). La primera estaba copiada
@@ -448,21 +465,25 @@ golden; no se normalizan con estas reglas.
   definen las familias (`--silver`, `--line`, `--glass`, `--sticky`, `--omi-accent`); cualquier otra hoja
   usa `var(--…)` o `color-mix(in srgb, var(--oro) 30%, transparent)`. Las sombras negras (`rgba(0,0,0,…)`)
   son la excepción aceptada: no son un tono de marca, son profundidad.
-- **El contrato se vela solo.** `src/theme/contratoAsistente.test.ts` (diecinueve pruebas sobre dieciséis
+- **El contrato se vela solo.** `src/theme/contratoAsistente.test.ts` (veintiuna pruebas sobre diecisiete
   afirmaciones) barre el repo y falla
   si vuelve el cian del prototipo fuera del mapa, si alguien reabre un `const C = {}` propio (el espejo del
   simulador), si copia un vidrio de blanco crudo en vez de pedirlo al tema, si la credencial tiene dos
   dibujantes, si un carácter hace de icono, si una frase tuya vuelve al voseo, si la unidad de capacidad
   vuelve a llamarse "skill" en texto que se lee, si un aviso de carga vuelve a teclear `...` en vez de `…`,
   si la rampa de umbral vuelve a escribirse en un componente, si el tracking vuelve a ser un número suelto
-  en vez de `LETRA`, o si la luz vuelve a ser un número suelto en vez de `HALO` y `BLUR` — y las dos varas
-  pesaban sobre los dos idiomas: `letterSpacing: 1.2` en un style en
+  en vez de `LETRA`, si la luz vuelve a ser un número suelto en vez de `HALO` y `BLUR`, o si la caída de un
+  cuerpo vuelve a escribirse a mano en vez de pedir la pareja `CERCANA`/`LEJANA` — y las tres varas
+  pesan sobre los dos idiomas: `letterSpacing: 1.2` en un style en
   línea y `letter-spacing: 1.4px` en una hoja son la misma fuga escrita dos veces, igual que `0 0 18px` y
-  `box-shadow: 0 0 18px`. Así que `src/index.css` declara los espejos `--letra-*`, `--halo-*` y `--vidrio-*`
+  `box-shadow: 0 0 18px`, y `0 12px 34px` y `box-shadow: 0 12px 34px`. Así que `src/index.css` declara los
+  espejos `--letra-*`, `--halo-*`, `--vidrio-*`, `--altura-*` y `--caida-*`
   y el test compara los números de un lado contra los del dueño. La vara de la luz lleva dos precisiones que
   la hacen: sin el lookbehind, `0 0 0 1px` (un anillo: offset, offset, **ancho**, radio) casa desde el segundo
   cero y se convierte en un halo de 4px; y `0 0 0px` se perdona porque es la ausencia de luz con la que
-  arranca un beat, no un paso de la escala.
+  arranca un beat, no un paso de la escala. La de la altura lleva las suyas: manda la propiedad más cercana
+  (`margin: 0 -16px 12px` no es una caída), una capa `inset` es una arista y no se mide, y el contexto se
+  busca hacia atrás en el archivo porque una sombra larga se parte en varias líneas sin repetir la propiedad.
   Las varas de voz y léxico barren 292 archivos
   (cliente, Edge Functions y migraciones) con redes morfológicas y literales extraídos del código, no con
   una lista de palabras ya vistas; las excepciones se pagan con coordenada exacta. `design.qa.yaml` +
@@ -478,7 +499,7 @@ golden; no se normalizan con estas reglas.
 - **No propongas un mundo visual nuevo.** Ómicrom ya tiene identidad, tokens y 4 colores de usuario. Un `--design-system` que sugiera fondo claro, serif display o un accent nuevo está fuera de mundo: tomá de ahí solo lo que no contradiga este archivo.
 - **No uses `#5cc8ff`.** Eliminado del repo.
 - **No uses cian saturado** como color de marca. Se lee genérico y pelea con el color del usuario.
-- **No inventes valores.** Ni `fontSize: 14`, ni `cubic-bezier` de memoria, ni una sombra de una capa, ni un `0 0 18px` o un `blur(14px)` a mano: la luz se pide a `HALO` y el vidrio a `BLUR`.
+- **No inventes valores.** Ni `fontSize: 14`, ni `cubic-bezier` de memoria, ni un `0 0 18px` o un `blur(14px)` a mano, ni una caída escrita a dedo (`0 12px 34px`): la luz se pide a `HALO`, el vidrio a `BLUR` y la altura a `SHADOW` / `ELEVATED`.
 - **No pongas `C.cyan` en un orbe.** Es el gris de marca.
 - **No escribas jerga.** "Nodo Senior" → "Nivel: Senior". "Fundamento +15" → "Tu Excel está en 45/100 — este empleo pide 60/100". Cada pantalla se tiene que entender sin ambigüedad para un abogado, un ingeniero, un médico o un técnico. Explicá siempre **qué** hacer, **por qué** y **qué gana**.
 - **No digas "ADN"** en UI. La identidad del usuario es el **Gemelo Digital**; la vista compartible es la **Credencial Ómicrom**. ("ADN" solo sobrevive en el system prompt interno de la IA, que el usuario no ve.)

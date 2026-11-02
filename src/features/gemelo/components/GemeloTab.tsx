@@ -14,7 +14,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap, Shield, Globe, FileText, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { BLUR, HALO, C, FONT, tint, SIZE, ANIM, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, tint, SIZE, ELEVATED, ANIM, LETRA} from '@/theme';
 import { audioSweep } from '@/shared/utils/spatialAudio';
 import { AuraBackground } from '@/shared/components/AuraSystem';
 import { GlowCard, SmoothNumber, MagneticButton } from '@/shared/motion';
@@ -280,7 +280,7 @@ function CardIdentidad({ nucleus, top3, hasTwo, hasThree, reputation, skillColor
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: `blur(${BLUR.escarcha}px)`,
-      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
+      boxShadow: ELEVATED.lejana('md', tint(C.black, 30)),
     }}>
       {/* Orbital */}
       <div style={{ position: 'relative', width: '100%', maxWidth: 220, height: 220, margin: '0 auto 16px' }}>
@@ -375,7 +375,7 @@ function CardCompetencias({ skillsDetail, cvSummary, skipAnimation, skillColors,
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: `blur(${BLUR.escarcha}px)`,
-      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
+      boxShadow: ELEVATED.lejana('md', tint(C.black, 30)),
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -445,7 +445,7 @@ function CardImpacto({ axes, setActiveTab, skipAnimation, axisMeta, uc }: {
       background: `linear-gradient(145deg, ${C.surface}, ${C.glass})`,
       border: `1px solid ${C.line}`,
       backdropFilter: `blur(${BLUR.escarcha}px)`,
-      boxShadow: `0 4px 20px ${tint(C.black, 30)}`,
+      boxShadow: ELEVATED.lejana('md', tint(C.black, 30)),
     }}>
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>

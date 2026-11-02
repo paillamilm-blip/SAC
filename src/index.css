@@ -110,6 +110,16 @@
   --altura-xl-lejana:  0 24px 64px rgba(0,0,0,0.55);
   --altura-xl:  var(--altura-xl-cercana), var(--altura-xl-lejana);
 
+  /* La caída sola, sin pigmento: la geometría de la capa lejana. Existe porque
+     hay superficies que tiñan su sombra con el color del usuario o con el ámbar
+     del brief, y el CSS inyectado (banner de actualización de la PWA) no puede
+     importar theme/shadows.ts. Sin esta fila ese escrito tendría que inventar
+     los números; con ella pide la geometría y pone sólo el color. */
+  --caida-sm: 0 4px 12px;
+  --caida-md: 0 8px 24px;
+  --caida-lg: 0 16px 48px;
+  --caida-xl: 0 24px 64px;
+
   /* El filo de vidrio: la luz que golpea el borde superior de una superficie
      elevada. Es una arista, no una altura, y por eso no vive en la pareja. */
   --filo-vidrio: inset 0 1px 0 rgba(150,180,255,0.10);

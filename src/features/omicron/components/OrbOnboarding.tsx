@@ -15,7 +15,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/store/AppContext';
 import { speakOmicron } from '@/features/omicron/services/voice';
-import { HALO, C, FONT, RADIUS, tint, SIZE, ANIM, LETRA} from '@/theme';
+import { HALO, C, FONT, RADIUS, tint, SIZE, ELEVATED, ANIM, LETRA} from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import { OmicronPlaceholder2D } from '@/shared/components/OmicronPlaceholder2D';
 import { ColorPicker } from '@/shared/components/ColorPicker';
@@ -273,7 +273,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   background: `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)`,
                   border: 'none', color: '#000', fontFamily: FONT.display,
                   fontSize: SIZE.sm, fontWeight: 700, cursor: 'pointer',
-                  boxShadow: `0 4px 24px ${chosenColor}55`,
+                  boxShadow: ELEVATED.lejana('md', `${chosenColor}55`),
                 }}>
                   Continuar
                 </MagneticButton>
@@ -292,7 +292,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   padding: '16px 20px', borderRadius: RADIUS.xl,
                   background: C.surface,
                   border: `1px solid ${chosenColor}33`,
-                  boxShadow: `0 4px 24px ${tint(C.black, 40)}, 0 0 ${HALO.ascua}px ${chosenColor}11`,
+                  boxShadow: `${ELEVATED.lejana('md', tint(C.black, 40))}, 0 0 ${HALO.ascua}px ${chosenColor}11`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 ${HALO.ascua}px ${chosenColor}`, animation: ANIM.breathe }} />
@@ -332,7 +332,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                   width: 50, height: 50, borderRadius: '50%', border: 'none',
                   background: input.trim() ? `linear-gradient(135deg, ${chosenColor}, ${chosenColor}aa)` : C.glass,
                   color: input.trim() ? '#000' : C.mut, display: 'grid', placeItems: 'center', fontSize: SIZE.lg,
-                  boxShadow: input.trim() ? `0 4px 16px ${chosenColor}44` : 'none',
+                  boxShadow: input.trim() ? ELEVATED.lejana('sm', `${chosenColor}44`) : 'none',
                 }}>
                   <Icon role="enviar" size={16} label="Enviarle tu pregunta a Ómicrom" />
                 </MagneticButton>
@@ -387,7 +387,7 @@ export function OrbOnboarding({ onComplete, onProfileGenerated, onSkillsPreview 
                 padding: '18px 22px', borderRadius: RADIUS.xl,
                 background: C.surface,
                 border: `1px solid ${chosenColor}44`,
-                boxShadow: `0 8px 32px ${tint(C.black, 40)}, 0 0 ${HALO.marca}px ${chosenColor}15`,
+                boxShadow: `${ELEVATED.lejana('md', tint(C.black, 40))}, 0 0 ${HALO.marca}px ${chosenColor}15`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, justifyContent: 'center' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: chosenColor, boxShadow: `0 0 ${HALO.foco}px ${chosenColor}` }} />

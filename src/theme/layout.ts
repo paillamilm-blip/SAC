@@ -3,7 +3,8 @@
 
 import React from 'react';
 import { SANS, LETRA } from './typography';
-import { C } from './tokens';
+import { C, tint } from './tokens';
+import { ELEVATED } from './shadows';
 
 /** Spacing — grid de 4px */
 export const SP = {
@@ -98,7 +99,7 @@ export const BASE: Record<string, React.CSSProperties> = {
   statCard: { padding: '10px 12px', borderRadius: RADIUS.md, background: C.surfaceLight, border: `1px solid ${C.line}` },
   // Acción primaria = ámbar de la marca con tinta oscura encima (nunca blanco:
   // #f2b134 sobre blanco puro baja el contraste y se ve lechoso).
-  btnPrimary: { width: '100%', padding: '12px 0', background: `linear-gradient(135deg,${C.gold},${C.amberDeep})`, border: 'none', borderRadius: RADIUS.sm, fontFamily: SANS, fontWeight: 700, fontSize: 15, color: C.onAccent, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: LETRA.apretada, boxShadow: '0 8px 24px rgba(242,177,52,0.28)' },
+  btnPrimary: { width: '100%', padding: '12px 0', background: `linear-gradient(135deg,${C.gold},${C.amberDeep})`, border: 'none', borderRadius: RADIUS.sm, fontFamily: SANS, fontWeight: 700, fontSize: 15, color: C.onAccent, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: LETRA.apretada, boxShadow: ELEVATED.lejana('md', tint(C.gold, 28)) },
   btnSecondary: { width: '100%', padding: '12px 0', background: C.surfaceLight, border: `1px solid ${C.line}`, borderRadius: RADIUS.sm, fontFamily: SANS, fontWeight: 700, fontSize: 15, color: C.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: LETRA.apretada },
   btnDanger: { width: '100%', padding: '12px 0', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', borderRadius: RADIUS.sm, fontFamily: SANS, fontWeight: 700, fontSize: 15, color: C.red, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: LETRA.apretada },
 };

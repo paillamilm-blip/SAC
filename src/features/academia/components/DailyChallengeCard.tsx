@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { HALO, C, FONT, tint, SIZE, LETRA} from '@/theme';
+import { HALO, C, FONT, tint, SIZE, ELEVATED, LETRA} from '@/theme';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import {
   getDailyChallenge,
@@ -129,7 +129,7 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 14,
     background: `linear-gradient(145deg, ${tint(C.cyan, 6)}, ${tint(C.purple, 4)})`,
     border: `1px solid ${tint(C.cyan, 20)}`,
-    boxShadow: `0 4px 16px ${tint(C.black, 30)}`,
+    boxShadow: ELEVATED.lejana('sm', tint(C.black, 30)),
   },
   header: {
     display: 'flex',

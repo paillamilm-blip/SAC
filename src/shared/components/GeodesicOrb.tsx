@@ -116,7 +116,7 @@ export function GeodesicOrb({
           height: coreSize,
           borderRadius: '50%',
           background: `radial-gradient(circle, ${color}${glowOpacity}, ${color}44, transparent 70%)`,
-          boxShadow: `0 0 ${30 * intensity}px ${color}${glowOpacity}, 0 0 ${60 * intensity}px ${color}44`,
+          boxShadow: `0 0 ${HALO.resplandor}px ${color}${glowOpacity}, 0 0 ${HALO.difusion}px ${color}44`,
           animation: breathing ? ANIM.breathe : undefined,
           // Excepción documentada: el núcleo cambia de tamaño solo cuando varía
           // el conteo de nodos (una vez por sesión), no en cada frame. Escalarlo

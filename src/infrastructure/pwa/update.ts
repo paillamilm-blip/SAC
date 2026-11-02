@@ -59,7 +59,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
     'position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);' +
     'z-index:99999;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;' +
     'background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(var(--vidrio-cristal));-webkit-backdrop-filter:blur(var(--vidrio-cristal));' +
-    'border:1px solid var(--line-strong);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 var(--halo-resplandor) color-mix(in srgb, var(--gold) 25%, transparent);' +
+    'border:1px solid var(--line-strong);box-shadow:var(--caida-lg) rgba(0,0,0,.6),0 0 var(--halo-resplandor) color-mix(in srgb, var(--gold) 25%, transparent);' +
     'color:var(--ink);' +
     `max-width:calc(100vw - 32px);animation:${ANIM.riseFixed}`;
 
@@ -72,7 +72,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
   btn.style.cssText =
     'flex-shrink:0;min-height:44px;padding:10px 16px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:13px;' +
     'color:var(--on-accent);background:linear-gradient(135deg,var(--gold),var(--gold-deep));' +
-    'box-shadow:0 6px 16px color-mix(in srgb, var(--gold) 40%, transparent)';
+    'box-shadow:var(--caida-sm) color-mix(in srgb, var(--gold) 40%, transparent)';
   btn.onclick = () => {
     btn.textContent = 'Actualizando…';
     btn.disabled = true;

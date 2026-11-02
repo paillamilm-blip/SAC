@@ -21,7 +21,7 @@ import { X, Share2, Download, RefreshCw, Zap, Shield, Globe, TrendingUp, CheckCi
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/infrastructure/supabase/client';
 import { useApp, useGemeloDigital } from '@/store/AppContext';
-import { BLUR, HALO, C, FONT, SIZE, RADIUS, tint, UMBRAL, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, SIZE, RADIUS, tint, ELEVATED, UMBRAL, LETRA} from '@/theme';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { ShareCredentialModal } from '@/features/gemelo/components/RedSocial';
@@ -319,7 +319,7 @@ export function CredencialModal({ onClose, onUpdateCV }: { onClose: () => void; 
           background: `linear-gradient(160deg, ${C.glass2}, ${tint(C.white, 2)})`,
           border: `1px solid ${C.line}`,
           backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
-          boxShadow: `0 20px 60px ${C.scrim}`,
+          boxShadow: ELEVATED.lejana('xl', C.scrim),
         }}
       >
         {/* ═══ BRILLO HOLOGRÁFICO (sheen) ═══════════════════════════════

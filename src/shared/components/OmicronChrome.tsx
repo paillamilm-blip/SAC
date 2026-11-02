@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 import { ReactNode, CSSProperties } from 'react';
 import { Icon } from './icons';
-import { HALO, C, FONT, SIZE, RADIUS, SP, BLUR, SHADOW, EASE, TIMING, ANIM, ACCENT, tint, LETRA} from '@/theme';
+import { HALO, C, FONT, SIZE, RADIUS, SP, BLUR, SHADOW, EASE, TIMING, ANIM, ACCENT, tint, ELEVATED, LETRA} from '@/theme';
 
 export const oc: Record<string, CSSProperties> = {
   // Pantalla transparente: deja ver el fondo Ómicrom de la shell.
@@ -122,7 +122,7 @@ const S: Record<string, CSSProperties> = {
     background: `linear-gradient(135deg, ${ACCENT}, ${C.purple})`,
     border: 'none', color: C.onAccent, cursor: 'pointer',
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
-    boxShadow: `0 8px 20px ${tint(ACCENT, 34)}`,
+    boxShadow: ELEVATED.lejana('md', tint(ACCENT, 34)),
   },
 };
 

@@ -5,7 +5,7 @@
 // la app ya está instalada (display-mode: standalone).
 import { useState, useEffect } from 'react';
 import { Download, X, Share } from 'lucide-react';
-import { BLUR, HALO, C, FONT, RADIUS, tint, SIZE, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, RADIUS, tint, SIZE, ELEVATED, LETRA} from '@/theme';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -74,7 +74,7 @@ export function InstallPWA() {
         display: 'flex', alignItems: 'center', gap: 12, maxWidth: '92vw',
         padding: '10px 12px 10px 16px', borderRadius: RADIUS.pill,
         background: C.surface, border: `1px solid ${C.cyanDim}`,
-        boxShadow: `0 12px 40px ${C.scrim}, 0 0 ${HALO.resplandor}px ${tint(C.cyan, 18)}`,
+        boxShadow: `${ELEVATED.lejana('lg', C.scrim)}, 0 0 ${HALO.resplandor}px ${tint(C.cyan, 18)}`,
         backdropFilter: `blur(${BLUR.escarcha}px)`,
       }}
     >

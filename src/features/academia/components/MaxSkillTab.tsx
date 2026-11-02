@@ -623,7 +623,7 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: FONT.display, fontWeight: 700, fontSize: SIZE.sm,
     cursor: 'pointer', display: 'flex', alignItems: 'center',
     justifyContent: 'center', gap: 8,
-    boxShadow: `0 8px 24px ${tint(C.cyan, 30)}`,
+    boxShadow: ELEVATED.lejana('md', tint(C.cyan, 30)),
   },
   btnAcademia: {
     width: '100%', padding: '10px 0', borderRadius: RADIUS.md,
@@ -672,7 +672,7 @@ const S: Record<string, React.CSSProperties> = {
     background: `linear-gradient(135deg, ${C.gold}, ${C.purple})`,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#fff', flexShrink: 0,
-    boxShadow: `0 6px 20px ${tint(C.gold, 30)}`,
+    boxShadow: ELEVATED.lejana('md', tint(C.gold, 30)),
   },
   coachResult: {
     padding: '12px 14px', borderRadius: RADIUS.md,

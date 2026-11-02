@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/infrastructure/supabase/client';
 import { useBroadcastAchievement } from '@/hooks/useBroadcastAchievement';
 import { useApp } from '@/store/AppContext';
-import { BLUR, HALO, C, FONT, BASE, RADIUS, GLOW, cx, tint, SIZE, ANIM, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, BASE, RADIUS, GLOW, ELEVATED, cx, tint, SIZE, ANIM, LETRA} from '@/theme';
 import { audioAscend } from '@/shared/utils/spatialAudio';
 import { firePulse } from '@/shared/components/LivePulseBar';
 import { CelebrationBurst } from '@/shared/motion';
@@ -75,7 +75,7 @@ function TutorModal({ lesson, onClose }: { lesson: { title: string; content: str
       <div onClick={e => e.stopPropagation()} style={{
         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
         borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
-        border: `1px solid ${C.gold}55`, boxShadow: `0 20px 60px ${C.scrim}`,
+        border: `1px solid ${C.gold}55`, boxShadow: ELEVATED.lejana('xl', C.scrim),
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.gold}18`, border: `1px solid ${C.gold}55` }}>
@@ -181,7 +181,7 @@ function CoachModal({ onClose }: { onClose: () => void }) {
       <div onClick={e => e.stopPropagation()} style={{
         width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
         borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.surfaceLight}, ${C.surface})`,
-        border: `1px solid ${C.cyan}55`, boxShadow: `0 20px 60px ${C.scrim}`,
+        border: `1px solid ${C.cyan}55`, boxShadow: ELEVATED.lejana('xl', C.scrim),
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px', borderBottom: `1px solid ${C.cyanFaint}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${C.cyan}18`, border: `1px solid ${C.cyan}55` }}>

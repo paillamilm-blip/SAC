@@ -14,7 +14,7 @@ import { useApp } from '@/store/AppContext';
 import { ProgressRadar } from '@/features/gemelo/components/ProgressRadar';
 import { useUserColor } from '@/shared/hooks/useUserColor';
 import { computeOrbFusion, type Skill } from '@/features/gemelo/services/orbFusion';
-import { BLUR, HALO, C, FONT, RADIUS, SIZE, ANIM, LETRA} from '@/theme';
+import { BLUR, HALO, C, FONT, RADIUS, SIZE, ELEVATED, ANIM, LETRA} from '@/theme';
 import { Icon, type IconRole } from '@/shared/components/icons';
 import type { GemeloDigital } from '@/types';
 
@@ -54,7 +54,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
         style={{
           width: '100%', maxWidth: 420, maxHeight: '92vh', overflowY: 'auto',
           borderRadius: RADIUS.xl, background: `linear-gradient(165deg, ${C.nocheClara}, ${C.noche})`,
-          border: `1px solid ${C.cyanDim}`, boxShadow: `0 20px 60px ${C.scrim}`,
+          border: `1px solid ${C.cyanDim}`, boxShadow: ELEVATED.lejana('xl', C.scrim),
           position: 'relative',
         }}
       >

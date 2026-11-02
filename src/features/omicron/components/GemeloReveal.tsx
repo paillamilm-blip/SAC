@@ -14,7 +14,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Zap, TrendingUp, Shield, Target, Clock, ChevronRight, Sparkles } from 'lucide-react';
-import { HALO, C, FONT, SIZE, RADIUS, LETRA} from '@/theme';
+import { HALO, C, FONT, SIZE, RADIUS, ELEVATED, LETRA} from '@/theme';
 import { Icon } from '@/shared/components/icons';
 import { getUserColor } from '@/shared/services/userColor';
 import { GeodesicOrb } from '@/shared/components/GeodesicOrb';
@@ -589,7 +589,7 @@ export function GemeloReveal({ analyzed, onActivate, isAuthenticated, persisting
                 onClick={onActivate}
                 whileTap={isAuthenticated && (persisting || persisted) ? undefined : { scale: 0.97 }}
                 disabled={isAuthenticated && (persisting || persisted)}
-                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: isAuthenticated && (persisting || persisted) ? 'default' : 'pointer', opacity: isAuthenticated && (persisting || persisted) ? 0.7 : 1, boxShadow: `0 4px 24px ${uc}44`, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                style={{ width: '100%', padding: '16px 24px', borderRadius: RADIUS.pill, background: `linear-gradient(135deg, ${uc}, ${C.purple})`, border: 'none', color: '#fff', fontFamily: FONT.display, fontWeight: 800, fontSize: SIZE.lg, cursor: isAuthenticated && (persisting || persisted) ? 'default' : 'pointer', opacity: isAuthenticated && (persisting || persisted) ? 0.7 : 1, boxShadow: ELEVATED.lejana('md', `${uc}44`), marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
                 {isAuthenticated
                   ? (persisted

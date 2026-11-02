@@ -411,7 +411,7 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
                       color: active ? '#fff' : C.mut,
                       fontWeight: active ? 700 : 500,
                       background: active ? `linear-gradient(135deg, ${uc}, ${C.purple})` : 'transparent',
-                      boxShadow: active ? `0 4px 16px ${uc}44` : 'none',
+                      boxShadow: active ? ELEVATED.lejana('sm', `${uc}44`) : 'none',
                     }}
                   >
                     {m === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
@@ -614,7 +614,7 @@ const S: Record<string, CSSProperties> = {
     background: `linear-gradient(160deg, ${C.glass2}, ${C.glass})`,
     border: `1px solid ${C.line}`,
     backdropFilter: `blur(${BLUR.cristal}px)`, WebkitBackdropFilter: `blur(${BLUR.cristal}px)`,
-    boxShadow: `0 16px 48px ${tint(C.black, 50)}`,
+    boxShadow: ELEVATED.lejana('lg', tint(C.black, 50)),
   },
   cardAccent: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 1,
