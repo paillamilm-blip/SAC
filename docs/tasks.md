@@ -6,7 +6,7 @@
 | Fecha de emisión | 2026-11-02 |
 | Base | `origin/main` @ `043dc47` |
 | Especificación | [`design.md`](./design.md) · hechos en [`audit.md`](./audit.md) |
-| Tareas | 31 = 1 completada (02) · 1 en progreso (24) · 21 pendientes · 8 bloqueadas (06 por aprobación del dueño; 25–31 por ADR-004) |
+| Tareas | 34 = 2 completadas (02, 24) · 21 pendientes · 11 bloqueadas (06 por aprobación de `migration repair`; 25–34 por aprobación de `producto-unico.md`) |
 
 ## Cómo usar este documento
 
@@ -14,7 +14,7 @@
 - Una tarea pasa a `Completada` **solo** cuando su *criterio de aceptación binario* se cumple (el comando termina con código 0 o devuelve el código HTTP indicado) y el resultado se pega en *Incidencias o notas*.
 - Fechas y horas en formato `YYYY-MM-DD HH:mm`, en **UTC** (el reloj del entorno de ejecución). `—` significa "aún no ocurrió".
 - Una tarea = un PR pequeño a `main` (regla R-15).
-- Los criterios de las tareas `Bloqueada` por la App B son **provisionales**: se concretan al cerrar la TAREA-02.
+- Las tareas 25–34 dependen de la aprobación del dueño de `docs/fusion/producto-unico.md`; sus criterios pueden ajustarse con sus respuestas.
 
 ### Leyenda de modelos
 
@@ -37,10 +37,11 @@ FASE 2  01 → 10 → 11 → 12 → 14, 15
                     12 → 18
                     13 → 19
 FASE 3  01 → 20      21      06 → 22      09,10,20 → 23
-FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
-        24,12,18 → 27      26 → 28      27 → 29      26,29 → 30      todas → 31
+FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
+                 25 → 28 (también 12) ┐
+                 25 → 29 (también 12, 18) ┴→ 30 (también 26, 27) → 31 → 32 → 33 → 34 (todas)
 ```
-`*` = bloqueada por la TAREA-02.
+`*` = esperan una decisión del dueño (TAREA-02 ya está completada).
 
 ### Resumen de estado
 
@@ -50,7 +51,7 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
 | 1 · Base de datos y seguridad | 04–09 | 04, 05, 09 Pendiente · 06 Bloqueada (aprobación del dueño) · 07, 08 Pendiente, pero en la práctica esperan a 06 |
 | 2 · Estructura del código | 10–19 | Pendiente |
 | 3 · Entorno, backend y CI | 20–23 | Pendiente |
-| 4 · Integración de la App B | 24–31 | 24 En progreso · 25–31 Bloqueada (esperan ADR-004) |
+| 4 · Producto único (Ómicrom + brecha) | 24–34 | 24 Completada · 25–34 Bloqueada (esperan la aprobación del dueño) |
 
 ---
 
@@ -300,89 +301,119 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
 
 ---
 
-# FASE 4 · Integración de la App B (todas bloqueadas por TAREA-02)
+# FASE 4 · Producto único (Ómicrom + brecha)
 
-> La App B es el repositorio `brecha` (Next.js, ver `docs/fusion/app-b-inventario.md`). Los criterios de esta fase son **provisionales** y **dependen de la decisión ADR-004** (opción A: dos apps con un Supabase; opción B: portar a Ómicrom como feature; ver `docs/fusion/impacto.md` §3). Con la opción A, las tareas 27–29 no aplican a Ómicrom. La TAREA-27 se subdivide al decidir.
+> Fase definida por [`fusion/producto-unico.md`](./fusion/producto-unico.md): un solo sistema, con el frontend y el flujo de `brecha` dentro de `Sistema-omicrom` (Vite + Supabase), y el asistente de voz de Ómicrom como interfaz. Las tareas 25–34 están `Bloqueada` hasta que el dueño apruebe esa propuesta (preguntas de su §8). La opción A de ADR-004 (dos apps) queda reemplazada.
 
 ### TAREA-24: Análisis de impacto y colisiones de la App B (`brecha`) sobre Ómicrom
 - **Archivos afectados:** `docs/fusion/impacto.md` (crear)
-- **Criterio de aceptación binario:** `test -s docs/fusion/impacto.md && grep -q '^## 1. Colisiones de nombres y compatibilidad' docs/fusion/impacto.md && grep -q '^## 4. Impacto en datos' docs/fusion/impacto.md && grep -q '^## 5. Impacto en Edge Functions y secretos' docs/fusion/impacto.md && grep -q '^## 7. Cambios en código existente' docs/fusion/impacto.md && grep -q '^## 3. Decisión de arquitectura' docs/fusion/impacto.md` termina con código 0, **y** el dueño responde las preguntas de §9.
+- **Criterio de aceptación binario:** `test -s docs/fusion/impacto.md && grep -q '^## 1. Colisiones de nombres y compatibilidad' docs/fusion/impacto.md && grep -q '^## 4. Impacto en datos' docs/fusion/impacto.md && grep -q '^## 5. Impacto en Edge Functions y secretos' docs/fusion/impacto.md && grep -q '^## 7. Cambios en código existente' docs/fusion/impacto.md && grep -q '^## 3. Decisión de arquitectura' docs/fusion/impacto.md` termina con código 0.
 - **Modelo asignado:** Qwen Max
-- **Estado:** En progreso
+- **Estado:** Completada
 - **Registro temporal:**
   - Fecha y hora de inicio: 2026-11-02 16:36
-  - Fecha y hora de finalización: —
-- **Incidencias o notas:** Borrador escrito en `docs/fusion/impacto.md` contra el código real de `brecha`. Hallazgo central: `brecha` necesita un servidor Node y Ómicrom es una SPA estática; hay que decidir A/B (ADR-004) antes de planificar la integración. Pendiente para cerrarla: (a) la TAREA-20, de la que depende por orden (comparar variables de entorno contra los `.env.example` documentados) y (b) las respuestas del dueño a las 4 preguntas de §9 del documento. Se corrige el título de la tarea: "App B" ya no es un prompt.
+  - Fecha y hora de finalización: 2026-11-02 17:00
+- **Incidencias o notas:** Criterio ejecutado: exit 0. Se relajó la dependencia de TAREA-20 (la comparación de variables de entorno se resolvió a mano: solo `GEMINI_API_KEY` coincide) y se retiró el requisito "el dueño responde §9", porque el dueño respondió en sustancia con un pedido nuevo (producto único). Las opciones A/B/C de su §3 quedan **superadas** por `producto-unico.md`, que adopta la base de Ómicrom (variante de la opción B). Conservar `impacto.md` como evidencia de colisiones y de esfuerzo.
 
-### TAREA-25: Modelo de datos de la App B y ADR-004
-- **Archivos afectados:** `docs/fusion/datos-b.md` (crear), `docs/adr/ADR-004-datos-app-b.md` (crear), `docs/design.md` (modificar §3.5, §4.6, §6.2)
-- **Criterio de aceptación binario:** `grep -q "^Estado: Aceptada" docs/adr/ADR-004-datos-app-b.md && test -s docs/fusion/datos-b.md` termina con código 0.
+### TAREA-25: Aprobar el producto único y fijar ADR-004 (revisado)
+- **Archivos afectados:** `docs/adr/ADR-004-producto-unico.md` (crear), `docs/design.md` (modificar §2.4, §3.3 y tabla de ADR)
+- **Criterio de aceptación binario:** `grep -q "^Estado: Aceptada" docs/adr/ADR-004-producto-unico.md && grep -q "^Base: Sistema-omicrom" docs/adr/ADR-004-producto-unico.md && ! grep -n "opción A (dos apps" docs/design.md` termina con código 0.
 - **Modelo asignado:** Qwen Max
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Decide prefijo de tablas frente a esquema propio, las claves foráneas hacia `profiles`, las políticas RLS y si hay datos existentes que migrar (`scripts/migrar-app-b.mjs`, con `--dry-run`). Requiere revisión del dueño antes de pasar a `Aceptada`. Depende de TAREA-24 y TAREA-09.
+- **Incidencias o notas:** Bloqueada por la aprobación del dueño de `producto-unico.md` §8: (1) base técnica, (2) qué se hace con revelación, pasaporte, Academia y reputación visible (§3.4), (3) servicio de pago de Gemini, (4) nombre del producto, (5) si el PDF se guarda. Sin esas respuestas no se escribe código del producto.
 
-### TAREA-26: Migraciones de la App B
-- **Archivos afectados:** `supabase/migrations/<AAAAMMDDHHMMSS>_<app_b>_*.sql` (crear), `supabase/tests/<app_b>_rls.sql` (crear)
-- **Criterio de aceptación binario:** `supabase db reset && bash scripts/db-test.sh supabase/tests/<app_b>_rls.sql && node scripts/check-migrations.mjs` termina con código 0. La prueba falla si alguna tabla del módulo tiene `rowsecurity = false`.
+### TAREA-26: Tablas `brecha_*` con RLS y pruebas SQL
+- **Archivos afectados:** `supabase/migrations/<AAAAMMDDHHMMSS>_brecha_tablas.sql` (crear, instante real), `supabase/tests/brecha_rls.sql` (crear)
+- **Criterio de aceptación binario:** `supabase db reset && bash scripts/db-test.sh supabase/tests/brecha_rls.sql && node scripts/check-migrations.mjs` termina con código 0. La prueba falla si alguna tabla `brecha_*` tiene `rowsecurity = false`, si un usuario lee filas de otro, o si un usuario inserta directamente en `brecha_analisis`.
 - **Modelo asignado:** Qwen Coder
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Solo migraciones nuevas; ninguna de las 92 existentes se edita (regla de §4.6). Cada tabla lleva RLS en la misma migración. Depende de TAREA-25 y TAREA-07 (política de `profiles` ya cerrada).
+- **Incidencias o notas:** Esquema en `fusion/impacto.md` §4, con una diferencia: **no se guarda el PDF** (sin `storage_path`), salvo que el dueño decida lo contrario. `GRANT` por columna: el usuario actualiza solo `veredicto`, `veredicto_en` y, **hasta la TAREA-32**, `dominada_en` (autodeclarada, como en `brecha`). La TAREA-32 revoca ese último permiso y lo reemplaza por una RPC con prueba. Depende de TAREA-25, TAREA-07 y TAREA-09.
 
-### TAREA-27: Portar `brecha` a Ómicrom como feature (solo si ADR-004 elige la opción B)
-- **Archivos afectados:** `src/features/brecha/**` (crear, con `index.ts`, `components/`, `hooks/`, `services/`), `src/domain/brecha/**` (mover `lib/types.ts` y `lib/comparar.ts`), `src/features/brecha/styles/**` (CSS acotado)
-- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && node scripts/check-layers.mjs` termina con código 0, sin aumentar `scripts/layers-baseline.json`. Existe una prueba de unidad para `compararAnalisis` y otra para `validarResultado`, hoy sin cobertura (inventario B-05).
+### TAREA-27: Edge Function `brecha-analizar`
+- **Archivos afectados:** `supabase/functions/brecha-analizar/index.ts`, `supabase/functions/brecha-analizar/validar.ts` (crear; la lógica viene de `brecha/lib/ai/validar.ts`), `supabase/functions/brecha-analizar/validar.test.ts` (crear), `docs/db/edge-functions.md` (modificar)
+- **Criterio de aceptación binario:** `deno check supabase/functions/brecha-analizar/index.ts && deno test supabase/functions/brecha-analizar/` termina con código 0, y `curl -s -o /dev/null -w "%{http_code}" -X POST "$SUPABASE_URL/functions/v1/brecha-analizar"` sin cabecera de autorización devuelve exactamente `401`.
 - **Modelo asignado:** Qwen Coder
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Esfuerzo medido en `docs/fusion/impacto.md` §3: los 5 componentes cliente (1 057 líneas) se ajustan; las 2 páginas de servidor (159 líneas) se **reescriben** como cliente; el CSS global (1 573 líneas) se acota. **Esta tarea se subdivide** en 5 al decidir ADR-004 (componentes, páginas, dominio, estilos, pruebas); hoy es un marcador. Con la opción A no aplica. Usa `infrastructure/supabase/client.ts`; sin segundo cliente, sin `package.json` propio. Claves de `localStorage` solo vía `infrastructure/storage/keys.ts`. Cada dependencia nueva requiere ADR y alta en `design.md` §6.2. Depende de TAREA-24, TAREA-12 y TAREA-18.
+- **Incidencias o notas:** Reemplaza `POST /api/analisis`: valida el PDF (≤ 15 MB), aplica el límite por usuario con `_shared/rateLimit.ts`, llama a Gemini con el prompt de `brecha/lib/ai/gemini.ts`, guarda con `service_role` y devuelve el id. **Antes de implementar:** verificar el límite de tamaño de cuerpo de las Edge Functions (PDF de 15 MB ≈ 20 MB en base64); alternativa: subir a Storage temporal y borrar tras analizar. El proveedor `fixture` se conserva para pruebas. No se modifica `proxy-ai`. La pantalla de privacidad y el servicio de pago de Gemini deben estar decididos antes de abrir a usuarios reales. Depende de TAREA-26 y TAREA-20.
 
-### TAREA-28: Edge Functions de la App B
-- **Archivos afectados:** `supabase/functions/<app-b>-*/index.ts` (crear), `supabase/functions/.env.example` (modificar), `docs/db/edge-functions.md` (modificar)
-- **Criterio de aceptación binario:** `deno check supabase/functions/<app-b>-*/index.ts && node scripts/check-functions-doc.mjs && node scripts/check-env.mjs` termina con código 0.
-- **Modelo asignado:** Qwen Coder
-- **Estado:** Bloqueada
-- **Registro temporal:**
-  - Fecha y hora de inicio: —
-  - Fecha y hora de finalización: —
-- **Incidencias o notas:** Funciones previstas: `brecha-analizar` (reemplaza `POST /api/analisis`: validar PDF, límite de uso con `_shared/rateLimit.ts`, llamar a Gemini) y `brecha-veredicto` (reemplaza `PATCH /api/brechas/:id`). `proxy-ai` no se modifica (no admite adjuntos). Antes de implementar, verificar el límite de tamaño de cuerpo de las Edge Functions con PDF de hasta 15 MB; alternativa: subir a Storage y pasar la referencia. Nombre `<modulo>-<accion>`; JWT verificado; secretos solo por `Deno.env.get`. Depende de TAREA-26. Con la opción A no aplica (marcar `Completada` con "no aplica").
-
-### TAREA-29: Navegación y shell para la App B
-- **Archivos afectados:** `src/types/common.ts` (modificar `TabId`), `src/store/NavigationContext.tsx` (modificar), `src/App.tsx` (modificar), `public/manifest.webmanifest` y `public/sw.js` (modificar solo si la App B aporta rutas o caché propias)
-- **Criterio de aceptación binario:** `npm run typecheck && npm run test && npm run build` termina con código 0, y `src/store/NavigationContext.test.tsx` incluye y pasa un caso para la nueva pestaña.
-- **Modelo asignado:** Qwen Coder
-- **Estado:** Bloqueada
-- **Registro temporal:**
-  - Fecha y hora de inicio: —
-  - Fecha y hora de finalización: —
-- **Incidencias o notas:** Hoy `TabId = 'perfil' | 'academia' | 'maxskill'`. Carga perezosa (`React.lazy`) del módulo. Cuidar el service worker: un único `sw.js` sirve a ambos módulos. Depende de TAREA-27.
-
-### TAREA-30: Prueba de humo end-to-end del producto unificado
-- **Archivos afectados:** `e2e/unificado.e2e.ts` (crear), `playwright.config.ts` (modificar: `headless` configurable por variable de entorno)
-- **Criterio de aceptación binario:** `BASE_URL="$STAGING_URL" TEST_EMAIL="$E2E_EMAIL" TEST_PASSWORD="$E2E_PASSWORD" npx playwright test e2e/unificado.e2e.ts` termina con código 0. Además, la petición `GET "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1"` con la clave anónima devuelve HTTP **200** y la misma petición sin cabecera de clave devuelve HTTP **401**.
+### TAREA-28: Dominio de `brecha` con pruebas
+- **Archivos afectados:** `src/domain/brecha/types.ts`, `src/domain/brecha/comparar.ts` (mover desde `brecha/lib/`), `src/domain/brecha/comparar.test.ts` (crear)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run test && node scripts/check-layers.mjs` termina con código 0, y `comparar.test.ts` cubre al menos: brecha cerrada por "dominada", cerrada por "no aparece", brecha nueva y persistente.
 - **Modelo asignado:** Qwen Flash
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Recorrido mínimo: registro o login → ver Gemelo → abrir la App B → volver. Solo contra **staging**, nunca producción. Depende de TAREA-26 y TAREA-29.
+- **Incidencias o notas:** Cierra el hallazgo B-05 (sin pruebas). `comparar.ts` y `types.ts` no dependen de Node ni de Next, así que se mueven sin cambios de lógica. Depende de TAREA-12 (existencia de `domain/`) y TAREA-25.
 
-### TAREA-31: Cierre de la consolidación
-- **Archivos afectados:** `docs/design.md` (modificar: quitar marcas `[PENDIENTE-APP-B]`), `docs/tasks.md` (modificar), `CHANGELOG.md` (modificar), `README.md` (modificar)
-- **Criterio de aceptación binario:** `npm ci && npm run typecheck && npm run lint && npm run test && npm run build && npm run check:layers && npm run check:migrations && npm run check:env && ! grep -n "PENDIENTE-APP-B" docs/design.md` termina con código 0.
+### TAREA-29: Shell, enrutado y CSS acotado
+- **Archivos afectados:** `src/features/brecha/index.ts`, `src/features/brecha/styles/brecha.module.css` o `brecha.css` con prefijo (crear), `src/App.tsx`, `src/types/common.ts`, `src/store/NavigationContext.tsx`, `src/store/NavigationContext.test.tsx` (modificar)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build` termina con código 0, y `NavigationContext.test.tsx` incluye y pasa un caso para cada ruta nueva (`/` y `/reporte/:id`).
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Ómicrom navega por estado y `brecha` por rutas. Decidir entre `react-router-dom` (dependencia nueva, requiere ADR y alta en `design.md` §6.2) o un enrutador mínimo propio sobre la API History. El CSS de `brecha` (1 573 líneas) se acota para no alterar el resto. Comparar el tamaño de los chunks antes y después. Depende de TAREA-12, TAREA-18 y TAREA-25.
+
+### TAREA-30: Pantallas del ciclo conectadas a Supabase
+- **Archivos afectados:** `src/features/brecha/components/{SubirCv,EscaneoCv,MapaCapacidades,PanelReporte}.tsx`, `src/features/brecha/pages/{Inicio,Reporte}.tsx` (reescribir las dos páginas como cliente), `src/features/brecha/services/brecha.ts` (crear: único lugar con acceso a datos), `src/features/brecha/hooks/useAnalisis.ts` (crear)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build && node scripts/check-layers.mjs` termina con código 0, y los componentes no importan `@/infrastructure/supabase` (regla R-02).
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Los 5 componentes cliente (1 057 líneas) solo necesitan cambiar `next/link`, `next/navigation` y el destino de `fetch` (`SubirCv.tsx:53`, `PanelReporte.tsx:103`) por el servicio. Las 2 páginas (159 líneas) se reescriben porque hoy son componentes de servidor. `MapaCapacidades` usa `matchMedia` y SVG: revisar la etiqueta "HABILIDAD BLANDA" cortada en móvil (ver `visual-brecha/README.md`). Verificar con capturas contra `visual-brecha/` antes de fusionar. El login de entrada reutiliza `features/auth`; el modo invitado permite escanear antes de registrarse. Depende de TAREA-26, 27, 28 y 29.
+
+### TAREA-31: Asistente de voz como capa global con el vocabulario del ciclo
+- **Archivos afectados:** `src/features/assistant/` (crear con `index.ts`; mover desde `src/features/omicron/services/{voice,oraculo,brain,emotion,tools}.ts` y `components/OmicronBar.tsx`), `src/infrastructure/voice/*` (sin cambios de lógica), pruebas `oraculo.test.ts` y `OmicronBar.test.tsx` (adaptar)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && node scripts/check-layers.mjs` termina con código 0, y `oraculo.test.ts` incluye casos que resuelven a una acción las frases: "escanear mi CV", "qué brechas tengo", "léeme la primera", "marcarla como real".
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Medido: la voz son ≈ 2 000 líneas sin lectura de `import.meta.env`; el único acople es `TabId` en `oraculo.ts` y `brain.ts`, que se reasigna a rutas. Cambia el vocabulario (`NAV`, `NAV_NATURAL`, `TOOL_CATALOG`), no el motor. **Antes:** probar la voz de punta a punta: el PR #406 la marca "en desarrollo" y `proxy-tts` depende de un proveedor externo con respaldo a la voz del navegador. `brain.ts` ya se movió a `infrastructure/ai` en la TAREA-12; ajustar la ruta. Depende de TAREA-29 y TAREA-30.
+
+### TAREA-32: Cerrar una brecha con prueba (examen → "dominada" verificable)
+- **Archivos afectados:** `supabase/migrations/<AAAAMMDDHHMMSS>_brecha_dominar_rpc.sql` (crear), `supabase/tests/brecha_dominar.sql` (crear), `src/features/brecha/services/brecha.ts` (modificar), `src/features/brecha/components/PanelReporte.tsx` (modificar: botón "Demostrarlo")
+- **Criterio de aceptación binario:** `bash scripts/db-test.sh supabase/tests/brecha_dominar.sql && npm run typecheck && npm run test` termina con código 0. La prueba SQL comprueba que un usuario **no puede** poner `dominada_en` por actualización directa y que la RPC `brecha_dominar` solo lo permite si existe una fila en `omicron_skill_proofs` para esa habilidad.
 - **Modelo asignado:** Qwen Max
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Depende de todas las anteriores. Revisión formal final por el dueño. Confirmar que `docs/design.md` coincide con el código real (R-14).
+- **Incidencias o notas:** Es la unión de las dos ideas: la brecha de `brecha` se cierra con el examen de Ómicrom (`omicron_ensure_skill_node` → `simulador-universal` → `register_exam_success`). Hay que definir el mapeo `brecha.aprender.que` → `skill_key` (normalización de texto). Se revoca el `GRANT UPDATE (dominada_en)` de TAREA-26. La marca "Es real" sigue siendo una opinión del usuario y **no** alimenta la reputación (regla R-03). Depende de TAREA-30 y TAREA-31.
+
+### TAREA-33: Retirar la UI antigua de Ómicrom
+- **Archivos afectados:** `src/features/gemelo/components/**`, `src/features/academia/components/**`, `src/features/redviva/components/**`, `src/features/omicron/components/**` salvo lo que se decida conservar (§3.4 de `producto-unico.md`); `src/App.tsx` (modificar)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build && node scripts/check-layers.mjs` termina con código 0, y `node scripts/check-layers.mjs --rule no-orphans` no reporta módulos huérfanos nuevos.
+- **Modelo asignado:** Qwen Flash
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Se retiran ≈ 11 500 líneas de UI (44 % de las 26 227 de producción). No se toca backend, migraciones ni datos. Queda recuperable en el historial de git. Un retiro por commit. Esperar a que el ciclo completo funcione (TAREA-32) y a la decisión de §3.4. Depende de TAREA-32.
+
+### TAREA-34: Prueba de humo del producto único y cierre
+- **Archivos afectados:** `e2e/ciclo.e2e.ts` (crear), `playwright.config.ts` (modificar: `headless` configurable), `docs/design.md`, `docs/tasks.md`, `CHANGELOG.md`, `README.md` (modificar)
+- **Criterio de aceptación binario:** `BASE_URL="$STAGING_URL" TEST_EMAIL="$E2E_EMAIL" TEST_PASSWORD="$E2E_PASSWORD" npx playwright test e2e/ciclo.e2e.ts` termina con código 0 (entrar → escanear un PDF de prueba → ver mapa → marcar una brecha como real → cerrar sesión), y `npm ci && npm run typecheck && npm run lint && npm run test && npm run build && npm run check:layers && npm run check:migrations && npm run check:env && ! grep -n "PENDIENTE-APP-B" docs/design.md` termina con código 0.
+- **Modelo asignado:** Qwen Max
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Solo contra staging, nunca producción. Usar el proveedor `fixture` para no gastar cuota de IA. La fase 1b de `brecha` (≥ 6 de 10 brechas reales con 10 CVs reales) debe estar medida antes de abrir a usuarios. Revisión formal final por el dueño. Depende de todas las anteriores.
 
 ---
 

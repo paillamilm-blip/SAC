@@ -388,7 +388,7 @@ Cada regla indica cómo se verifica. Las marcadas **[CI]** rompen el build al vi
 | ADR-001 | Desarrollo guiado por especificaciones: `docs/design.md` y `docs/tasks.md` son la fuente de verdad; el código sigue a los documentos | Propuesta |
 | ADR-002 | Orden y nomenclatura de migraciones; tratamiento de `9999_` | Propuesta; **depende de TAREA-04 y aprobación del dueño** |
 | ADR-003 | Escritura de `profiles` por lista blanca de columnas (`GRANT` por columna) | Propuesta |
-| ADR-004 | Integración de la App B (`brecha`): A) dos apps con un Supabase, B) portar como feature. Incluye modelo de datos (prefijo `brecha_`) | **Pendiente de decisión del dueño** (insumos listos en `fusion/impacto.md`) |
+| ADR-004 | Integración de la App B (`brecha`). **Propuesta vigente: producto único** dentro de `Sistema-omicrom` con el frontend y el flujo de `brecha` y la voz de Ómicrom (ver `fusion/producto-unico.md`). Reemplaza la opción A (dos apps) | **Pendiente de aprobación del dueño** (TAREA-25) |
 | ADR-005 | Orden de dependencias entre features y capa `domain/` | Propuesta |
 
 ---

@@ -1,5 +1,7 @@
 # Análisis de impacto y colisiones — `brecha` (App B) sobre Ómicrom
 
+> **Actualización 2026-11-02:** este documento se conserva como evidencia de colisiones y de esfuerzo. Las opciones A/B/C de su §3 quedan **superadas** por [`producto-unico.md`](./producto-unico.md), que adopta la base de Ómicrom con el frontend y el flujo de `brecha` y el asistente de voz como interfaz.
+
 | Campo | Valor |
 |---|---|
 | Estado | **Borrador.** TAREA-24 depende de la TAREA-20 (documentar variables de entorno) y esta aún no se ejecutó |
