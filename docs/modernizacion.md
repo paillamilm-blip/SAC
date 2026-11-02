@@ -168,6 +168,8 @@ Una animación más bonita sobre pausas fijas sigue prometiendo algo que el sist
 4. **Ingreso sin contraseña** (enlace/código por correo): ¿lo quieres?
 5. **Nombre:** confirmar **Ómicrom** (con M) como único nombre visible.
 
+> **Maqueta del inicio** con estos supuestos: [`fusion/mockups/`](./fusion/mockups/README.md).
+
 ## 6. Mejoras futuras (no incluidas en el plan)
 Tema claro completo, llaves de acceso (*passkeys*), modo sin conexión para el reporte ya generado, traducción a otros idiomas, reconocimiento de voz propio en el servidor para que funcione igual en todos los navegadores.
 
