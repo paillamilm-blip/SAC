@@ -266,7 +266,10 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
 
   if (!abierto) return null;
 
-  const sugeridas = sugerencias(estado);
+  // No repetir como sugerencia lo que ya está ofrecido como botón de una acción pendiente.
+  const sugeridas = sugerencias(estado).filter(
+    (s) => !mensajes.some((m) => m.accion?.estado === 'propuesta' && m.accion.etiqueta === s),
+  );
 
   return (
     <section className="u-chat" role="dialog" aria-label="Asistente de Ómicrom" aria-modal="false">

@@ -11,6 +11,8 @@ vi.mock('@/store/AppContext', () => ({
 vi.mock('@/features/auth/components/AuthOverlay', () => ({
   AuthOverlay: () => <div role="dialog" aria-label="Acceso" />,
 }));
+// useUserColor arrastra ColorPicker -> spatialAudio, que usa matchMedia (no existe en jsdom).
+vi.mock('@/shared/hooks/useUserColor', () => ({ useUserColor: () => '#7dd3fc' }));
 vi.mock('@/features/omicron/services/brain', () => ({ askOmicron: vi.fn() }));
 vi.mock('@/infrastructure/voice/engine', () => ({
   speak: vi.fn(),
