@@ -1,0 +1,229 @@
+// Repositorio de análisis. Funciones PURAS sobre un objeto `Db` (fáciles de probar)
+// más una capa mínima de lectura/escritura en un `Almacen` (localStorage en la app).
+//
+// Persistencia v0: en el dispositivo, una clave por persona. La persistencia en
+// Supabase (tablas brecha_*) es la TAREA-31 y no se activa hasta que se aplique
+// la migración; este módulo es la costura donde se enchufará.
+
+import { compararAnalisis } from '../domain/comparar';
+import type {
+  Analisis,
+  Brecha,
+  ComparacionAnalisis,
+  ResultadoAnalisis,
+  Veredicto,
+} from '../domain/types';
+
+export interface Db {
+  version: 1;
+  analisis: Analisis[];
+}
+
+export const CLAVE_PREFIJO = 'omicron:brecha:db:v1:';
+export const CLAVE_INVITADO = 'invitado';
+
+export function dbVacia(): Db {
+  return { version: 1, analisis: [] };
+}
+
+export function claveDe(usuario: string): string {
+  return `${CLAVE_PREFIJO}${usuario}`;
+}
+
+/** Subconjunto de Storage que necesitamos (permite probar sin navegador). */
+export interface Almacen {
+  getItem(k: string): string | null;
+  setItem(k: string, v: string): void;
+  removeItem(k: string): void;
+}
+
+export type GeneradorId = () => string;
+
+export const idPorDefecto: GeneradorId = () => {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+export interface MetaAnalisis {
+  nombreArchivo: string | null;
+  tamanio: number | null;
+  proveedor: string;
+  simulado: boolean;
+}
+
+export function agregarAnalisis(
+  db: Db,
+  resultado: ResultadoAnalisis,
+  meta: MetaAnalisis,
+  ahora: string,
+  nuevoId: GeneradorId = idPorDefecto,
+): { db: Db; analisis: Analisis } {
+  const analisis: Analisis = {
+    id: nuevoId(),
+    creadoEn: ahora,
+    proveedor: meta.proveedor,
+    simulado: meta.simulado,
+    nombreArchivo: meta.nombreArchivo,
+    tamanio: meta.tamanio,
+    ocupacion: resultado.ocupacion,
+    nivel: resultado.nivel,
+    resumen: resultado.resumen,
+    fortalezas: [...resultado.fortalezas],
+    brechas: resultado.brechas.map((b) => ({
+      ...b,
+      aprender: { ...b.aprender },
+      id: nuevoId(),
+      veredicto: null,
+      veredictoEn: null,
+      dominadaEn: null,
+    })),
+  };
+  return { db: { ...db, analisis: [...db.analisis, analisis] }, analisis };
+}
+
+function actualizarBrecha(
+  db: Db,
+  analisisId: string,
+  brechaId: string,
+  cambio: (b: Brecha) => Brecha | null,
+): Db {
+  let tocado = false;
+  const analisis = db.analisis.map((a) => {
+    if (a.id !== analisisId) return a;
+    return {
+      ...a,
+      brechas: a.brechas.map((b) => {
+        if (b.id !== brechaId) return b;
+        const nueva = cambio(b);
+        if (!nueva) return b;
+        tocado = true;
+        return nueva;
+      }),
+    };
+  });
+  return tocado ? { ...db, analisis } : db;
+}
+
+/** Marca "Es real" / "No aplica" o la quita (null). Quitar "Es real" también quita "dominada". */
+export function marcarBrecha(
+  db: Db,
+  analisisId: string,
+  brechaId: string,
+  veredicto: Veredicto,
+  ahora: string,
+): Db {
+  return actualizarBrecha(db, analisisId, brechaId, (b) => ({
+    ...b,
+    veredicto,
+    veredictoEn: veredicto ? ahora : null,
+    dominadaEn: veredicto === 'confirmada' ? b.dominadaEn : null,
+  }));
+}
+
+/**
+ * Autodeclara una brecha como dominada. Solo se puede dominar lo que antes se
+ * reconoció como real (misma regla que brecha). Cuando exista el examen
+ * (TAREA-37) esto pasará a exigir una prueba registrada.
+ */
+export function marcarDominada(db: Db, analisisId: string, brechaId: string, ahora: string): Db {
+  return actualizarBrecha(db, analisisId, brechaId, (b) =>
+    b.veredicto === 'confirmada' && !b.dominadaEn ? { ...b, dominadaEn: ahora } : null,
+  );
+}
+
+export function listarAnalisis(db: Db): Analisis[] {
+  return [...db.analisis].sort((a, b) => b.creadoEn.localeCompare(a.creadoEn));
+}
+
+export function obtenerAnalisis(db: Db, id: string): Analisis | null {
+  return db.analisis.find((a) => a.id === id) ?? null;
+}
+
+export function ultimoAnalisis(db: Db): Analisis | null {
+  return listarAnalisis(db)[0] ?? null;
+}
+
+/**
+ * Compara contra el análisis anterior DE LA MISMA OCUPACIÓN: comparar perfiles
+ * distintos produciría "brechas cerradas" que en realidad son un cambio de objetivo.
+ */
+export function compararConAnterior(db: Db, analisis: Analisis): ComparacionAnalisis | null {
+  const previo = listarAnalisis(db).find(
+    (a) => a.id !== analisis.id && a.ocupacion === analisis.ocupacion && a.creadoEn < analisis.creadoEn,
+  );
+  if (!previo) return null;
+  return compararAnalisis(
+    { id: previo.id, creadoEn: previo.creadoEn, brechas: previo.brechas },
+    analisis.brechas,
+    analisis.creadoEn,
+  );
+}
+
+export interface Metricas {
+  totalAnalisis: number;
+  brechas: number;
+  revisadas: number;
+  confirmadas: number;
+  rechazadas: number;
+  dominadas: number;
+  /** % de brechas revisadas que la persona reconoció como reales; null si no revisó ninguna. */
+  precision: number | null;
+}
+
+export function metricas(db: Db): Metricas {
+  const brechas = db.analisis.flatMap((a) => a.brechas);
+  const confirmadas = brechas.filter((b) => b.veredicto === 'confirmada').length;
+  const rechazadas = brechas.filter((b) => b.veredicto === 'rechazada').length;
+  const revisadas = confirmadas + rechazadas;
+  return {
+    totalAnalisis: db.analisis.length,
+    brechas: brechas.length,
+    revisadas,
+    confirmadas,
+    rechazadas,
+    dominadas: brechas.filter((b) => b.dominadaEn).length,
+    precision: revisadas ? Math.round((confirmadas / revisadas) * 100) : null,
+  };
+}
+
+/**
+ * Lo que trae un invitado pasa a su cuenta SOLO si la cuenta aún no tiene nada:
+ * nunca se pisan análisis existentes.
+ */
+export function fusionarInvitado(cuenta: Db, invitado: Db): { db: Db; migrado: boolean } {
+  if (cuenta.analisis.length > 0 || invitado.analisis.length === 0) {
+    return { db: cuenta, migrado: false };
+  }
+  return { db: { ...cuenta, analisis: [...invitado.analisis] }, migrado: true };
+}
+
+// ── Lectura / escritura ────────────────────────────────────────────────
+
+function esDb(x: unknown): x is Db {
+  if (typeof x !== 'object' || x === null) return false;
+  const o = x as { version?: unknown; analisis?: unknown };
+  return o.version === 1 && Array.isArray(o.analisis);
+}
+
+/** Lee la base; si no existe o está corrupta devuelve una vacía (nunca lanza). */
+export function cargar(almacen: Almacen, clave: string): Db {
+  try {
+    const crudo = almacen.getItem(clave);
+    if (!crudo) return dbVacia();
+    const parsed: unknown = JSON.parse(crudo);
+    return esDb(parsed) ? parsed : dbVacia();
+  } catch {
+    return dbVacia();
+  }
+}
+
+/** Devuelve false si no pudo guardar (cuota llena, modo privado...). */
+export function guardar(almacen: Almacen, clave: string, db: Db): boolean {
+  try {
+    almacen.setItem(clave, JSON.stringify(db));
+    return true;
+  } catch {
+    return false;
+  }
+}

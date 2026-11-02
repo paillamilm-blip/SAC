@@ -1,0 +1,54 @@
+name: Recorrido visual de /u
+
+# Construye la app como en producción, la abre en un navegador real y recorre el producto único
+# (subir CV -> reporte -> revisar -> asistente). Sube las capturas como artefacto "visual-u".
+# Solo corre si cambia lo que afecta a /u; no bloquea el resto del CI.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/features/brecha/**'
+      - 'src/features/assistant/**'
+      - 'src/App.tsx'
+      - 'scripts/visual-u.mjs'
+      - '.github/workflows/visual-u.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recorrido:
+    name: Recorrido en navegador
+    runs-on: ubuntu-latest
+    env:
+      # Valores ficticios (no son secretos): el cliente de Supabase solo necesita existir al importarse.
+      VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependencias
+        run: npm install
+      - name: Instalar Playwright (solo para este recorrido)
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: Servir el build
+        run: |
+          npx vite preview --port 4173 --strictPort > preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:4173/u >/dev/null && break; sleep 1; done
+      - name: Recorrido
+        run: node scripts/visual-u.mjs
+      - name: Subir capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-u
+          path: visual-u/
+          if-no-files-found: warn
