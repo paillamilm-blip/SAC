@@ -6,7 +6,7 @@
 | Fecha | 2026-11-02 |
 | Base | `origin/main` @ `043dc47` |
 | Fuente de hechos | [`audit.md`](./audit.md) |
-| Plan de ejecución | [`tasks.md`](./tasks.md) |
+| Plan de ejecución | [`tasks.md`](./tasks.md) · modernización: [`modernizacion.md`](./modernizacion.md) |
 
 **Convención de este documento.** Lo marcado **[ACTUAL]** describe lo que existe hoy y fue verificado. Lo marcado **[OBJETIVO]** es el diseño al que se converge. Lo marcado **[PENDIENTE-APP-B]** depende de la decisión ADR-004 (cómo se integra `brecha`) y no puede cerrarse antes.
 
@@ -397,7 +397,7 @@ Cada regla indica cómo se verifica. Las marcadas **[CI]** rompen el build al vi
 
 | Riesgo / supuesto | Mitigación |
 |---|---|
-| La App B no se localiza o difiere de lo supuesto | Las tareas 24–31 quedan `Bloqueada`; las 01–23 son independientes y se pueden ejecutar ya |
+| La App B no se localiza o difiere de lo supuesto | Las tareas 25–48 dependen de la aprobación del producto único; las 01–23 y 27–29 son independientes y se pueden ejecutar ya |
 | La CLI de Supabase ordena de otra manera a la supuesta | TAREA-04 lo mide antes de cualquier cambio |
 | `supabase migration repair` altera la remota | Solo con aprobación y tras exportar `migration list` |
 | Mover código (barrels, `domain/`) rompe imports | Un movimiento por tarea, con `typecheck` y `test` en verde como criterio |

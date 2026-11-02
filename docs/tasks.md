@@ -6,7 +6,7 @@
 | Fecha de emisión | 2026-11-02 |
 | Base | `origin/main` @ `043dc47` |
 | Especificación | [`design.md`](./design.md) · hechos en [`audit.md`](./audit.md) |
-| Tareas | 34 = 2 completadas (02, 24) · 21 pendientes · 11 bloqueadas (06 por aprobación de `migration repair`; 25–34 por aprobación de `producto-unico.md`) |
+| Tareas | 48 = 2 completadas (02, 24) · 24 pendientes · 22 bloqueadas (06 por aprobación de `migration repair`; 25, 26, 30–48 por la aprobación de `producto-unico.md` y `modernizacion.md`) |
 
 ## Cómo usar este documento
 
@@ -14,7 +14,7 @@
 - Una tarea pasa a `Completada` **solo** cuando su *criterio de aceptación binario* se cumple (el comando termina con código 0 o devuelve el código HTTP indicado) y el resultado se pega en *Incidencias o notas*.
 - Fechas y horas en formato `YYYY-MM-DD HH:mm`, en **UTC** (el reloj del entorno de ejecución). `—` significa "aún no ocurrió".
 - Una tarea = un PR pequeño a `main` (regla R-15).
-- Las tareas 25–34 dependen de la aprobación del dueño de `docs/fusion/producto-unico.md`; sus criterios pueden ajustarse con sus respuestas.
+- Las tareas 25–48 dependen de la aprobación del dueño de `docs/fusion/producto-unico.md` y `docs/modernizacion.md`; sus criterios pueden ajustarse con sus respuestas. Las tareas 27, 28 y 29 (versiones del stack) no dependen de esa aprobación.
 
 ### Leyenda de modelos
 
@@ -37,9 +37,16 @@ FASE 2  01 → 10 → 11 → 12 → 14, 15
                     12 → 18
                     13 → 19
 FASE 3  01 → 20      21      06 → 22      09,10,20 → 23
-FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
-                 25 → 28 (también 12) ┐
-                 25 → 29 (también 12, 18) ┴→ 30 (también 26, 27) → 31 → 32 → 33 → 34 (todas)
+FASE 4  02 → 24 → 25* → 26* (ley de diseño v2)
+        01,19,23 → 27 → 28 → 29            (versiones: Vite 8 → motion → React 19.2)
+        26,27 → 30 (tokens)
+        25,07,09 → 31 (tablas) → 32 (función, también 20)
+        12,25 → 33 (dominio)
+        12,18,25,29,30 → 34 (shell)
+        31,32,33,34 → 35 (pantallas) → 36 (voz) → 37 (cerrar con prueba) → 38 (retirar UI) → 39 (humo)
+FASE 5  35,36 → 40 (a11y) · 35 → 41 (movimiento) · 35,36 → 42 (rendimiento) · 34,35 → 43 (PWA)
+        23,38 → 44 (seguridad web) · 36 → 45 (voz completa) · 32,35 → 46 (escáner real)
+        40,42 → 47 (CI de calidad) → todas → 48 (cierre)
 ```
 `*` = esperan una decisión del dueño (TAREA-02 ya está completada).
 
@@ -51,7 +58,8 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 | 1 · Base de datos y seguridad | 04–09 | 04, 05, 09 Pendiente · 06 Bloqueada (aprobación del dueño) · 07, 08 Pendiente, pero en la práctica esperan a 06 |
 | 2 · Estructura del código | 10–19 | Pendiente |
 | 3 · Entorno, backend y CI | 20–23 | Pendiente |
-| 4 · Producto único (Ómicrom + brecha) | 24–34 | 24 Completada · 25–34 Bloqueada (esperan la aprobación del dueño) |
+| 4 · Producto único (Ómicrom + brecha) | 24–39 | 24 Completada · 27, 28, 29 Pendiente (versiones del stack) · resto Bloqueada (esperan la aprobación del dueño) |
+| 5 · Modernización | 40–48 | Bloqueada (esperan el ciclo construido y la ley de diseño v2) |
 
 ---
 
@@ -325,7 +333,57 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
   - Fecha y hora de finalización: —
 - **Incidencias o notas:** Bloqueada por la aprobación del dueño de `producto-unico.md` §8: (1) base técnica, (2) qué se hace con revelación, pasaporte, Academia y reputación visible (§3.4), (3) servicio de pago de Gemini, (4) nombre del producto, (5) si el PDF se guarda. Sin esas respuestas no se escribe código del producto.
 
-### TAREA-26: Tablas `brecha_*` con RLS y pruebas SQL
+### TAREA-26: Ley de diseño v2 (DESIGN.md y PRODUCT.md)
+- **Archivos afectados:** `DESIGN.md` (reescribir), `PRODUCT.md` (modificar Stack, Capacidades y Accesibilidad), `.kiro/steering/pipeline-diseno.md` (modificar si cambia la autoridad), `docs/modernizacion.md` (registrar las decisiones de §5)
+- **Criterio de aceptación binario:** `grep -q "oklch" DESIGN.md && grep -q "^## Color de identidad del usuario" DESIGN.md && ! grep -nE "Three\.js|rioplatense|Tailwind 3\.4|Ómicron[^a-z]" PRODUCT.md DESIGN.md` termina con código 0.
+- **Modelo asignado:** Qwen Max
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Bloqueada por las decisiones de `modernizacion.md` §5: (1) ley v2, (2) qué pasa con el color elegido por la persona, (3) tema claro, (4) ingreso sin contraseña, (5) nombre. Parte de los tokens de `brecha` y conserva los principios de `PRODUCT.md` que siguen vigentes (cero jerga, cada número con su escala, nunca datos falsos, la interfaz no afirma más que el dato). `PRODUCT.md` hoy lista dominios que ya no existen (empleos, mercado, billetera, Three.js). Depende de TAREA-25.
+
+### TAREA-27: Vite 5 → 8
+- **Archivos afectados:** `package.json`, `package-lock.json`, `vite.config.ts`, `.github/workflows/ci.yml` (solo si cambia la versión de Node requerida)
+- **Criterio de aceptación binario:** `npm ci && npm run typecheck && npm run lint && npm run test && npm run build` termina con código 0, y `node -e "process.exit(require('./package.json').devDependencies.vite.replace(/[^0-9.]/g,'').startsWith('8')?0:1)"` también.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Pendiente
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Solo cambia la compilación, no el código de la app. Vite 8 usa Rolldown y Oxc en lugar de esbuild y Rollup (salió el 12 de marzo de 2026; ver [guía de migración](https://github.com/vitejs/vite/blob/main/docs/guide/migration.md)). Revisar si `manualChunks` y `@vitejs/plugin-react` siguen siendo compatibles y si exige otra versión de Node. Registrar tiempos de `build` y tamaños de chunk antes y después. Verificación solo por CI (este entorno no instala paquetes). Un PR, reversible. Depende de TAREA-01, 19 y 23.
+
+### TAREA-28: `framer-motion` → `motion`
+- **Archivos afectados:** `package.json`, `package-lock.json`, `vite.config.ts` (regla de chunks que menciona `framer-motion`), y los archivos de `src/` que importan `framer-motion` (30 importaciones medidas)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run test && npm run build && ! grep -rn "from 'framer-motion'" src` termina con código 0.
+- **Modelo asignado:** Qwen Flash
+- **Estado:** Pendiente
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Cambio mecánico: el paquete se llama ahora `motion` y se importa desde `motion/react`; la v12 no anuncia cambios incompatibles para React ([guía](https://motion.dev/docs/react-upgrade-guide)). Un PR. Depende de TAREA-27.
+
+### TAREA-29: React 18 → 19.2
+- **Archivos afectados:** `package.json`, `package-lock.json` (`react`, `react-dom`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `eslint-plugin-react-hooks`), y los archivos de `src/` que usen APIs retiradas
+- **Criterio de aceptación binario:** `npm ci && npm run typecheck && npm run lint && npm run test && npm run build` termina con código 0, y `npm ls react 2>/dev/null | grep -q "react@19"` también.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Pendiente
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** El paso más delicado del stack: 26 227 líneas de producción y 26 archivos de prueba como red de seguridad. React 19.2 (1 oct 2025) añade `<Activity>` y `useEffectEvent` ([react.dev](https://react.dev/blog/2025/10/01/react-19-2)). Seguir la guía oficial de actualización a 19 y retirar lo que elimina. `eslint-plugin-react-hooks` v6 usa configuración plana. **TypeScript no se sube a 7.0** mientras `typescript-eslint` no lo soporte (se espera con TS 7.1). Un PR. Depende de TAREA-28.
+
+### TAREA-30: Tokens y base CSS moderna
+- **Archivos afectados:** `src/styles/tokens.css` (crear), `src/styles/base.css` (crear), `src/main.tsx` (importar), `src/index.css` (quitar el `@import` de Google Fonts), `index.html` (quitar los `preconnect` a Google Fonts)
+- **Criterio de aceptación binario:** `npm run build && ! grep -rn "fonts.googleapis.com\|fonts.gstatic.com" src index.html && grep -q "@layer reset, tokens, base, components, utilities" src/styles/tokens.css` termina con código 0.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Implementa la ley v2 (TAREA-26): variables CSS por rol, `@layer`, `color-scheme`, escalas de espaciado, radios y sombras, tamaños fluidos con `clamp()`, `dvh`/`svh`, consultas de contenedor y foco visible. Pila tipográfica de sistema (cumple el principio "sin webfonts" de `PRODUCT.md`, hoy incumplido por `src/index.css:4`). **Cambio visible menor:** Inter y JetBrains Mono pasan a las fuentes de sistema. Las características CSS nuevas se confirman contra el objetivo de navegadores de Vite 8 antes de usarlas. Depende de TAREA-26 y 27.
+
+### TAREA-31: Tablas `brecha_*` con RLS y pruebas SQL
 - **Archivos afectados:** `supabase/migrations/<AAAAMMDDHHMMSS>_brecha_tablas.sql` (crear, instante real), `supabase/tests/brecha_rls.sql` (crear)
 - **Criterio de aceptación binario:** `supabase db reset && bash scripts/db-test.sh supabase/tests/brecha_rls.sql && node scripts/check-migrations.mjs` termina con código 0. La prueba falla si alguna tabla `brecha_*` tiene `rowsecurity = false`, si un usuario lee filas de otro, o si un usuario inserta directamente en `brecha_analisis`.
 - **Modelo asignado:** Qwen Coder
@@ -333,9 +391,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Esquema en `fusion/impacto.md` §4, con una diferencia: **no se guarda el PDF** (sin `storage_path`), salvo que el dueño decida lo contrario. `GRANT` por columna: el usuario actualiza solo `veredicto`, `veredicto_en` y, **hasta la TAREA-32**, `dominada_en` (autodeclarada, como en `brecha`). La TAREA-32 revoca ese último permiso y lo reemplaza por una RPC con prueba. Depende de TAREA-25, TAREA-07 y TAREA-09.
+- **Incidencias o notas:** Esquema en `fusion/impacto.md` §4, con una diferencia: **no se guarda el PDF** (sin `storage_path`), salvo que el dueño decida lo contrario. `GRANT` por columna: el usuario actualiza solo `veredicto`, `veredicto_en` y, **hasta la TAREA-37**, `dominada_en` (autodeclarada, como en `brecha`). La TAREA-37 revoca ese último permiso y lo reemplaza por una RPC con prueba. Depende de TAREA-25, TAREA-07 y TAREA-09.
 
-### TAREA-27: Edge Function `brecha-analizar`
+### TAREA-32: Edge Function `brecha-analizar`
 - **Archivos afectados:** `supabase/functions/brecha-analizar/index.ts`, `supabase/functions/brecha-analizar/validar.ts` (crear; la lógica viene de `brecha/lib/ai/validar.ts`), `supabase/functions/brecha-analizar/validar.test.ts` (crear), `docs/db/edge-functions.md` (modificar)
 - **Criterio de aceptación binario:** `deno check supabase/functions/brecha-analizar/index.ts && deno test supabase/functions/brecha-analizar/` termina con código 0, y `curl -s -o /dev/null -w "%{http_code}" -X POST "$SUPABASE_URL/functions/v1/brecha-analizar"` sin cabecera de autorización devuelve exactamente `401`.
 - **Modelo asignado:** Qwen Coder
@@ -343,9 +401,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Reemplaza `POST /api/analisis`: valida el PDF (≤ 15 MB), aplica el límite por usuario con `_shared/rateLimit.ts`, llama a Gemini con el prompt de `brecha/lib/ai/gemini.ts`, guarda con `service_role` y devuelve el id. **Antes de implementar:** verificar el límite de tamaño de cuerpo de las Edge Functions (PDF de 15 MB ≈ 20 MB en base64); alternativa: subir a Storage temporal y borrar tras analizar. El proveedor `fixture` se conserva para pruebas. No se modifica `proxy-ai`. La pantalla de privacidad y el servicio de pago de Gemini deben estar decididos antes de abrir a usuarios reales. Depende de TAREA-26 y TAREA-20.
+- **Incidencias o notas:** Reemplaza `POST /api/analisis`: valida el PDF (≤ 15 MB), aplica el límite por usuario con `_shared/rateLimit.ts`, llama a Gemini con el prompt de `brecha/lib/ai/gemini.ts`, guarda con `service_role` y devuelve el id. **Antes de implementar:** verificar el límite de tamaño de cuerpo de las Edge Functions (PDF de 15 MB ≈ 20 MB en base64); alternativa: subir a Storage temporal y borrar tras analizar. El proveedor `fixture` se conserva para pruebas. No se modifica `proxy-ai`. La pantalla de privacidad y el servicio de pago de Gemini deben estar decididos antes de abrir a usuarios reales. Depende de TAREA-31 y TAREA-20.
 
-### TAREA-28: Dominio de `brecha` con pruebas
+### TAREA-33: Dominio de `brecha` con pruebas
 - **Archivos afectados:** `src/domain/brecha/types.ts`, `src/domain/brecha/comparar.ts` (mover desde `brecha/lib/`), `src/domain/brecha/comparar.test.ts` (crear)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run test && node scripts/check-layers.mjs` termina con código 0, y `comparar.test.ts` cubre al menos: brecha cerrada por "dominada", cerrada por "no aparece", brecha nueva y persistente.
 - **Modelo asignado:** Qwen Flash
@@ -355,7 +413,7 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
   - Fecha y hora de finalización: —
 - **Incidencias o notas:** Cierra el hallazgo B-05 (sin pruebas). `comparar.ts` y `types.ts` no dependen de Node ni de Next, así que se mueven sin cambios de lógica. Depende de TAREA-12 (existencia de `domain/`) y TAREA-25.
 
-### TAREA-29: Shell, enrutado y CSS acotado
+### TAREA-34: Shell, enrutado y CSS acotado
 - **Archivos afectados:** `src/features/brecha/index.ts`, `src/features/brecha/styles/brecha.module.css` o `brecha.css` con prefijo (crear), `src/App.tsx`, `src/types/common.ts`, `src/store/NavigationContext.tsx`, `src/store/NavigationContext.test.tsx` (modificar)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build` termina con código 0, y `NavigationContext.test.tsx` incluye y pasa un caso para cada ruta nueva (`/` y `/reporte/:id`).
 - **Modelo asignado:** Qwen Coder
@@ -363,9 +421,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Ómicrom navega por estado y `brecha` por rutas. Decidir entre `react-router-dom` (dependencia nueva, requiere ADR y alta en `design.md` §6.2) o un enrutador mínimo propio sobre la API History. El CSS de `brecha` (1 573 líneas) se acota para no alterar el resto. Comparar el tamaño de los chunks antes y después. Depende de TAREA-12, TAREA-18 y TAREA-25.
+- **Incidencias o notas:** Ómicrom navega por estado y `brecha` por rutas. Decidir entre `react-router-dom` (dependencia nueva, requiere ADR y alta en `design.md` §6.2) o un enrutador mínimo propio sobre la API History. El CSS de `brecha` (1 573 líneas) se acota para no alterar el resto. Comparar el tamaño de los chunks antes y después. Depende de TAREA-12, 18, 25, 29 y 30.
 
-### TAREA-30: Pantallas del ciclo conectadas a Supabase
+### TAREA-35: Pantallas del ciclo conectadas a Supabase
 - **Archivos afectados:** `src/features/brecha/components/{SubirCv,EscaneoCv,MapaCapacidades,PanelReporte}.tsx`, `src/features/brecha/pages/{Inicio,Reporte}.tsx` (reescribir las dos páginas como cliente), `src/features/brecha/services/brecha.ts` (crear: único lugar con acceso a datos), `src/features/brecha/hooks/useAnalisis.ts` (crear)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build && node scripts/check-layers.mjs` termina con código 0, y los componentes no importan `@/infrastructure/supabase` (regla R-02).
 - **Modelo asignado:** Qwen Coder
@@ -373,9 +431,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Los 5 componentes cliente (1 057 líneas) solo necesitan cambiar `next/link`, `next/navigation` y el destino de `fetch` (`SubirCv.tsx:53`, `PanelReporte.tsx:103`) por el servicio. Las 2 páginas (159 líneas) se reescriben porque hoy son componentes de servidor. `MapaCapacidades` usa `matchMedia` y SVG: revisar la etiqueta "HABILIDAD BLANDA" cortada en móvil (ver `visual-brecha/README.md`). Verificar con capturas contra `visual-brecha/` antes de fusionar. El login de entrada reutiliza `features/auth`; el modo invitado permite escanear antes de registrarse. Depende de TAREA-26, 27, 28 y 29.
+- **Incidencias o notas:** Los 5 componentes cliente (1 057 líneas) solo necesitan cambiar `next/link`, `next/navigation` y el destino de `fetch` (`SubirCv.tsx:53`, `PanelReporte.tsx:103`) por el servicio. Las 2 páginas (159 líneas) se reescriben porque hoy son componentes de servidor. `MapaCapacidades` usa `matchMedia` y SVG: revisar la etiqueta "HABILIDAD BLANDA" cortada en móvil (ver `visual-brecha/README.md`). Verificar con capturas contra `visual-brecha/` antes de fusionar. El login de entrada reutiliza `features/auth`; el modo invitado permite escanear antes de registrarse. Depende de TAREA-31, 32, 33 y 34.
 
-### TAREA-31: Asistente de voz como capa global con el vocabulario del ciclo
+### TAREA-36: Asistente de voz como capa global con el vocabulario del ciclo
 - **Archivos afectados:** `src/features/assistant/` (crear con `index.ts`; mover desde `src/features/omicron/services/{voice,oraculo,brain,emotion,tools}.ts` y `components/OmicronBar.tsx`), `src/infrastructure/voice/*` (sin cambios de lógica), pruebas `oraculo.test.ts` y `OmicronBar.test.tsx` (adaptar)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && node scripts/check-layers.mjs` termina con código 0, y `oraculo.test.ts` incluye casos que resuelven a una acción las frases: "escanear mi CV", "qué brechas tengo", "léeme la primera", "marcarla como real".
 - **Modelo asignado:** Qwen Coder
@@ -383,9 +441,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Medido: la voz son ≈ 2 000 líneas sin lectura de `import.meta.env`; el único acople es `TabId` en `oraculo.ts` y `brain.ts`, que se reasigna a rutas. Cambia el vocabulario (`NAV`, `NAV_NATURAL`, `TOOL_CATALOG`), no el motor. **Antes:** probar la voz de punta a punta: el PR #406 la marca "en desarrollo" y `proxy-tts` depende de un proveedor externo con respaldo a la voz del navegador. `brain.ts` ya se movió a `infrastructure/ai` en la TAREA-12; ajustar la ruta. Depende de TAREA-29 y TAREA-30.
+- **Incidencias o notas:** Medido: la voz son ≈ 2 000 líneas sin lectura de `import.meta.env`; el único acople es `TabId` en `oraculo.ts` y `brain.ts`, que se reasigna a rutas. Cambia el vocabulario (`NAV`, `NAV_NATURAL`, `TOOL_CATALOG`), no el motor. **Antes:** probar la voz de punta a punta: el PR #406 la marca "en desarrollo" y `proxy-tts` depende de un proveedor externo con respaldo a la voz del navegador. `brain.ts` ya se movió a `infrastructure/ai` en la TAREA-12; ajustar la ruta. Depende de TAREA-34 y TAREA-35.
 
-### TAREA-32: Cerrar una brecha con prueba (examen → "dominada" verificable)
+### TAREA-37: Cerrar una brecha con prueba (examen → "dominada" verificable)
 - **Archivos afectados:** `supabase/migrations/<AAAAMMDDHHMMSS>_brecha_dominar_rpc.sql` (crear), `supabase/tests/brecha_dominar.sql` (crear), `src/features/brecha/services/brecha.ts` (modificar), `src/features/brecha/components/PanelReporte.tsx` (modificar: botón "Demostrarlo")
 - **Criterio de aceptación binario:** `bash scripts/db-test.sh supabase/tests/brecha_dominar.sql && npm run typecheck && npm run test` termina con código 0. La prueba SQL comprueba que un usuario **no puede** poner `dominada_en` por actualización directa y que la RPC `brecha_dominar` solo lo permite si existe una fila en `omicron_skill_proofs` para esa habilidad.
 - **Modelo asignado:** Qwen Max
@@ -393,9 +451,9 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Es la unión de las dos ideas: la brecha de `brecha` se cierra con el examen de Ómicrom (`omicron_ensure_skill_node` → `simulador-universal` → `register_exam_success`). Hay que definir el mapeo `brecha.aprender.que` → `skill_key` (normalización de texto). Se revoca el `GRANT UPDATE (dominada_en)` de TAREA-26. La marca "Es real" sigue siendo una opinión del usuario y **no** alimenta la reputación (regla R-03). Depende de TAREA-30 y TAREA-31.
+- **Incidencias o notas:** Es la unión de las dos ideas: la brecha de `brecha` se cierra con el examen de Ómicrom (`omicron_ensure_skill_node` → `simulador-universal` → `register_exam_success`). Hay que definir el mapeo `brecha.aprender.que` → `skill_key` (normalización de texto). Se revoca el `GRANT UPDATE (dominada_en)` de TAREA-31. La marca "Es real" sigue siendo una opinión del usuario y **no** alimenta la reputación (regla R-03). Depende de TAREA-35 y TAREA-36.
 
-### TAREA-33: Retirar la UI antigua de Ómicrom
+### TAREA-38: Retirar la UI antigua de Ómicrom
 - **Archivos afectados:** `src/features/gemelo/components/**`, `src/features/academia/components/**`, `src/features/redviva/components/**`, `src/features/omicron/components/**` salvo lo que se decida conservar (§3.4 de `producto-unico.md`); `src/App.tsx` (modificar)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build && node scripts/check-layers.mjs` termina con código 0, y `node scripts/check-layers.mjs --rule no-orphans` no reporta módulos huérfanos nuevos.
 - **Modelo asignado:** Qwen Flash
@@ -403,17 +461,113 @@ FASE 4  02 → 24 → 25* → 26 (también 07, 09) → 27 (también 20)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Se retiran ≈ 11 500 líneas de UI (44 % de las 26 227 de producción). No se toca backend, migraciones ni datos. Queda recuperable en el historial de git. Un retiro por commit. Esperar a que el ciclo completo funcione (TAREA-32) y a la decisión de §3.4. Depende de TAREA-32.
+- **Incidencias o notas:** Se retiran ≈ 11 500 líneas de UI (44 % de las 26 227 de producción). No se toca backend, migraciones ni datos. Queda recuperable en el historial de git. Un retiro por commit. Esperar a que el ciclo completo funcione (TAREA-37) y a la decisión de §3.4. Depende de TAREA-37.
 
-### TAREA-34: Prueba de humo del producto único y cierre
-- **Archivos afectados:** `e2e/ciclo.e2e.ts` (crear), `playwright.config.ts` (modificar: `headless` configurable), `docs/design.md`, `docs/tasks.md`, `CHANGELOG.md`, `README.md` (modificar)
-- **Criterio de aceptación binario:** `BASE_URL="$STAGING_URL" TEST_EMAIL="$E2E_EMAIL" TEST_PASSWORD="$E2E_PASSWORD" npx playwright test e2e/ciclo.e2e.ts` termina con código 0 (entrar → escanear un PDF de prueba → ver mapa → marcar una brecha como real → cerrar sesión), y `npm ci && npm run typecheck && npm run lint && npm run test && npm run build && npm run check:layers && npm run check:migrations && npm run check:env && ! grep -n "PENDIENTE-APP-B" docs/design.md` termina con código 0.
+### TAREA-39: Prueba de humo del ciclo del producto único
+- **Archivos afectados:** `e2e/ciclo.e2e.ts` (crear), `playwright.config.ts` (modificar: `headless` configurable por variable de entorno)
+- **Criterio de aceptación binario:** `BASE_URL="$STAGING_URL" TEST_EMAIL="$E2E_EMAIL" TEST_PASSWORD="$E2E_PASSWORD" npx playwright test e2e/ciclo.e2e.ts` termina con código 0 (entrar → escanear un PDF de prueba → ver mapa → marcar una brecha como real → cerrar sesión).
+- **Modelo asignado:** Qwen Flash
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Solo contra staging, nunca producción. Usar el proveedor `fixture` para no gastar cuota de IA. La fase 1b de `brecha` (≥ 6 de 10 brechas reales con 10 CVs reales) debe estar medida antes de abrir a usuarios. El cierre general del proyecto pasó a la TAREA-48. Depende de TAREA-37 y 38.
+
+---
+
+# FASE 5 · Modernización (después de que el ciclo funciona)
+
+> Define [`modernizacion.md`](./modernizacion.md). Cada tarea convierte una fila de su §2 en un criterio verificable. Todas esperan que el ciclo del producto único esté construido (TAREA-35) y la aprobación de la ley de diseño v2 (TAREA-26).
+
+### TAREA-40: Accesibilidad WCAG 2.2 AA verificada
+- **Archivos afectados:** `e2e/a11y.e2e.ts` (crear), `package.json` (añadir `@axe-core/playwright` como dependencia de desarrollo), `src/features/brecha/**` y `src/features/assistant/**` (corregir hallazgos), `docs/accesibilidad.md` (crear)
+- **Criterio de aceptación binario:** `npx playwright test e2e/a11y.e2e.ts` termina con código 0 (cero violaciones serias o críticas en cada pantalla del ciclo) y `test -s docs/accesibilidad.md`.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Criterios de WCAG 2.2 a cubrir: objetivo táctil ≥ 24×24 px (el mapa tiene nodos pequeños), foco no oculto por la cabecera ni la barra inferior fijas (`scroll-padding`), alternativa al arrastre del PDF (ya existe el clic), autenticación accesible, entrada no redundante, ayuda en el mismo lugar. **`axe` detecta solo una parte**: `docs/accesibilidad.md` debe registrar la revisión manual con teclado y con lector de pantalla. Fuentes: [W3C](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/). Depende de TAREA-35 y 36.
+
+### TAREA-41: Movimiento moderno con variante reducida
+- **Archivos afectados:** `src/styles/motion.css` (crear), `scripts/check-motion.mjs` (crear), `src/shared/motion/**` y `src/features/brecha/**` (adaptar)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run test && npm run build && node scripts/check-motion.mjs` termina con código 0. El script falla si un archivo define `animation` o `transition` sin su variante dentro de `@media (prefers-reduced-motion: reduce)`.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Transiciones de pantalla con la API nativa de View Transitions y `@starting-style` para entradas; `motion` solo para gestos. La variante reducida es **más suave, no cero** (regla de `PRODUCT.md`). Depende de TAREA-35.
+
+### TAREA-42: Rendimiento con presupuesto y carga diferida
+- **Archivos afectados:** `lighthouserc.json` (crear), `scripts/check-bundle.mjs` (crear), `src/App.tsx` y `src/features/**` (carga diferida del mapa, la voz y el examen), `vite.config.ts`
+- **Criterio de aceptación binario:** `npm run build && node scripts/check-bundle.mjs` termina con código 0 (presupuesto de tamaño por chunk definido en el script), y `npx lhci autorun` termina con código 0 con aserciones LCP ≤ 2 500 ms y CLS ≤ 0,1.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Umbrales "buenos" de Core Web Vitals. **INP (≤ 200 ms) no se mide en laboratorio**: en CI se usa TBT como sustituto y el INP real se vigila con datos de campo. El presupuesto se fija con la primera medición real, no antes. Depende de TAREA-35 y 36.
+
+### TAREA-43: PWA moderna: manifiesto, iconos y service worker
+- **Archivos afectados:** `public/manifest.webmanifest` (reescribir), `public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (crear), `public/sw.js` (reescribir), `index.html` (`og:locale`, `apple-touch-icon`), `scripts/check-manifest.mjs` (crear), `src/infrastructure/pwa/update.ts` (modificar)
+- **Criterio de aceptación binario:** `node scripts/check-manifest.mjs && npm run build` termina con código 0. El script verifica: nombre **Ómicrom**, descripción vigente, iconos PNG 192 y 512 más uno *maskable* aparte, `lang` correcto y que cada atajo apunta a una ruta que existe.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Defectos medidos hoy: nombre "Sistema Ómicron", descripción "Marketplace de capital intelectual", atajos a `?tab=wallet` y `?tab=academia` que nada lee, un solo `icon.svg` marcado `any maskable`, `og:locale` `es_ES`. El service worker pasa de "red primero para todo" a precarga del shell versionado, caché solo de recursos estáticos, nunca de las llamadas a Supabase, y aviso de nueva versión. Depende de TAREA-34 y 35.
+
+### TAREA-44: Seguridad web: CSP, HSTS y cabeceras
+- **Archivos afectados:** `vercel.json` (modificar), `scripts/check-headers.mjs` (crear)
+- **Criterio de aceptación binario:** `node scripts/check-headers.mjs` termina con código 0 (verifica en `vercel.json` `Content-Security-Policy-Report-Only` y luego `Content-Security-Policy`, `Strict-Transport-Security`, `Cross-Origin-Opener-Policy`), y tras desplegar en staging `curl -sI "$STAGING_URL" | grep -qi "^content-security-policy"` también.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Hoy hay 5 cabeceras y **ninguna CSP ni HSTS**. Primero solo informe, se revisan las violaciones en staging y recién entonces se activa la política. La CSP debe permitir el origen de Supabase en `connect-src`. El script de PDF.js desde un CDN (`cvExtract.ts`) desaparece con la TAREA-38. Depende de TAREA-23 y 38.
+
+### TAREA-45: Asistente de voz: experiencia completa y accesible
+- **Archivos afectados:** `src/features/assistant/**` (modificar), pruebas `*.test.tsx` del asistente (crear)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test` termina con código 0, incluyendo pruebas que verifican que (a) sin `SpeechRecognition` el campo de texto sigue permitiendo usar todo el ciclo, (b) los estados *escuchando / pensando / hablando* se anuncian con `aria-live` y (c) no se reproduce audio sin una acción del usuario.
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Ya existen `isSpeechAvailable()`, manejo de `onerror` y entrada de texto. **Por verificar:** explicación del permiso del micrófono, transcripción en vivo y posibilidad de interrumpir la voz. `SpeechRecognition` funciona en Chromium y parcialmente en Safari, no en Firefox por defecto, y suele enviar el audio a un servicio en la nube: avisarlo. Probar la voz de punta a punta (el PR #406 la marca "en desarrollo"). Depende de TAREA-36.
+
+### TAREA-46: Escáner del CV con progreso real
+- **Archivos afectados:** `supabase/functions/brecha-analizar/index.ts` (modificar: respuesta por eventos), `supabase/functions/brecha-analizar/eventos.test.ts` (crear), `src/features/brecha/services/brecha.ts`, `src/features/brecha/components/EscaneoCv.tsx`, `src/features/brecha/components/SubirCv.tsx`, `src/features/brecha/components/SubirCv.progreso.test.tsx` (crear)
+- **Criterio de aceptación binario:** `deno test supabase/functions/brecha-analizar/ && npm run test` termina con código 0. La prueba `SubirCv.progreso.test.tsx`, con temporizadores simulados, comprueba que tras 10 s sin eventos del servidor la etapa **no avanza** más allá de "leyendo".
+- **Modelo asignado:** Qwen Coder
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Hoy `SubirCv.tsx` avanza con pausas fijas (`dormir(500)`, `dormir(550)`, `dormir(700)`, `dormir(420)`), sin relación con lo que hace el servidor. `PRODUCT.md` lo prohíbe: "la interfaz no afirma más que el dato". La función emite eventos (`recibido`, `leyendo`, `comparando`, `guardado`) y la interfaz solo avanza con ellos; si no hay evento, el avance es indeterminado. Debe poder cancelarse. Depende de TAREA-32 y 35.
+
+### TAREA-47: Calidad continua: accesibilidad, rendimiento y regresión visual en CI
+- **Archivos afectados:** `.github/workflows/ci.yml` (modificar), `playwright.config.ts` (modificar), `e2e/visual.e2e.ts` (crear), `package.json` (modificar scripts)
+- **Criterio de aceptación binario:** `grep -q "lhci" .github/workflows/ci.yml && grep -q "a11y" .github/workflows/ci.yml && grep -q "toHaveScreenshot" e2e/visual.e2e.ts` termina con código 0, y el pipeline completo queda en verde en un PR de prueba.
+- **Modelo asignado:** Qwen Flash
+- **Estado:** Bloqueada
+- **Registro temporal:**
+  - Fecha y hora de inicio: —
+  - Fecha y hora de finalización: —
+- **Incidencias o notas:** Convierte en puertas automáticas lo construido en las tareas 40 y 42, y añade comparación de capturas por pantalla y por ancho (320, 390, 768, 1280). Las capturas de referencia se generan con el CI y las revisa el dueño. Depende de TAREA-40 y 42.
+
+### TAREA-48: Cierre general de la consolidación y la modernización
+- **Archivos afectados:** `docs/design.md`, `docs/tasks.md`, `docs/modernizacion.md`, `CHANGELOG.md`, `README.md` (modificar)
+- **Criterio de aceptación binario:** `npm ci && npm run typecheck && npm run lint && npm run test && npm run build && npm run check:layers && npm run check:migrations && npm run check:env && ! grep -n "PENDIENTE-APP-B" docs/design.md` termina con código 0.
 - **Modelo asignado:** Qwen Max
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Solo contra staging, nunca producción. Usar el proveedor `fixture` para no gastar cuota de IA. La fase 1b de `brecha` (≥ 6 de 10 brechas reales con 10 CVs reales) debe estar medida antes de abrir a usuarios. Revisión formal final por el dueño. Depende de todas las anteriores.
+- **Incidencias o notas:** Depende de todas las anteriores. Revisión formal final por el dueño. Confirmar que `docs/design.md` coincide con el código real (regla R-14) y que no queda ningún "Ómicron" visible fuera de identificadores técnicos.
 
 ---
 

@@ -71,7 +71,7 @@ Consecuencias:
 - Los puntos 1a y 1b (duplicados y colisiones entre apps) se resuelven en [`fusion/impacto.md`](./fusion/impacto.md), contra el código real. Resultado: **no hay duplicados de archivos ni choques de nombres de tablas**; las colisiones son de runtime (servidor Node frente a SPA estática), de versión de React (18 frente a 19), de CSS global y de lógica de IA duplicada.
 - La integración de datos se reduce a tablas nuevas `brecha_*` sin tocar las 92 migraciones (design §4.6). **No hay datos que migrar**: `data/` está ignorado y el repositorio no contiene análisis ni CVs.
 - Se añaden los hallazgos propios de la App B (B-01 a B-08, ver [`fusion/app-b-inventario.md`](./fusion/app-b-inventario.md) §8): sin autenticación, persistencia en disco y privacidad de CVs en el nivel gratuito de Gemini.
-- La TAREA-02 queda `Completada`, la TAREA-24 `En progreso`, y las 25–31 esperan la decisión ADR-004. Las tareas 01 y 03–23 no dependen de la App B.
+- La TAREA-02 queda `Completada`, la TAREA-24 `En progreso`, y las 25–48 esperan la aprobación del producto único y de la modernización. Las tareas 01 y 03–23 no dependen de la App B.
 
 ---
 
@@ -235,7 +235,7 @@ Direcciones de dependencia actuales entre features (nº de imports): `omicron→
 
 | Hallazgo | Sev. | Tareas |
 |---|---|---|
-| H-01 App B ausente | Crítico | 02, 24–31 |
+| H-01 App B ausente | Crítico | 02, 24–39 |
 | H-02 `profiles` UPDATE | Alto | 05, 07 |
 | H-03 orden de migraciones | Alto | 04, 06, 09 |
 | H-04 `profiles` INSERT | Medio | 08 |

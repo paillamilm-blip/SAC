@@ -120,12 +120,12 @@ Supabase
 - Todo lo que sobrevive de Ómicrom es código de navegador más Supabase. Todo lo que sobrevive de `brecha` en el frontend es React plano más CSS: solo usa `next/link` y `next/navigation`.
 - Pasar a Next.js obligaría a operar un servidor Node y a reconectar la sesión de Supabase entre servidor y navegador, sin ganar nada visible. El producto resultante tiene **el frontend de `brecha`** igualmente.
 - Se aprovecha lo que Ómicrom ya tiene: CI (`typecheck`, `lint`, `test`, `build`), 26 archivos de prueba, despliegue en Vercel y PWA.
-- Se necesita un enrutador (`/` y `/reporte/:id`). Ómicrom navega por estado. Opciones: `react-router-dom` (dependencia nueva, exige ADR) o un enrutador mínimo propio sobre la API History. Se decide en la TAREA-29.
+- Se necesita un enrutador (`/` y `/reporte/:id`). Ómicrom navega por estado. Opciones: `react-router-dom` (dependencia nueva, exige ADR) o un enrutador mínimo propio sobre la API History. Se decide en la TAREA-34.
 
 ### Datos
 - Tablas `brecha_*` nuevas con RLS (`auth.uid() = user_id`), migraciones de 14 dígitos, sin tocar las 92 existentes. Detalle de columnas en [`impacto.md`](./impacto.md) §4.
 - **Decisión de privacidad por defecto: no guardar el PDF.** Verifiqué que `brecha` nunca vuelve a leer el archivo guardado (`Cv.ruta` solo se escribe). Si la función recibe el PDF, lo envía al modelo y descarta, no hay archivo personal que proteger ni retener. Solo se guardan los metadatos y el análisis.
-- Solo el servidor (función con `service_role`) inserta análisis. La persona puede leer los suyos y actualizar únicamente `veredicto`, `veredicto_en` y, hasta la TAREA-32, `dominada_en`, mediante `GRANT` por columna (misma lección que H-02). `dominada_en` empieza autodeclarada, igual que en `brecha`, y la TAREA-32 revoca ese permiso: pasa a ser **solo por RPC con prueba** (§4.1).
+- Solo el servidor (función con `service_role`) inserta análisis. La persona puede leer los suyos y actualizar únicamente `veredicto`, `veredicto_en` y, hasta la TAREA-37, `dominada_en`, mediante `GRANT` por columna (misma lección que H-02). `dominada_en` empieza autodeclarada, igual que en `brecha`, y la TAREA-37 revoca ese permiso: pasa a ser **solo por RPC con prueba** (§4.1).
 
 ## 6. Fases y tamaño
 
@@ -134,10 +134,11 @@ La primera fase entrega algo que ya se puede probar de punta a punta.
 | Fase | Qué queda funcionando | Trabajo (tareas de `tasks.md`) |
 |---|---|---|
 | **0 · Base** | La consolidación técnica que ya está planificada: capas, entorno, CI, seguridad de `profiles` | 01–23 (no dependen del producto único) |
-| **1 · Corte vertical** | Entrar → escanear CV → mapa → brechas → "Es real / No aplica", todo con la apariencia de `brecha`, en Ómicrom | 25–30 (tablas 26, función 27, dominio 28, shell 29, pantallas 30) |
-| **2 · Asistente** | La voz recorre todo el ciclo con comandos del nuevo vocabulario | 31 |
-| **3 · Demostrar** | Una brecha se cierra con un examen; la credencial incluye lo probado | 32 |
-| **4 · Retiro y cierre** | Se quita la UI antigua de Ómicrom, se actualizan documentos y se corre la prueba de humo | 33–34 |
+| **1 · Corte vertical** | Entrar → escanear CV → mapa → brechas → "Es real / No aplica", todo con la apariencia de `brecha`, en Ómicrom | 25–35 (versiones 27–29, ley de diseño 26, tokens 30, tablas 31, función 32, dominio 33, shell 34, pantallas 35) |
+| **2 · Asistente** | La voz recorre todo el ciclo con comandos del nuevo vocabulario | 36 |
+| **3 · Demostrar** | Una brecha se cierra con un examen; la credencial incluye lo probado | 37 |
+| **4 · Retiro y prueba de humo** | Se quita la UI antigua de Ómicrom y se corre la prueba de humo | 38–39 |
+| **5 · Modernización** | Accesibilidad AA, movimiento, rendimiento, PWA, seguridad web, voz y escáner reales; puertas automáticas en CI. Ver [`../modernizacion.md`](../modernizacion.md) | 40–48 |
 
 Esfuerzo (medido en líneas, no en tiempo): 3 628 líneas de `brecha` se mueven o reescriben, ≈ 2 000 de voz se trasladan y ≈ 11 500 de UI de Ómicrom se retiran al final. No doy estimaciones de duración porque no puedo ejecutar `build` en este entorno; la verificación sería con el CI de GitHub.
 
@@ -145,12 +146,12 @@ Esfuerzo (medido en líneas, no en tiempo): 3 628 líneas de `brecha` se mueven 
 
 | Riesgo | Detalle | Mitigación |
 |---|---|---|
-| **`brecha` no está validada** | Su propia fase 1b (≥6 de 10 brechas reales con CVs reales) está pendiente; no tiene pruebas ni CI | Compuerta antes de abrir a usuarios: medir la fase 1b. Pruebas para `comparar` y `validar` en las TAREAS 27 y 28 |
+| **`brecha` no está validada** | Su propia fase 1b (≥6 de 10 brechas reales con CVs reales) está pendiente; no tiene pruebas ni CI | Compuerta antes de abrir a usuarios: medir la fase 1b. Pruebas para `comparar` y `validar` en las TAREAS 32 y 33 |
 | **Privacidad del CV** | El CV completo va a Gemini. Con el servicio sin pago, Google puede usar el contenido para mejorar sus productos ([términos](https://ai.google.dev/gemini-api/terms)). Aplica también a Ómicrom | Decidir servicio de pago y actualizar `POLITICA_PRIVACIDAD.md` antes de usuarios reales. No es asesoría legal |
 | **Voz en desarrollo** | El último PR (#406) dice "voz en desarrollo"; `proxy-tts` depende de un proveedor externo con respaldo a la voz del navegador | Probar la voz de punta a punta antes de la Fase 2 |
-| **Tamaño de PDF en Edge Functions** | `brecha` acepta 15 MB (≈ 20 MB en base64). No comprobado si Supabase lo admite | Verificar con la documentación vigente antes de la TAREA-27 |
+| **Tamaño de PDF en Edge Functions** | `brecha` acepta 15 MB (≈ 20 MB en base64). No comprobado si Supabase lo admite | Verificar con la documentación vigente antes de la TAREA-32 |
 | **CSS global de 1 573 líneas** | Puede alterar el resto de la app | Acotar con prefijo o CSS Modules; prueba visual |
-| **Pérdida percibida de Ómicrom** | Se retiran ≈ 11 500 líneas de UI de las 26 227 de producción (44 %): `gemelo` 3 387, `academia` 2 237, `redviva` 1 911 y el resto de `omicron` 3 959 | No se borra backend ni datos; la UI antigua se retira solo al final (TAREA-33) y queda en el historial de git |
+| **Pérdida percibida de Ómicrom** | Se retiran ≈ 11 500 líneas de UI de las 26 227 de producción (44 %): `gemelo` 3 387, `academia` 2 237, `redviva` 1 911 y el resto de `omicron` 3 959 | No se borra backend ni datos; la UI antigua se retira solo al final (TAREA-38) y queda en el historial de git |
 | **Verificación limitada** | Este entorno no instala paquetes: no puedo construir ni ejecutar la app | CI de GitHub en cada PR; capturas revisadas por ti antes de fusionar |
 
 ## 8. Decisiones que necesito de ti
