@@ -12,7 +12,7 @@
 
 ## 0. Resumen ejecutivo
 
-1. **La segunda aplicación no existe como código en este repositorio.** Es el hallazgo bloqueante (H-01). El dueño confirmó después (2026-11-02) que de la App B solo existe **el prompt**. Por tanto no hay duplicación entre apps que auditar: la "fusión" es una integración por construir a partir de ese prompt. Lo que depende de él queda `Bloqueada` en `tasks.md` hasta recibir el texto.
+1. **La segunda aplicación no está dentro de este repositorio.** Era el hallazgo bloqueante (H-01). El dueño la identificó después (2026-11-02): es el repositorio **`paillamilm-blip/brecha`**, una app Next.js aparte. No hubo "fusión" física; la integración está por hacer. Su inventario y el análisis de impacto están en `docs/fusion/`. La forma de integrarla depende de una decisión pendiente (ADR-004).
 2. Lo que sí es verificable es la deuda interna del repositorio actual. Los hallazgos de mayor impacto:
    - **H-02 (Alto):** el trigger que protege `profiles` usa una lista fija de 20 columnas. Columnas añadidas después (`is_premium`, `commission_floor_locked_at`, `streak_days`, `competencias_validadas`) no están en ella, y la política RLS deja al usuario actualizar su propia fila.
    - **H-03 (Alto, por verificar):** `9999_audit_consolidado.sql` se ordena después de `10000…10010` si la CLI compara nombres como texto. En ese caso fallaría en una base nueva y, aunque no fallara, pisaría el `search_path` fijado por `0057`.
@@ -65,13 +65,13 @@ Otras lecturas posibles de "fusión" y por qué no las doy por buenas:
 | App B = otro repo de la cuenta (`tuprofeindustrial-web`, `VideoseductaivosIA`, `causaspro`) | Cada uno tiene su propio stack; ninguno referenciado aquí | Sin evidencia |
 | La fusión vive en una rama local o fork no publicado | No verificable desde aquí | Posible |
 
-**Actualización (2026-11-02).** El dueño indica que de la App B solo tiene el prompt. Queda descartado que exista código por localizar en `sac`, en otra rama o en otro repositorio. Ómicrom, con sus 92 migraciones, es la única app con base de datos; la App B nacerá sin datos previos que migrar (a confirmar al leer el prompt).
+**Resolución (2026-11-02).** Primero el dueño indicó que solo tenía el prompt de la App B; después compartió `paillamilm-blip/brecha` y confirmó que **esa es la App B** (2 commits, ambos del 2026-11-02, generados a partir de ese prompt). Queda descartado `sac`/`omicron-next`. Ómicrom, con sus 92 migraciones, es la única app con base de datos.
 
 Consecuencias:
-- Los puntos 1a (duplicados entre apps) y 1b (colisiones entre apps) pasan de **auditoría** a **análisis de impacto de diseño**: se evalúan las colisiones que el prompt provocaría sobre Ómicrom antes de escribir código (TAREA-24).
-- La integración de datos se reduce a diseñar tablas nuevas sin tocar las 92 migraciones (design §4.6). No hay datos heredados salvo que el prompt los mencione.
-- La TAREA-02 deja de ser "localizar código" y pasa a ser "convertir el prompt en requisitos verificables".
-- Siguen bloqueadas las tareas 24–31 hasta recibir el texto del prompt. Las tareas 01, 03–23 no dependen de él.
+- Los puntos 1a y 1b (duplicados y colisiones entre apps) se resuelven en [`fusion/impacto.md`](./fusion/impacto.md), contra el código real. Resultado: **no hay duplicados de archivos ni choques de nombres de tablas**; las colisiones son de runtime (servidor Node frente a SPA estática), de versión de React (18 frente a 19), de CSS global y de lógica de IA duplicada.
+- La integración de datos se reduce a tablas nuevas `brecha_*` sin tocar las 92 migraciones (design §4.6). **No hay datos que migrar**: `data/` está ignorado y el repositorio no contiene análisis ni CVs.
+- Se añaden los hallazgos propios de la App B (B-01 a B-08, ver [`fusion/app-b-inventario.md`](./fusion/app-b-inventario.md) §8): sin autenticación, persistencia en disco y privacidad de CVs en el nivel gratuito de Gemini.
+- La TAREA-02 queda `Completada`, la TAREA-24 `En progreso`, y las 25–31 esperan la decisión ADR-004. Las tareas 01 y 03–23 no dependen de la App B.
 
 ---
 
@@ -256,8 +256,9 @@ Direcciones de dependencia actuales entre features (nº de imports): `omicron→
 
 ## 9. Preguntas abiertas para el dueño
 
-1. ~~¿Dónde está la App B?~~ **Respondida:** existe solo como prompt. Pendiente: que el dueño entregue el texto completo.
-2. ~~¿Cuál de las dos apps tiene base de datos?~~ **Respondida:** Ómicrom. Pendiente de confirmar al leer el prompt: ¿menciona datos previos que migrar?
+1. ~~¿Dónde está la App B?~~ **Respondida:** `paillamilm-blip/brecha`.
+2. ~~¿Cuál de las dos apps tiene base de datos?~~ **Respondida:** Ómicrom. La App B no tiene datos previos que migrar.
+2b. **Nuevas** (de `fusion/impacto.md` §9): ¿opción A o B para integrar? ¿se mide la fase 1b antes de portar? ¿se activa el servicio de pago de Gemini para CVs reales? ¿la marca "Es real" debe influir en Ómicrom?
 3. ¿`CredentialReview` / `CredentialsPanel` son una función de revisor pendiente de cablear?
 4. ¿Se aprueba ejecutar `supabase migration repair` en la base remota para alinear el orden de `9999_` (ADR-002)?
 5. ¿Se mantiene Tailwind o se retira (2 archivos lo usan)?

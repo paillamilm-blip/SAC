@@ -6,13 +6,13 @@
 | Fecha de emisión | 2026-11-02 |
 | Base | `origin/main` @ `043dc47` |
 | Especificación | [`design.md`](./design.md) · hechos en [`audit.md`](./audit.md) |
-| Tareas | 31 = 21 ejecutables ya · 10 bloqueadas (02 y 06 por una decisión del dueño; 24–31 por la App B) |
+| Tareas | 31 = 1 completada (02) · 1 en progreso (24) · 21 pendientes · 8 bloqueadas (06 por aprobación del dueño; 25–31 por ADR-004) |
 
 ## Cómo usar este documento
 
 - El **orden numérico es el orden de ejecución**. Toda dependencia apunta a una tarea de número menor.
 - Una tarea pasa a `Completada` **solo** cuando su *criterio de aceptación binario* se cumple (el comando termina con código 0 o devuelve el código HTTP indicado) y el resultado se pega en *Incidencias o notas*.
-- Fechas y horas en formato `YYYY-MM-DD HH:mm`, hora de Santiago (UTC−3/−4). `—` significa "aún no ocurrió".
+- Fechas y horas en formato `YYYY-MM-DD HH:mm`, en **UTC** (el reloj del entorno de ejecución). `—` significa "aún no ocurrió".
 - Una tarea = un PR pequeño a `main` (regla R-15).
 - Los criterios de las tareas `Bloqueada` por la App B son **provisionales**: se concretan al cerrar la TAREA-02.
 
@@ -46,11 +46,11 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
 
 | Fase | Tareas | Estado |
 |---|---|---|
-| 0 · Compuertas y línea base | 01–03 | 01, 03 Pendiente · 02 Bloqueada |
+| 0 · Compuertas y línea base | 01–03 | 01, 03 Pendiente · 02 Completada |
 | 1 · Base de datos y seguridad | 04–09 | 04, 05, 09 Pendiente · 06 Bloqueada (aprobación del dueño) · 07, 08 Pendiente, pero en la práctica esperan a 06 |
 | 2 · Estructura del código | 10–19 | Pendiente |
 | 3 · Entorno, backend y CI | 20–23 | Pendiente |
-| 4 · Integración de la App B | 24–31 | Bloqueada (TAREA-02) |
+| 4 · Integración de la App B | 24–31 | 24 En progreso · 25–31 Bloqueada (esperan ADR-004) |
 
 ---
 
@@ -66,15 +66,15 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
   - Fecha y hora de finalización: —
 - **Incidencias o notas:** En el sandbox de la auditoría `npm ci` devolvió HTTP 403 para `zod`; no se pudo medir. Ejecutar en CI o máquina local. Si algún paso falla hoy, registrar el fallo como línea base y no corregirlo aquí: abrir tarea aparte. `npm run lint` admite advertencias (exit 0).
 
-### TAREA-02: Convertir el prompt de la App B en requisitos verificables
-- **Archivos afectados:** `docs/fusion/app-b-prompt.md` (crear: copia literal del prompt del dueño), `docs/fusion/app-b-requisitos.md` (crear)
-- **Criterio de aceptación binario:** `test -s docs/fusion/app-b-prompt.md && test -s docs/fusion/app-b-requisitos.md && grep -qE '^\| RF-[0-9]+' docs/fusion/app-b-requisitos.md && grep -q '^## Preguntas abiertas' docs/fusion/app-b-requisitos.md` termina con código 0. Cada requisito `RF-n` lleva su criterio de aceptación comprobable. Se declara si el prompt menciona datos previos, rutas, dependencias o integraciones externas.
+### TAREA-02: Localizar e inventariar la App B
+- **Archivos afectados:** `docs/fusion/app-b-inventario.md` (crear)
+- **Criterio de aceptación binario:** `test -d /projects/sandbox/brecha/.git && git -C /projects/sandbox/brecha rev-parse HEAD && test -s docs/fusion/app-b-inventario.md` termina con código 0. El inventario lista stack y versiones, estructura, modelo de datos, interfaz HTTP, variables de entorno y hallazgos propios.
 - **Modelo asignado:** Qwen Max
-- **Estado:** Bloqueada
+- **Estado:** Completada
 - **Registro temporal:**
-  - Fecha y hora de inicio: —
-  - Fecha y hora de finalización: —
-- **Incidencias o notas:** El dueño confirmó que de la App B solo existe el prompt. Bloqueada hasta que lo entregue completo. No se escribe código en esta tarea. Las ambigüedades del prompt se listan en "Preguntas abiertas" y se resuelven con el dueño, sin inventar. Desbloquea las tareas 24–31. Ver `audit.md` §2 (actualización) y §9.
+  - Fecha y hora de inicio: 2026-11-02 16:31
+  - Fecha y hora de finalización: 2026-11-02 16:36
+- **Incidencias o notas:** Criterio ejecutado: exit 0 (commit `4a3ebfc`). El dueño confirmó que la App B es `paillamilm-blip/brecha` (commit `4a3ebfc`, 2 commits del 2026-11-02). Antes se había dicho que solo existía el prompt; existe código generado a partir de él. Se inventarió por lectura estática: `npm install`, `typecheck` y `next build` no se ejecutaron (registro npm bloqueado en el sandbox). Hallazgos B-01 a B-08 registrados en el inventario; B-01 (sin autenticación), B-02 (disco) y B-03 (privacidad) son altos. Desbloquea la TAREA-24.
 
 ### TAREA-03: Corregir la documentación que contradice al código
 - **Archivos afectados:** `README.md` (modificar), `.kiro/steering/project-context.md` (modificar), `.github/workflows/ci.yml` (modificar solo comentarios), `tailwind.config.js` (modificar solo comentarios)
@@ -302,17 +302,17 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
 
 # FASE 4 · Integración de la App B (todas bloqueadas por TAREA-02)
 
-> La App B existe solo como prompt. Los criterios de esta fase son **provisionales**: se reescriben al cerrar la TAREA-02 con los requisitos y el nombre real del módulo (`<app-b>` abajo). La TAREA-27 se subdivide entonces.
+> La App B es el repositorio `brecha` (Next.js, ver `docs/fusion/app-b-inventario.md`). Los criterios de esta fase son **provisionales** y **dependen de la decisión ADR-004** (opción A: dos apps con un Supabase; opción B: portar a Ómicrom como feature; ver `docs/fusion/impacto.md` §3). Con la opción A, las tareas 27–29 no aplican a Ómicrom. La TAREA-27 se subdivide al decidir.
 
-### TAREA-24: Análisis de impacto y colisiones del prompt de la App B sobre Ómicrom
+### TAREA-24: Análisis de impacto y colisiones de la App B (`brecha`) sobre Ómicrom
 - **Archivos afectados:** `docs/fusion/impacto.md` (crear)
-- **Criterio de aceptación binario:** `test -s docs/fusion/impacto.md && grep -q '^## Colisiones de nombres' docs/fusion/impacto.md && grep -q '^## Dependencias nuevas' docs/fusion/impacto.md && grep -q '^## Tablas y RPC nuevas' docs/fusion/impacto.md && grep -q '^## Cambios en código existente' docs/fusion/impacto.md` termina con código 0.
+- **Criterio de aceptación binario:** `test -s docs/fusion/impacto.md && grep -q '^## 1. Colisiones de nombres y compatibilidad' docs/fusion/impacto.md && grep -q '^## 4. Impacto en datos' docs/fusion/impacto.md && grep -q '^## 5. Impacto en Edge Functions y secretos' docs/fusion/impacto.md && grep -q '^## 7. Cambios en código existente' docs/fusion/impacto.md && grep -q '^## 3. Decisión de arquitectura' docs/fusion/impacto.md` termina con código 0, **y** el dueño responde las preguntas de §9.
 - **Modelo asignado:** Qwen Max
-- **Estado:** Bloqueada
+- **Estado:** En progreso
 - **Registro temporal:**
-  - Fecha y hora de inicio: —
+  - Fecha y hora de inicio: 2026-11-02 16:36
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Como no hay código de la App B, no se compara contra nada: se evalúa qué colisionaría cuando el prompt se construya (nombres de tablas, funciones, rutas, claves de `localStorage`, `TabId`, `sw.js`/manifest, variables de entorno). La lista "Cambios en código existente" debe quedar vacía o justificada fila por fila. Plantilla de puntos de contacto en `audit.md` §3.2. Depende de TAREA-02 y TAREA-20.
+- **Incidencias o notas:** Borrador escrito en `docs/fusion/impacto.md` contra el código real de `brecha`. Hallazgo central: `brecha` necesita un servidor Node y Ómicrom es una SPA estática; hay que decidir A/B (ADR-004) antes de planificar la integración. Pendiente para cerrarla: (a) la TAREA-20, de la que depende por orden (comparar variables de entorno contra los `.env.example` documentados) y (b) las respuestas del dueño a las 4 preguntas de §9 del documento. Se corrige el título de la tarea: "App B" ya no es un prompt.
 
 ### TAREA-25: Modelo de datos de la App B y ADR-004
 - **Archivos afectados:** `docs/fusion/datos-b.md` (crear), `docs/adr/ADR-004-datos-app-b.md` (crear), `docs/design.md` (modificar §3.5, §4.6, §6.2)
@@ -334,15 +334,15 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
   - Fecha y hora de finalización: —
 - **Incidencias o notas:** Solo migraciones nuevas; ninguna de las 92 existentes se edita (regla de §4.6). Cada tabla lleva RLS en la misma migración. Depende de TAREA-25 y TAREA-07 (política de `profiles` ya cerrada).
 
-### TAREA-27: Construir la App B como feature (a partir de sus requisitos)
-- **Archivos afectados:** `src/features/<app-b>/**` (crear, con `index.ts`, `components/`, `hooks/`, `services/`), `src/domain/**` (si aporta lógica pura)
-- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && node scripts/check-layers.mjs` termina con código 0, sin aumentar `scripts/layers-baseline.json`. Cada `RF-n` de `docs/fusion/app-b-requisitos.md` tiene al menos una prueba que referencia su identificador.
+### TAREA-27: Portar `brecha` a Ómicrom como feature (solo si ADR-004 elige la opción B)
+- **Archivos afectados:** `src/features/brecha/**` (crear, con `index.ts`, `components/`, `hooks/`, `services/`), `src/domain/brecha/**` (mover `lib/types.ts` y `lib/comparar.ts`), `src/features/brecha/styles/**` (CSS acotado)
+- **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && node scripts/check-layers.mjs` termina con código 0, sin aumentar `scripts/layers-baseline.json`. Existe una prueba de unidad para `compararAnalisis` y otra para `validarResultado`, hoy sin cobertura (inventario B-05).
 - **Modelo asignado:** Qwen Coder
 - **Estado:** Bloqueada
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** No hay código que importar: se construye desde los requisitos. **Esta tarea se subdivide** (una tarea por grupo de `RF-n`) al cerrar TAREA-02 y TAREA-25; hoy es un marcador. Usa `infrastructure/supabase/client.ts`; sin segundo cliente, sin `package.json` propio. Claves de `localStorage` solo vía `infrastructure/storage/keys.ts`. Cada dependencia nueva requiere ADR y alta en `design.md` §6.2. Depende de TAREA-24, TAREA-12 y TAREA-18.
+- **Incidencias o notas:** Esfuerzo medido en `docs/fusion/impacto.md` §3: los 5 componentes cliente (1 057 líneas) se ajustan; las 2 páginas de servidor (159 líneas) se **reescriben** como cliente; el CSS global (1 573 líneas) se acota. **Esta tarea se subdivide** en 5 al decidir ADR-004 (componentes, páginas, dominio, estilos, pruebas); hoy es un marcador. Con la opción A no aplica. Usa `infrastructure/supabase/client.ts`; sin segundo cliente, sin `package.json` propio. Claves de `localStorage` solo vía `infrastructure/storage/keys.ts`. Cada dependencia nueva requiere ADR y alta en `design.md` §6.2. Depende de TAREA-24, TAREA-12 y TAREA-18.
 
 ### TAREA-28: Edge Functions de la App B
 - **Archivos afectados:** `supabase/functions/<app-b>-*/index.ts` (crear), `supabase/functions/.env.example` (modificar), `docs/db/edge-functions.md` (modificar)
@@ -352,7 +352,7 @@ FASE 4* 02,20 → 24 → 25 → 26 (también 09, 07)
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Nombre `<modulo>-<accion>`; JWT verificado salvo webhooks documentados; secretos solo por `Deno.env.get`. Depende de TAREA-26. Puede no ser necesaria si la App B no tiene lógica de servidor: en ese caso marcar `Completada` con la nota "no aplica".
+- **Incidencias o notas:** Funciones previstas: `brecha-analizar` (reemplaza `POST /api/analisis`: validar PDF, límite de uso con `_shared/rateLimit.ts`, llamar a Gemini) y `brecha-veredicto` (reemplaza `PATCH /api/brechas/:id`). `proxy-ai` no se modifica (no admite adjuntos). Antes de implementar, verificar el límite de tamaño de cuerpo de las Edge Functions con PDF de hasta 15 MB; alternativa: subir a Storage y pasar la referencia. Nombre `<modulo>-<accion>`; JWT verificado; secretos solo por `Deno.env.get`. Depende de TAREA-26. Con la opción A no aplica (marcar `Completada` con "no aplica").
 
 ### TAREA-29: Navegación y shell para la App B
 - **Archivos afectados:** `src/types/common.ts` (modificar `TabId`), `src/store/NavigationContext.tsx` (modificar), `src/App.tsx` (modificar), `public/manifest.webmanifest` y `public/sw.js` (modificar solo si la App B aporta rutas o caché propias)

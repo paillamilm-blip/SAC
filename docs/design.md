@@ -8,14 +8,14 @@
 | Fuente de hechos | [`audit.md`](./audit.md) |
 | Plan de ejecución | [`tasks.md`](./tasks.md) |
 
-**Convención de este documento.** Lo marcado **[ACTUAL]** describe lo que existe hoy y fue verificado. Lo marcado **[OBJETIVO]** es el diseño al que se converge. Lo marcado **[PENDIENTE-APP-B]** depende de la `TAREA-02` (localizar la segunda app) y no puede cerrarse antes.
+**Convención de este documento.** Lo marcado **[ACTUAL]** describe lo que existe hoy y fue verificado. Lo marcado **[OBJETIVO]** es el diseño al que se converge. Lo marcado **[PENDIENTE-APP-B]** depende de la decisión ADR-004 (cómo se integra `brecha`) y no puede cerrarse antes.
 
 ---
 
 ## 1. Alcance y supuestos
 
-- Ómicrom es la única app con base de datos (92 migraciones). De la App B **solo existe el prompt** (confirmado por el dueño el 2026-11-02): no hay código que fusionar, hay un módulo que construir (audit H-01).
-- El diseño fija la arquitectura del producto unificado y las reglas de construcción que valen para cualquier App B. Los detalles de la App B (tablas, rutas, dependencias) se completan tras la `TAREA-02`, que convierte el prompt en requisitos verificables.
+- Ómicrom es la única app con base de datos (92 migraciones). La App B es el repositorio **`paillamilm-blip/brecha`** (confirmado por el dueño el 2026-11-02): una app Next.js sin base de datos, con persistencia en disco. Su inventario está en [`fusion/app-b-inventario.md`](./fusion/app-b-inventario.md) y su impacto en [`fusion/impacto.md`](./fusion/impacto.md).
+- El diseño fija la arquitectura del producto unificado y las reglas de integración. **La forma de integrar `brecha` depende de ADR-004** (§2.4): no es una "feature más" por defecto, porque necesita un servidor Node que Ómicrom no tiene.
 - Stack **[ACTUAL]**, sin cambios propuestos: TypeScript 5.6 estricto, React 18, Vite 5, Supabase (Postgres, Auth, Realtime, Edge Functions en Deno), TanStack Query 5, Zod, Framer Motion, Lucide, Vitest, Playwright. Despliegue en Vercel como PWA.
 
 ---
@@ -114,11 +114,18 @@ Para llegar a este orden sin ciclos hay que mover cuatro cosas **[ACTUAL → OBJ
 | `gemelo/services/profile.ts` (`streakDays`) lo importan `academia` y `omicron` | Ciclo `gemelo↔academia`; además duplica la racha del servidor | Se elimina; se lee `profiles.streak_days` (TAREA-17) |
 | `omicron/services/brain.ts` (`askOmicron`, `OmicronContext`) lo importa `academia` | Ciclo `academia→omicron→gemelo→academia`. `brain.ts` depende solo de `infrastructure/ai` y de `emotion.ts`/`tools.ts` locales | `infrastructure/ai/omicronBrain.ts` (junto a `emotion` y `tools`); decisión confirmada en TAREA-12 |
 
-### 2.4 Cómo entra la App B **[PENDIENTE-APP-B]**
+### 2.4 Cómo entra la App B **[PENDIENTE: decisión ADR-004]**
 
-Regla fija, sea cual sea su contenido:
+`brecha` es una app Next.js con servidor Node (rutas API, escritura en disco, clave de IA en el servidor). Ómicrom es una SPA estática cuyo único backend es Supabase. Hay dos caminos viables (detalle y esfuerzo en [`fusion/impacto.md`](./fusion/impacto.md) §3):
 
-1. Entra como **una feature más**: `src/features/<app-b>/` con barrel, molde de §2.2 y sin saltarse las capas.
+- **Opción A:** `brecha` sigue como app independiente y comparte el proyecto Supabase (Auth, `profiles`, tablas `brecha_*` con RLS). No cambia Ómicrom.
+- **Opción B:** se porta a Ómicrom como feature; sus 2 rutas API pasan a Edge Functions y su almacenamiento a Postgres y Storage.
+
+La opción C (migrar Ómicrom a Next.js) queda descartada. Recomendación vigente: validar primero la hipótesis de producto de `brecha` (fase 1b, ≥6/10 brechas reales) y portar solo si se confirma.
+
+**Si se elige B**, rigen estas reglas, que son las mismas para cualquier módulo nuevo:
+
+1. Entra como **una feature**: `src/features/brecha/` con barrel, molde de §2.2 y sin saltarse las capas.
 2. **No** trae su propio cliente Supabase, su propio sistema de rutas global ni su propio `package.json`. Usa `infrastructure/supabase/client.ts`.
 3. Sus dependencias nuevas requieren ADR y entrada en la tabla de §6.2.
 4. Sus tablas, funciones y claves de `localStorage` siguen los espacios de nombres de §4.6, §5.2 y §5.4.
@@ -260,7 +267,7 @@ Cómo se hace **sin romper** las migraciones actuales:
 2. **Espacio de nombres**: tablas nuevas con prefijo del módulo (`<app_b>_*`) en `public`, o esquema propio `<app_b>` si el volumen lo justifica (decisión en ADR-004 tras TAREA-25). No se reutilizan nombres ya usados, incluidas las tablas congeladas.
 3. **RLS desde el día uno**: cada `create table` va acompañada de `enable row level security` y sus políticas en la misma migración. Un test SQL falla si una tabla del módulo no tiene RLS.
 4. **Claves foráneas** hacia `profiles(id)` con `on delete cascade` donde el dato sea del usuario.
-5. **Datos existentes**: como la App B existe solo como prompt, se espera que no haya datos que migrar. Si el prompt menciona datos previos (en `localStorage`, archivos o un backend), se migran con un script idempotente aparte (`scripts/migrar-app-b.mjs`), nunca dentro de una migración SQL, y con modo `--dry-run`.
+5. **Datos existentes**: `brecha` no trae datos que migrar (su carpeta `data/` está ignorada por git y el repositorio no contiene análisis ni CVs). Si en el futuro hay datos de pruebas locales que conservar, se migran con un script idempotente aparte, nunca dentro de una migración SQL, y con modo `--dry-run`.
 6. **Compatibilidad hacia atrás**: ninguna tabla, columna o RPC existente cambia de firma por la integración. Cualquier cambio sobre `profiles` pasa por §3.4.
 
 ---
@@ -381,7 +388,7 @@ Cada regla indica cómo se verifica. Las marcadas **[CI]** rompen el build al vi
 | ADR-001 | Desarrollo guiado por especificaciones: `docs/design.md` y `docs/tasks.md` son la fuente de verdad; el código sigue a los documentos | Propuesta |
 | ADR-002 | Orden y nomenclatura de migraciones; tratamiento de `9999_` | Propuesta; **depende de TAREA-04 y aprobación del dueño** |
 | ADR-003 | Escritura de `profiles` por lista blanca de columnas (`GRANT` por columna) | Propuesta |
-| ADR-004 | Modelo de datos de la App B (prefijo frente a esquema propio) | **Bloqueada por TAREA-02** |
+| ADR-004 | Integración de la App B (`brecha`): A) dos apps con un Supabase, B) portar como feature. Incluye modelo de datos (prefijo `brecha_`) | **Pendiente de decisión del dueño** (insumos listos en `fusion/impacto.md`) |
 | ADR-005 | Orden de dependencias entre features y capa `domain/` | Propuesta |
 
 ---
