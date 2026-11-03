@@ -96,7 +96,7 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
       setDb(siguiente);
       return true;
     },
-    [aplicar, marcarDominada],
+    [],
   );
 
   const traerInvitado = useCallback(() => {

@@ -317,7 +317,6 @@ export function OrbShell() {
   const [state, setState] = useState<ShellState>('orb');
   const [selectedNode, setSelectedNode] = useState<OrbNode | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [inputText, setInputText] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [responseMsg, setResponseMsg] = useState<string | null>(null);
@@ -806,7 +805,7 @@ export function OrbShell() {
   // speaking') se CONSERVAN (otros módulos los emiten/oyen). Con el home ya en
   // 2D (Red Viva), el nivel de voz y el espectro ya no alimentan un render 3D,
   // así que estos handlers solo mantienen el estado que el shell todavía usa
-  // (isListening → barra Ómicrom; isSpeaking → pausa el idle). No se renombra ni
+  // (isListening → barra Ómicrom). No se renombra ni
   // se retira ningún evento.
   useEffect(() => {
     const handleOracleListening = (e: Event) => {
@@ -819,11 +818,9 @@ export function OrbShell() {
     window.addEventListener('oracle:listening', handleOracleListening);
     window.addEventListener('oracle:voice', handleOracleVoice);
     window.addEventListener('oracle:spectrum', handleSpectrum);
-    // Escuchar cuando speakAI está hablando (pausa el respiro ocioso del home).
-    const handleSpeaking = (e: Event) => {
-      const active = (e as CustomEvent).detail?.active;
-      setIsSpeaking(!!active);
-    };
+    // Handler no-op conservado para no retirar el evento de voz. Con el home en
+    // 2D ya no hay respiro ocioso que pausar cuando Ómicrom habla.
+    const handleSpeaking = () => { /* isSpeaking ya no alimenta un render */ };
     window.addEventListener('omicron:speaking', handleSpeaking);
     return () => {
       window.removeEventListener('oracle:listening', handleOracleListening);

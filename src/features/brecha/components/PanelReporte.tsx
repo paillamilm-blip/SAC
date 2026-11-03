@@ -44,7 +44,6 @@ function mesAnio(iso: string) {
 }
 
 export default function PanelReporte({
-  analisisId,
   ocupacion,
   nivel,
   creadoEn,
@@ -61,7 +60,6 @@ export default function PanelReporte({
   brechaInicialId,
   onPestana,
 }: {
-  analisisId: string;
   ocupacion: string;
   nivel: string;
   creadoEn: string;

@@ -19,7 +19,7 @@ concurrency:
 jobs:
   check:
     name: Typecheck · Lint · Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # src/lib/supabase.ts llama createClient() a nivel de módulo (se
     # ejecuta apenas se importa, no dentro de una función). Cualquier
     # archivo que importe supabase.ts -directa o indirectamente-

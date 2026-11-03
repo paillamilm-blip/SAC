@@ -46,7 +46,6 @@ export default function ReportePage({
         <PanelReporte
           // Se remonta si el asistente cambia de pestaña o de brecha: esos valores son solo iniciales.
           key={`${analisis.id}:${pestana}:${brechaId ?? ''}`}
-          analisisId={analisis.id}
           ocupacion={analisis.ocupacion}
           nivel={analisis.nivel}
           creadoEn={analisis.creadoEn}

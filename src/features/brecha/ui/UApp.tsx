@@ -26,7 +26,7 @@ function primerNombre(perfil: { display_name?: string; full_name?: string; usern
 }
 
 export default function UApp() {
-  const { authStatus, profile, isLoadingProfile } = useApp();
+  const { authStatus, profile } = useApp();
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;

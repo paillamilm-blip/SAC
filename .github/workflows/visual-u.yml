@@ -20,7 +20,7 @@ permissions:
 jobs:
   recorrido:
     name: Recorrido en navegador
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # Valores ficticios (no son secretos): el cliente de Supabase solo necesita existir al importarse.
       VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
