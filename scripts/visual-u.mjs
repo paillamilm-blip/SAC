@@ -79,8 +79,9 @@ async function recorrido(browser, nombre, viewport) {
   await page.getByLabel('Mensaje para el asistente').press('Enter');
   await page.waitForTimeout(500);
   const texto = await page.locator('[role=log]').innerText();
-  if (/De tu análisis/.test(texto)) ok(`${nombre}: el asistente responde con origen «De tu análisis»`);
-  else falla(`${nombre}: la respuesta del asistente no declara su origen`);
+  // El recorrido usa la muestra fija: el asistente debe decirlo, no presentarla como «tu análisis».
+  if (/Muestra de ejemplo/.test(texto) && !/De tu análisis/.test(texto)) ok(`${nombre}: el asistente declara el origen «Muestra de ejemplo»`);
+  else falla(`${nombre}: el asistente no declara bien el origen de una muestra fija`);
   await foto('07-asistente-respuesta');
   await desborde('asistente');
 
@@ -109,18 +110,26 @@ async function recorrido(browser, nombre, viewport) {
 }
 
 async function appAnterior(browser) {
-  // La app de siempre (/) no debe romperse por haber agregado /u.
+  // La raíz abre el producto único; la app de siempre vive en /anterior y no debe romperse.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+
+  const raiz = await ctx.newPage();
+  await raiz.goto(`${BASE}/`, { waitUntil: 'load' });
+  await raiz.waitForSelector('.u-app', { timeout: 15_000 }).catch(() => {});
+  if ((await raiz.locator('.u-app').count()) && new URL(raiz.url()).pathname === '/u') ok('la raíz / abre el producto único (/u)');
+  else falla('la raíz / no abrió el producto único');
+  await raiz.close();
+
   const page = await ctx.newPage();
   const errores = [];
   page.on('pageerror', (e) => errores.push(String(e)));
-  await page.goto(`${BASE}/`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/anterior`, { waitUntil: 'load' });
   await page.waitForTimeout(2500);
   await page.screenshot({ path: `${SALIDA}/anterior-raiz.png` });
   const hayUApp = await page.locator('.u-app').count();
-  if (hayUApp) falla('la ruta / muestra el producto único: debería seguir siendo la app de siempre');
-  else ok('la ruta / sigue mostrando la app de siempre (sin .u-app)');
-  if (errores.length) console.log('(aviso) errores en /:', errores.slice(0, 2).join(' | '));
+  if (hayUApp) falla('/anterior muestra el producto único: debería mostrar la app de siempre');
+  else ok('/anterior sigue mostrando la app de siempre (sin .u-app)');
+  if (errores.length) console.log('(aviso) errores en /anterior:', errores.slice(0, 2).join(' | '));
   await ctx.close();
 }
 

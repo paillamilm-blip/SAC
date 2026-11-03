@@ -50,11 +50,19 @@ describe('responder', () => {
   it('"qué me falta" lista las de mayor impacto y cita la frase real del análisis', () => {
     const { db, a } = conAnalisis();
     const r = responder('¿qué me falta?', estado(db));
-    expect(r?.origen).toBe('analisis');
+    // `conAnalisis` usa la muestra fija: se declara como tal, no como «tu análisis».
+    expect(r?.origen).toBe('muestra');
     expect(r?.fuentes?.length).toBe(3);
     // cada cita existe literalmente en el análisis (no se inventa nada)
     const evidencias = new Set(a.brechas.map((b) => b.evidencia));
     expect(r?.fuentes?.every((f) => evidencias.has(f.cita))).toBe(true);
+    expect(r?.fuentes?.every((f) => f.etiqueta === 'Muestra de ejemplo')).toBe(true);
+  });
+
+  it('con un análisis real, "qué me falta" sí dice «De tu análisis»', () => {
+    const real = agregarAnalisis(dbVacia(), MUESTRA, { ...META, proveedor: 'ia', simulado: false }, T0, ids()).db;
+    const r = responder('¿qué me falta?', estado(real));
+    expect(r?.origen).toBe('analisis');
     expect(r?.fuentes?.every((f) => f.etiqueta === 'De tu análisis')).toBe(true);
   });
 

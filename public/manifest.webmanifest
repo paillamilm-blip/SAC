@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Sistema Ómicron",
-  "short_name": "Ómicron",
-  "description": "Marketplace de capital intelectual Industria 5.0: aprende, valida tu Gemelo Digital y monetiza tu talento.",
+  "name": "Sistema Ómicrom",
+  "short_name": "Ómicrom",
+  "description": "Escanea tu CV, descubre tus brechas y avanza con un asistente de voz. Tu reputación, imposible de falsificar.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

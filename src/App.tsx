@@ -22,7 +22,7 @@ import { C, FONT } from './theme';
 import { SelfManagedPulseBar } from '@/shared/components/LivePulseBar';
 import { EmotionBridge } from '@/shared/components/EmotionBridge';
 import { omicronAudio } from '@/shared/utils/spatialAudio';
-import { esRutaUnificada } from '@/features/brecha/ui/ruta';
+import { BASE, esRutaUnificada, raizEsProducto } from '@/features/brecha/ui/ruta';
 
 
 const UApp = lazy(() => import('@/features/brecha/ui/UApp'));
@@ -193,6 +193,11 @@ export default function App() {
     : null;
   if (verifyToken) return <VerifyCredentialView token={verifyToken} />;
 
+  // La raíz abre el producto único; la app de siempre está en /anterior (y en sus enlaces con parámetros).
+  if (raizEsProducto(window.location.pathname, window.location.search)) {
+    window.history.replaceState(null, '', `${BASE}${window.location.search}${window.location.hash}`);
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
@@ -200,7 +205,7 @@ export default function App() {
           <RealtimeProvider>
             <EmotionBridge>
               <ConnectionBanner />
-              {/* Producto único en /u (vista previa). Todo lo demás sigue siendo la app de siempre. */}
+              {/* Producto único en / (que redirige a /u). La app de siempre queda en /anterior. */}
               {esRutaUnificada(window.location.pathname) ? (
                 <Suspense fallback={null}>
                   <UApp />

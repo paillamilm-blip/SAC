@@ -2,7 +2,7 @@
 // Reutiliza de Ómicrom: sesión, color del usuario, voz y asistente.
 // Reutiliza de brecha: subida y escaneo del CV, mapa de capacidades y reporte.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
@@ -16,7 +16,7 @@ import { useOmicronStats } from '../hooks/useOmicronStats';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import ReportePage from './ReportePage';
-import { BASE, hrefReporte, useRuta } from './ruta';
+import { BASE, RUTA_ANTERIOR, hrefReporte, useRuta } from './ruta';
 import '../styles/brecha.css';
 import '../styles/u-app.css';
 
@@ -30,10 +30,12 @@ export default function UApp() {
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
-  const { db, persistente, agregar, marcar, dominar } = useBrecha(usuarioId);
+  const { db, persistente, agregar, marcar, dominar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
   const [chatAbierto, setChatAbierto] = useState(false);
   const [pedirAuth, setPedirAuth] = useState(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
+  const botonAsistenteRef = useRef<HTMLButtonElement>(null);
+  const chatSeAbrio = useRef(false);
   const [cargaTiempoExcedido, setCargaTiempoExcedido] = useState(false);
   const nombre = authStatus === 'authenticated' ? primerNombre(profile) : null;
 
@@ -59,6 +61,12 @@ export default function UApp() {
   useEffect(() => {
     document.title = 'Ómicrom';
   }, []);
+
+  // Al cerrar el asistente, el foco vuelve al botón que lo abrió (quien navega con teclado no se pierde).
+  useEffect(() => {
+    if (chatAbierto) chatSeAbrio.current = true;
+    else if (chatSeAbrio.current) botonAsistenteRef.current?.focus();
+  }, [chatAbierto]);
 
   // Una vez iniciada la sesión, el formulario ya no hace falta.
   useEffect(() => {
@@ -125,7 +133,7 @@ export default function UApp() {
               Ómicrom
             </a>
             <div className="topbar-right">
-              <a className="u-enlace-suave" href="/">Versión anterior</a>
+              <a className="u-enlace-suave" href={RUTA_ANTERIOR}>Versión anterior</a>
               <div className="u-persona" title="Cargando...">
                 <span className="brand-dot" aria-hidden="true" />
               </div>
@@ -164,7 +172,7 @@ export default function UApp() {
             Ómicrom
           </a>
           <div className="topbar-right">
-            <a className="u-enlace-suave" href="/">
+            <a className="u-enlace-suave" href={RUTA_ANTERIOR}>
               Versión anterior
             </a>
             {esInvitado ? (
@@ -185,6 +193,22 @@ export default function UApp() {
           <div className="u-banda aviso aviso-sim" role="note">
             Modo demostración: el análisis es una muestra fija. Tu archivo no sale de tu equipo y el resultado no
             proviene de tu CV.
+          </div>
+        )}
+        {usuarioId && invitadoPendiente > 0 && (
+          <div className="u-banda aviso u-aviso-invitado" role="region" aria-label="Análisis hechos como invitado">
+            <p>
+              Hiciste {invitadoPendiente === 1 ? '1 análisis' : `${invitadoPendiente} análisis`} como invitado en este
+              dispositivo. ¿Quieres traer{invitadoPendiente === 1 ? 'lo' : 'los'} a tu cuenta?
+            </p>
+            <div className="u-banda-acciones">
+              <button type="button" className="boton boton-primario" onClick={traerInvitado}>
+                Traer a mi cuenta
+              </button>
+              <button type="button" className="boton" onClick={descartarInvitado}>
+                Descartar{invitadoPendiente === 1 ? 'lo' : 'los'} (se borran de este dispositivo)
+              </button>
+            </div>
           </div>
         )}
         {!persistente && (
@@ -219,7 +243,13 @@ export default function UApp() {
       </main>
 
       {!chatAbierto && (
-        <button type="button" className="u-fab" onClick={() => setChatAbierto(true)} aria-label="Abrir el asistente">
+        <button
+          ref={botonAsistenteRef}
+          type="button"
+          className="u-fab"
+          onClick={() => setChatAbierto(true)}
+          aria-label="Abrir el asistente"
+        >
           <span className="u-fab-punto" aria-hidden="true" />
           Asistente
         </button>

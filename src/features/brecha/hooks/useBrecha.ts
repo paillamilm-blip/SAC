@@ -5,10 +5,11 @@ import {
   agregarAnalisis,
   cargar,
   claveDe,
-  fusionarInvitado,
   guardar,
   marcarBrecha,
   marcarDominada,
+  pendientesDelInvitado,
+  traerDelInvitado,
   type Almacen,
   type Db,
   type MetaAnalisis,
@@ -29,17 +30,22 @@ export interface UsoBrecha {
   agregar(resultado: ResultadoAnalisis, meta: MetaAnalisis): Analisis;
   marcar(analisisId: string, brechaId: string, veredicto: Veredicto): void;
   dominar(analisisId: string, brechaId: string): boolean;
+  /** Cuántos análisis hechos como invitado esperan que la persona decida qué hacer con ellos. */
+  invitadoPendiente: number;
+  traerInvitado(): void;
+  descartarInvitado(): void;
 }
 
 /**
- * Estado de los análisis de UNA persona (o del invitado). Cuando el invitado inicia
- * sesión y su cuenta aún está vacía, sus análisis pasan a la cuenta (fusionarInvitado).
+ * Estado de los análisis de UNA persona (o del invitado). Cuando el invitado inicia sesión, sus
+ * análisis NO se mueven solos: `invitadoPendiente` avisa y la persona elige traerlos o descartarlos.
  */
 export function useBrecha(usuarioId: string | null): UsoBrecha {
   const clave = claveDe(usuarioId ?? CLAVE_INVITADO);
   const almacen = almacenLocal();
   const [db, setDb] = useState<Db>(() => (almacen ? cargar(almacen, clave) : { version: 1, analisis: [] }));
   const [persistente, setPersistente] = useState(true);
+  const [invitadoPendiente, setInvitadoPendiente] = useState(0);
   const dbRef = useRef(db);
   const claveRef = useRef(clave);
 
@@ -48,15 +54,8 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
     const a = almacenLocal();
     if (!a) return;
     claveRef.current = clave;
-    let actual = cargar(a, clave);
-    if (usuarioId) {
-      const r = fusionarInvitado(actual, cargar(a, claveDe(CLAVE_INVITADO)));
-      if (r.migrado) {
-        guardar(a, clave, r.db);
-        a.removeItem(claveDe(CLAVE_INVITADO));
-        actual = r.db;
-      }
-    }
+    const actual = cargar(a, clave);
+    setInvitadoPendiente(usuarioId ? pendientesDelInvitado(actual, cargar(a, claveDe(CLAVE_INVITADO))).length : 0);
     dbRef.current = actual;
     setDb(actual);
   }, [clave, usuarioId]);
@@ -100,5 +99,19 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
     [aplicar, marcarDominada],
   );
 
-  return { db, persistente, agregar, marcar, dominar };
+  const traerInvitado = useCallback(() => {
+    const a = almacenLocal();
+    if (!a) return;
+    const invitado = cargar(a, claveDe(CLAVE_INVITADO));
+    aplicar((d) => traerDelInvitado(d, invitado));
+    a.removeItem(claveDe(CLAVE_INVITADO));
+    setInvitadoPendiente(0);
+  }, [aplicar]);
+
+  const descartarInvitado = useCallback(() => {
+    almacenLocal()?.removeItem(claveDe(CLAVE_INVITADO));
+    setInvitadoPendiente(0);
+  }, []);
+
+  return { db, persistente, agregar, marcar, dominar, invitadoPendiente, traerInvitado, descartarInvitado };
 }
