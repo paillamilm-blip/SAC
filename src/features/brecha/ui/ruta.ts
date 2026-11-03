@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Pestana } from '../components/PanelReporte';
 
 export const BASE = '/u';
+/** Dónde vive la app de siempre desde que la raíz es el producto único. */
+export const RUTA_ANTERIOR = '/anterior';
 
 export type Ruta =
   | { nombre: 'inicio' }
@@ -15,6 +17,15 @@ const PESTANAS: readonly Pestana[] = ['mapa', 'brechas', 'diagnostico'];
 /** ¿Esta URL pertenece al producto único? */
 export function esRutaUnificada(pathname: string): boolean {
   return pathname === BASE || pathname.startsWith(`${BASE}/`);
+}
+
+/**
+ * ¿La raíz debe abrir el producto único? Sí, salvo que traiga parámetros propios de la app de siempre
+ * (accesos directos, perfiles compartidos, pestañas): esos enlaces se respetan tal cual.
+ */
+export function raizEsProducto(pathname: string, search: string): boolean {
+  if (pathname !== '/') return false;
+  return [...new URLSearchParams(search).keys()].every((k) => k === 'source');
 }
 
 export function parsearRuta(pathname: string, search: string): Ruta {

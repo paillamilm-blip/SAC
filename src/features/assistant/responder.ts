@@ -5,7 +5,7 @@
 // Regla de producto: cada respuesta lleva su ORIGEN y NUNCA propone ejecutar algo por
 // sí sola; las acciones salen como propuesta y la persona las confirma.
 
-import type { Brecha } from '../brecha/domain/types';
+import type { Analisis, Brecha } from '../brecha/domain/types';
 import { CATEGORIAS } from '../brecha/domain/types';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
 import { recomendar, resumenProgreso, type Accion, type Estado, type Origen } from './recomendar';
@@ -75,6 +75,12 @@ export function detectarIntencion(texto: string): Intencion {
 
 const PESO: Record<Brecha['severidad'], number> = { alta: 0, media: 1, baja: 2 };
 
+/** Origen de lo que se dice sobre un análisis: una muestra fija nunca se presenta como «tu análisis». */
+function origenDelAnalisis(a: Analisis | undefined): Origen {
+  if (!a) return 'estimacion';
+  return a.simulado ? 'muestra' : 'analisis';
+}
+
 export function saludoInicial(estado: Estado, nombre: string | null): Respuesta {
   const hola = nombre ? `Hola, ${nombre}.` : 'Hola.';
   const [primera] = recomendar(estado);
@@ -109,7 +115,7 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
       };
 
     case 'progreso':
-      return { texto: resumenProgreso(estado.db), origen: 'analisis' };
+      return { texto: resumenProgreso(estado.db), origen: origenDelAnalisis(ultimo) };
 
     case 'escanear':
       return {
@@ -124,7 +130,7 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
       }
       return {
         texto: 'Aquí tienes tu mapa de capacidades.',
-        origen: 'analisis',
+        origen: origenDelAnalisis(ultimo),
         accion: { accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'mapa' }, etiqueta: 'Abrir mi mapa', porQue: 'Abrir tu mapa' },
       };
 
@@ -144,13 +150,14 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
         .map((b, i) => `${i + 1}. ${b.titulo} (${CATEGORIAS[b.categoria].toLowerCase()}, impacto ${b.severidad})`)
         .join('\n');
       const total = ultimo.brechas.length;
+      const origen = origenDelAnalisis(ultimo);
       return {
         texto:
           intencion === 'leer_primera'
             ? `La brecha de mayor impacto es:\n${lista}`
             : `De tus ${total} brechas, las de mayor impacto son:\n${lista}`,
-        origen: 'analisis',
-        fuentes: elegidas.map((b) => ({ cita: b.evidencia, origen: 'analisis' as const, etiqueta: ETIQUETA_ORIGEN.analisis })),
+        origen,
+        fuentes: elegidas.map((b) => ({ cita: b.evidencia, origen, etiqueta: ETIQUETA_ORIGEN[origen] })),
         accion: {
           accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas', brechaId: elegidas[0].id },
           etiqueta: 'Ver esta brecha',
@@ -167,7 +174,7 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
       if (!candidata) {
         return {
           texto: 'No tienes ninguna brecha reconocida como real que esté pendiente. Primero dime cuáles son reales en tu lista de brechas.',
-          origen: 'analisis',
+          origen: origenDelAnalisis(ultimo),
           accion: { accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas' }, etiqueta: 'Ver mis brechas', porQue: 'Revisar tus brechas' },
         };
       }

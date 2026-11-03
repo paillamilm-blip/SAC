@@ -70,11 +70,13 @@ describe('ChatPanel', () => {
     expect(screen.getByText('Lo dejamos para después.')).toBeTruthy();
   });
 
-  it('responde con datos del análisis y declara el origen', () => {
+  it('responde con los datos guardados y declara su origen', () => {
     montar(conAnalisis());
     fireEvent.change(screen.getByLabelText('Mensaje para el asistente'), { target: { value: '¿qué me falta?' } });
     fireEvent.submit(screen.getByLabelText('Mensaje para el asistente').closest('form')!);
-    expect(screen.getAllByText('De tu análisis').length).toBeGreaterThan(0);
+    // La muestra fija se declara como muestra, nunca como «De tu análisis».
+    expect(screen.getAllByText('Muestra de ejemplo').length).toBeGreaterThan(0);
+    expect(screen.queryByText('De tu análisis')).toBeNull();
     expect(askOmicron).not.toHaveBeenCalled();
   });
 

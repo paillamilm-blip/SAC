@@ -188,14 +188,18 @@ export function metricas(db: Db): Metricas {
 }
 
 /**
- * Lo que trae un invitado pasa a su cuenta SOLO si la cuenta aún no tiene nada:
- * nunca se pisan análisis existentes.
+ * Análisis hechos como invitado que la cuenta todavía no tiene. No se mueven solos: la persona decide
+ * si traerlos (ver `traerDelInvitado`) o descartarlos. Nunca se pisa ni se repite un análisis de la cuenta.
  */
-export function fusionarInvitado(cuenta: Db, invitado: Db): { db: Db; migrado: boolean } {
-  if (cuenta.analisis.length > 0 || invitado.analisis.length === 0) {
-    return { db: cuenta, migrado: false };
-  }
-  return { db: { ...cuenta, analisis: [...invitado.analisis] }, migrado: true };
+export function pendientesDelInvitado(cuenta: Db, invitado: Db): Analisis[] {
+  const ids = new Set(cuenta.analisis.map((a) => a.id));
+  return invitado.analisis.filter((a) => !ids.has(a.id));
+}
+
+/** La cuenta con los análisis pendientes del invitado sumados. Si no hay nada que traer, devuelve la misma base. */
+export function traerDelInvitado(cuenta: Db, invitado: Db): Db {
+  const nuevos = pendientesDelInvitado(cuenta, invitado);
+  return nuevos.length === 0 ? cuenta : { ...cuenta, analisis: [...cuenta.analisis, ...nuevos] };
 }
 
 // ── Lectura / escritura ────────────────────────────────────────────────

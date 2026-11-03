@@ -12,11 +12,19 @@ const PRODUCTION_ORIGIN = 'https://sistema-omicrom.vercel.app';
 // Si está seteado y es un dominio conocido, usarlo.
 const SITE_URL = Deno.env.get('PUBLIC_SITE_URL') || '';
 
+// Dominios extra permitidos, separados por coma (secreto ALLOWED_ORIGINS). Sirve para sumar un proyecto
+// de Vercel nuevo sin editar el código: basta cambiar el secreto. Ej.: https://sac.vercel.app,https://app.midominio.cl
+const EXTRA_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/+$/, ''))
+  .filter((o) => o.startsWith('https://'));
+
 function getAllowedOrigin(requestOrigin?: string | null): string {
   // Lista de orígenes permitidos exactos
   const allowed = [
     PRODUCTION_ORIGIN,
     SITE_URL,
+    ...EXTRA_ORIGINS,
     'http://localhost:5173',   // Vite dev
     'http://localhost:3000',   // Fallback dev
   ].filter(Boolean);
@@ -30,6 +38,11 @@ function getAllowedOrigin(requestOrigin?: string | null): string {
 
   // Permitir preview deployments de Vercel del proyecto (con o sin 'm' final)
   if (requestOrigin.endsWith('.vercel.app') && /sistema-omicro[nm]/.test(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  // Previews y producción del proyecto «sac» en el equipo de Vercel (el equipo va en la URL).
+  if (/^https:\/\/sac(-[a-z0-9]+)*-tuprofendustrial-s-projects\.vercel\.app$/.test(requestOrigin)) {
     return requestOrigin;
   }
 

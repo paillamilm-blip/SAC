@@ -102,6 +102,10 @@
   color: var(--info);
   border-color: color-mix(in srgb, var(--info) 40%, var(--line));
 }
+.u-app .u-origen[data-origen='muestra'] {
+  color: #f2b134;
+  border-color: color-mix(in srgb, #f2b134 40%, var(--line));
+}
 .u-app .u-origen[data-origen='probado'] {
   color: var(--ok);
   border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
@@ -530,4 +534,25 @@
 /* Con la barra de pestañas del reporte visible, el asistente se apoya encima de ella */
 .u-app:has(.pestana-bar) .u-fab {
   bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Aviso de análisis hechos como invitado: pregunta, no mueve nada solo */
+.u-app .u-aviso-invitado {
+  display: flex;
+  gap: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.u-app .u-aviso-invitado p {
+  margin: 0;
+  max-width: 62ch;
+}
+.u-app .u-banda-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.u-app .u-banda-acciones .boton {
+  min-height: 44px;
 }

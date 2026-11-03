@@ -6,7 +6,8 @@ import {
   claveDe,
   compararConAnterior,
   dbVacia,
-  fusionarInvitado,
+  pendientesDelInvitado,
+  traerDelInvitado,
   guardar,
   listarAnalisis,
   marcarBrecha,
@@ -169,24 +170,28 @@ describe('listarAnalisis', () => {
   });
 });
 
-describe('fusionarInvitado', () => {
-  it('pasa los datos del invitado a una cuenta vacía', () => {
+describe('historial del invitado', () => {
+  it('lista lo del invitado que la cuenta aún no tiene', () => {
     const invitado = conUnAnalisis().db;
-    const r = fusionarInvitado(dbVacia(), invitado);
-    expect(r.migrado).toBe(true);
-    expect(r.db.analisis).toHaveLength(1);
+    expect(pendientesDelInvitado(dbVacia(), invitado)).toHaveLength(1);
   });
 
-  it('NUNCA pisa los análisis que la cuenta ya tiene', () => {
+  it('trae los análisis sin pisar ni repetir los de la cuenta', () => {
     const cuenta = conUnAnalisis('2026-10-01T10:00:00.000Z').db;
-    const invitado = conUnAnalisis('2026-11-02T10:00:00.000Z').db;
-    const r = fusionarInvitado(cuenta, invitado);
-    expect(r.migrado).toBe(false);
-    expect(r.db).toBe(cuenta);
+    // El fixture genera siempre el mismo id: el del invitado debe ser otro análisis.
+    const delInvitado = conUnAnalisis('2026-11-02T10:00:00.000Z').db;
+    const invitado = { ...delInvitado, analisis: delInvitado.analisis.map((a) => ({ ...a, id: 'del-invitado' })) };
+    const r = traerDelInvitado(cuenta, invitado);
+    expect(r.analisis).toHaveLength(2);
+    expect(r.analisis[0]).toBe(cuenta.analisis[0]);
+    // traerlo otra vez no duplica nada
+    expect(traerDelInvitado(r, invitado)).toBe(r);
   });
 
-  it('no migra si el invitado no tiene nada', () => {
-    expect(fusionarInvitado(dbVacia(), dbVacia()).migrado).toBe(false);
+  it('si el invitado no tiene nada, la cuenta queda igual', () => {
+    const cuenta = conUnAnalisis().db;
+    expect(pendientesDelInvitado(cuenta, dbVacia())).toHaveLength(0);
+    expect(traerDelInvitado(cuenta, dbVacia())).toBe(cuenta);
   });
 });
 

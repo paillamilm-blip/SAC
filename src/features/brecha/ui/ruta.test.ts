@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esRutaUnificada, hrefReporte, parsearRuta } from './ruta';
+import { esRutaUnificada, hrefReporte, parsearRuta, raizEsProducto } from './ruta';
 
 describe('ruta del producto único', () => {
   it('reconoce solo /u y sus subrutas', () => {
@@ -7,6 +7,15 @@ describe('ruta del producto único', () => {
     expect(esRutaUnificada('/u/reporte/abc')).toBe(true);
     expect(esRutaUnificada('/usuario')).toBe(false);
     expect(esRutaUnificada('/')).toBe(false);
+  });
+
+  it('la raíz abre el producto, salvo con parámetros de la app de siempre', () => {
+    expect(raizEsProducto('/', '')).toBe(true);
+    expect(raizEsProducto('/', '?source=pwa')).toBe(true);
+    expect(raizEsProducto('/', '?tab=wallet')).toBe(false);
+    expect(raizEsProducto('/', '?source=pwa&tab=perfil')).toBe(false);
+    expect(raizEsProducto('/anterior', '')).toBe(false);
+    expect(raizEsProducto('/u', '')).toBe(false);
   });
 
   it('/u es el inicio', () => {
