@@ -16,9 +16,8 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 const enc = new TextEncoder();
 
 import { corsHeaders } from '../_shared/cors.ts';
-const CORS = corsHeaders();
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+// El CORS se calcula POR PETICIÓN dentro del handler: `corsHeaders()` sin `req` siempre devolvía el dominio de
+// producción viejo y el navegador bloqueaba la verificación pública (?verificar=) desde sac-omi.vercel.app.
 
 function b64url(bytes: Uint8Array): string {
   let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
@@ -42,6 +41,9 @@ async function getUserId(authHeader: string): Promise<string | null> {
 }
 
 Deno.serve(async (req) => {
+  const CORS = corsHeaders(req);
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
