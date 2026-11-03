@@ -3,8 +3,9 @@
 // Las acciones que propone NUNCA se ejecutan solas: aparecen como tarjeta y tú confirmas.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { checkOmicronLimit } from '@/features/omicron/services/brain';
 import { askOmicron } from '@/features/omicron/services/brain';
-import { isSpeechSupported, speak, stopSpeaking } from '@/infrastructure/voice/engine';
+import { speakOmicron, stopOmicron, isOmicronSpeaking } from '@/features/omicron/services/voice';
 import { isSpeechAvailable, startSpeechRecognition, type SpeechHandle } from '@/infrastructure/voice/recognition';
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis } from '../brecha/services/repositorio';
@@ -64,7 +65,6 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
   }, [db]);
 
   const hayVoz = isSpeechAvailable();
-  const puedeHablar = isSpeechSupported();
   const estado = useMemo(() => ({ db, ahora: new Date().toISOString() }), [db]);
 
   const nuevoId = () => `m${Date.now().toString(36)}${(contador.current++).toString(36)}`;
@@ -81,26 +81,33 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
         ...extra,
       };
       setMensajes((prev) => [...prev, m]);
-      if (ajustes.hablar && puedeHablar) {
-        speak(
-          r.texto,
-          () => setHablando(true),
-          () => setHablando(false),
-        );
+      if (ajustes.hablar) {
+        speakOmicron(r.texto).then(() => setHablando(false)).catch(() => setHablando(false));
       }
     },
-    [ajustes.hablar, puedeHablar],
+    [ajustes.hablar],
   );
 
   // Al abrir por primera vez: recuperar historial (si la persona lo pidió) o saludar.
   const iniciado = useRef(false);
   useEffect(() => {
-    if (!abierto || iniciado.current) return;
+    if (!abierto) {
+      iniciado.current = false; // Resetear al cerrar
+      return;
+    }
+    if (iniciado.current) return;
     iniciado.current = true;
     const a = almacen();
     const previo = ajustes.guardarHistorial && a ? cargarHistorial(a, usuarioId) : [];
     if (previo.length > 0) {
-      setMensajes(previo);
+      // Marcar acciones propuestas como caducadas
+      const historialMarcado = previo.map((m) => {
+        if (m.accion && m.accion.estado === 'propuesta') {
+          return { ...m, accion: { ...m.accion, estado: 'caducada', porQue: 'Esta propuesta ya no está vigente' } };
+        }
+        return m;
+      });
+      setMensajes(historialMarcado);
     } else {
       const s = saludoInicial(estado, nombre);
       setMensajes([
@@ -114,7 +121,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [abierto]);
+  }, [abierto, usuarioId, ajustes.guardarHistorial]);
 
   // Guardar el historial solo si la persona lo activó.
   useEffect(() => {
@@ -146,14 +153,14 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
     reconocimiento.current?.abort();
     reconocimiento.current = null;
     setEscuchando(false);
-    stopSpeaking();
+    stopOmicron();
     setHablando(false);
   }, [abierto]);
 
   useEffect(
     () => () => {
       reconocimiento.current?.abort();
-      stopSpeaking();
+      stopOmicron();
     },
     [],
   );
@@ -163,7 +170,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
       const t = crudo.trim();
       if (!t || pensando) return;
       // Si la persona habla encima del asistente, el asistente calla (interrupción honesta).
-      stopSpeaking();
+      stopOmicron();
       setHablando(false);
       setTexto('');
       setMensajes((prev) => [...prev, { id: nuevoId(), rol: 'yo', texto: t }]);
@@ -176,6 +183,11 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
       }
       if (!iaDisponible) {
         decir(respuestaNoEntendida());
+        return;
+      }
+      // Validar límite diario de IA
+      if (!checkOmicronLimit()) {
+        decir({ texto: 'Llegaste al límite diario del asistente con IA. Mis respuestas con tus datos siguen disponibles.', origen: 'sistema' });
         return;
       }
       setPensando(true);
@@ -205,7 +217,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
       setEscuchando(false);
       return;
     }
-    stopSpeaking(); // interrumpir al asistente antes de escuchar
+    stopOmicron(); // interrumpir al asistente antes de escuchar
     setHablando(false);
     const h = startSpeechRecognition({
       lang: 'es-CL',
@@ -219,21 +231,71 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
         }
       },
       onEnd: () => setEscuchando(false),
-      onError: () => setEscuchando(false),
+      onError: (error) => {
+        setEscuchando(false);
+        // Mostrar mensaje de error
+        decir({ texto: getErrorMessage(error), origen: 'sistema' });
+      },
     });
     if (h) {
       reconocimiento.current = h;
       setEscuchando(true);
+    } else {
+      // Micrófono no disponible
+      decir({ texto: 'Tu navegador no soporta reconocimiento de voz o el micrófono no está disponible.', origen: 'sistema' });
+    }
+  }
+
+  function getErrorMessage(error: string): string {
+    switch (error) {
+      case 'not-allowed':
+        return 'No tienes permiso para usar el micrófono. Por favor, permite el acceso en la configuración de tu navegador.';
+      case 'no-speech':
+        return 'No se detectó voz. Inténtalo de nuevo.';
+      case 'aborted':
+        return 'La grabación fue cancelada.';
+      case 'audio-capture':
+        return 'No se pudo capturar el audio. Verifica tu micrófono.';
+      default:
+        return 'Ocurrió un error con el micrófono. Inténtalo de nuevo.';
     }
   }
 
   function resolverAccion(id: string, confirmar: boolean) {
     const m = mensajes.find((x) => x.id === id);
     if (!m?.accion || m.accion.estado !== 'propuesta') return;
+    
+    // Si la acción ya es caducada, no ejecutar
+    if (m.accion.estado === 'caducada') {
+      setMensajes((prev) =>
+        prev.map((x) => (x.id === id && x.accion ? { ...x, accion: { ...x.accion, estado: 'cancelada' } } : x)),
+      );
+      return;
+    }
+    
+    if (!confirmar) {
+      // Cancelar acción
+      setMensajes((prev) =>
+        prev.map((x) => (x.id === id && x.accion ? { ...x, accion: { ...x.accion, estado: 'cancelada' } } : x)),
+      );
+      return;
+    }
+    
+    // Ejecutar acción y verificar resultado
+    const exito = onEjecutar(m.accion.accion);
     setMensajes((prev) =>
-      prev.map((x) => (x.id === id && x.accion ? { ...x, accion: { ...x.accion, estado: confirmar ? 'hecha' : 'cancelada' } } : x)),
+      prev.map((x) => {
+        if (x.id === id && x.accion) {
+          if (exito) {
+            return { ...x, accion: { ...x.accion, estado: 'hecha' } };
+          } else {
+            // La acción no se ejecutó porque la brecha ya no está reconocida como real
+            return { ...x, accion: { ...x.accion, estado: 'caducada', porQue: 'No pude hacerlo: la brecha ya no está reconocida como real.' } };
+          }
+        }
+        return x;
+      }),
     );
-    if (confirmar) onEjecutar(m.accion.accion);
   }
 
   function cambiarAjuste(parcial: Partial<Ajustes>) {
@@ -242,7 +304,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
     const a = almacen();
     if (a) guardarAjustes(a, siguiente);
     if (parcial.hablar === false) {
-      stopSpeaking();
+      stopOmicron();
       setHablando(false);
     }
     if (parcial.guardarHistorial === false && a) borrarHistorial(a, usuarioId);
@@ -287,7 +349,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
               type="button"
               className="u-icono"
               onClick={() => {
-                stopSpeaking();
+                stopOmicron();
                 setHablando(false);
               }}
               aria-label="Callar al asistente"

@@ -28,7 +28,7 @@ export interface UsoBrecha {
   persistente: boolean;
   agregar(resultado: ResultadoAnalisis, meta: MetaAnalisis): Analisis;
   marcar(analisisId: string, brechaId: string, veredicto: Veredicto): void;
-  dominar(analisisId: string, brechaId: string): void;
+  dominar(analisisId: string, brechaId: string): boolean;
 }
 
 /**
@@ -87,9 +87,17 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
   );
 
   const dominar = useCallback(
-    (analisisId: string, brechaId: string) =>
-      aplicar((d) => marcarDominada(d, analisisId, brechaId, new Date().toISOString())),
-    [aplicar],
+    (analisisId: string, brechaId: string): boolean => {
+      const previo = dbRef.current;
+      const siguiente = marcarDominada(previo, analisisId, brechaId, new Date().toISOString());
+      if (siguiente === previo) return false; // no se ejecutó porque la brecha no estaba confirmada
+      dbRef.current = siguiente;
+      const a = almacenLocal();
+      setPersistente(a ? guardar(a, claveRef.current, siguiente) : false);
+      setDb(siguiente);
+      return true;
+    },
+    [aplicar, marcarDominada],
   );
 
   return { db, persistente, agregar, marcar, dominar };

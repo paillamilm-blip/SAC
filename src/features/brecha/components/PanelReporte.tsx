@@ -59,6 +59,7 @@ export default function PanelReporte({
   onDominar,
   pestanaInicial,
   brechaInicialId,
+  onPestana,
 }: {
   analisisId: string;
   ocupacion: string;
@@ -75,15 +76,13 @@ export default function PanelReporte({
   onDominar: (brechaId: string) => void;
   pestanaInicial?: Pestana;
   brechaInicialId?: string | null;
+  onPestana?: (pestana: Pestana) => void;
 }) {
   const [recienId, setRecienId] = useState<string | null>(null);
   const [abiertaId, setAbiertaId] = useState<string | null>(
     () => brechaInicialId ?? brechas.find((b) => !b.veredicto)?.id ?? null,
   );
   const [tab, setTab] = useState<Pestana>(pestanaInicial ?? "mapa");
-  // El guardado es inmediato y local: ya no hay espera de red ni error posible aquí.
-  const guardando = null as string | null;
-  const error = null as string | null;
 
   const confirmadas = brechas.filter((b) => b.veredicto === "confirmada").length;
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
@@ -129,6 +128,10 @@ export default function PanelReporte({
     const siguiente = PESTANAS[(i + paso) % PESTANAS.length];
     setTab(siguiente.id);
     document.getElementById(`tab-${siguiente.id}`)?.focus();
+    // Actualizar URL con replaceState
+    if (onPestana) {
+      onPestana(siguiente.id);
+    }
   }
 
   return (
@@ -211,12 +214,6 @@ export default function PanelReporte({
             Cola de revisión · {pendientes} pendientes
           </h2>
 
-          {error && (
-            <div className="aviso aviso-error" role="alert" style={{ marginTop: 0 }}>
-              {error}
-            </div>
-          )}
-
           <div className="cola">
             {filas.map((b) => {
               const estado = b.dominadaEn ? "dominada" : (b.veredicto ?? "pendiente");
@@ -298,7 +295,6 @@ export default function PanelReporte({
                           <button
                             className="boton boton-ok"
                             data-activo={b.veredicto === "confirmada"}
-                            disabled={guardando === b.id}
                             onClick={() => marcar(b.id, b.veredicto === "confirmada" ? null : "confirmada")}
                           >
                             Es real
@@ -306,7 +302,6 @@ export default function PanelReporte({
                           <button
                             className="boton boton-bad"
                             data-activo={b.veredicto === "rechazada"}
-                            disabled={guardando === b.id}
                             onClick={() => marcar(b.id, b.veredicto === "rechazada" ? null : "rechazada")}
                           >
                             No aplica
@@ -317,13 +312,11 @@ export default function PanelReporte({
                             ) : (
                               <button
                                 className="boton boton-logro"
-                                disabled={guardando === b.id}
                                 onClick={() => dominar(b.id)}
                               >
                                 Ya lo aprendí
                               </button>
                             ))}
-                          {guardando === b.id && <span className="nota">Guardando…</span>}
                         </div>
                       </article>
                     </div>

@@ -5,6 +5,7 @@
 // Regla de producto (PRODUCT.md, principio 4): la interfaz no afirma más que el dato.
 // Cada recomendación declara su ORIGEN:
 //   · 'analisis'   → sale de datos del análisis de la persona (se muestra la frase)
+//   · 'muestra'    → es una muestra fija (no sale del PDF, TAREA-01)
 //   · 'probado'    → lo respalda un examen aprobado (reservado: aún no existe, TAREA-37)
 //   · 'estimacion' → consejo del asistente sin respaldo en un dato propio
 
@@ -12,7 +13,7 @@ import type { Analisis, Brecha } from '../brecha/domain/types';
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
 
-export type Origen = 'analisis' | 'probado' | 'estimacion';
+export type Origen = 'analisis' | 'muestra' | 'probado' | 'estimacion';
 
 export type Accion =
   | { tipo: 'escanear' }
@@ -152,7 +153,7 @@ export function recomendar(estado: Estado): Recomendacion[] {
       id: `revisar:${b.id}`,
       titulo: `Revisa «${b.titulo}»`,
       porQue: `Es la brecha sin revisar de mayor impacto (${b.severidad}). Dime si es real o si no aplica a tu caso; así tu mapa deja de ser una suposición. ${b.evidencia}`,
-      origen: 'analisis',
+      origen: ultimo.simulado ? 'muestra' : 'analisis',
       accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas', brechaId: b.id },
       etiquetaAccion: 'Revisar esta brecha',
     });
@@ -165,7 +166,7 @@ export function recomendar(estado: Estado): Recomendacion[] {
       id: `aprender:${b.id}`,
       titulo: `Trabaja «${b.titulo}»`,
       porQue: `La reconociste como real. Para cerrarla: ${b.aprender.como} Cuando lo tengas, ${b.aprender.comoLoDemuestro.charAt(0).toLowerCase()}${b.aprender.comoLoDemuestro.slice(1)}`,
-      origen: 'analisis',
+      origen: ultimo.simulado ? 'muestra' : 'analisis',
       accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas', brechaId: b.id },
       etiquetaAccion: 'Ver el plan',
     });
@@ -204,7 +205,7 @@ export function recomendar(estado: Estado): Recomendacion[] {
     id: 'ver-mapa',
     titulo: 'Mira tu mapa',
     porQue: 'Ahí ves de un vistazo qué reconociste, qué dominaste y qué falta.',
-    origen: 'analisis',
+    origen: ultimo.simulado ? 'muestra' : 'analisis',
     accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'mapa' },
     etiquetaAccion: 'Abrir mi mapa',
   });
