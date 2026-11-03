@@ -87,6 +87,8 @@ Compartimos datos con terceros que nos ayudan a operar la Plataforma:
 
 Todos estos proveedores están obligados por acuerdos de confidencialidad y solo procesan datos según nuestras instrucciones.
 
+**Dónde se guardan hoy tus análisis del mapa de capacidades (`/u`):** los análisis que generas (el texto procesado de tu CV, tus brechas, tu mapa y tu avance) se guardan **en el almacenamiento local de tu propio navegador** (localStorage), no en nuestros servidores. Viven solo en ese dispositivo y navegador: si borras los datos del navegador o cambias de equipo, pierdes ese historial. El archivo PDF de tu CV **no** se guarda ni se sube a ningún servidor: se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba. Estamos migrando esta persistencia a Supabase (con cifrado y acceso por usuario) para que tu historial ya no dependa del navegador; te avisaremos cuando esté activa.
+
 ### 4.3 Autoridades Legales
 
 Podemos divulgar sus datos si lo exige la ley chilena o para:
