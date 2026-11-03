@@ -178,7 +178,9 @@ describe('historial del invitado', () => {
 
   it('trae los análisis sin pisar ni repetir los de la cuenta', () => {
     const cuenta = conUnAnalisis('2026-10-01T10:00:00.000Z').db;
-    const invitado = conUnAnalisis('2026-11-02T10:00:00.000Z').db;
+    // El fixture genera siempre el mismo id: el del invitado debe ser otro análisis.
+    const delInvitado = conUnAnalisis('2026-11-02T10:00:00.000Z').db;
+    const invitado = { ...delInvitado, analisis: delInvitado.analisis.map((a) => ({ ...a, id: 'del-invitado' })) };
     const r = traerDelInvitado(cuenta, invitado);
     expect(r.analisis).toHaveLength(2);
     expect(r.analisis[0]).toBe(cuenta.analisis[0]);
