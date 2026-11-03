@@ -21,7 +21,7 @@ export const CLAVE_AJUSTES = 'omicron:asistente:ajustes:v1';
 export const CLAVE_HISTORIAL = 'omicron:asistente:historial:v1:';
 export const MAX_MENSAJES = 60;
 
-export type EstadoAccion = 'propuesta' | 'hecha' | 'cancelada';
+export type EstadoAccion = 'propuesta' | 'hecha' | 'cancelada' | 'caducada';
 
 export interface Mensaje {
   id: string;
@@ -64,7 +64,15 @@ export function guardarAjustes(almacen: Almacen, ajustes: Ajustes): boolean {
 function esMensaje(m: unknown): m is Mensaje {
   if (!m || typeof m !== 'object') return false;
   const x = m as Partial<Mensaje>;
-  return typeof x.id === 'string' && typeof x.texto === 'string' && (x.rol === 'yo' || x.rol === 'asistente');
+  if (typeof x.id !== 'string' || typeof x.texto !== 'string' || (x.rol !== 'yo' && x.rol !== 'asistente')) return false;
+  // Validar accion si existe
+  if (x.accion) {
+    const a = x.accion as Partial<Accion>;
+    if (!a.accion || !a.etiqueta || !a.porQue || (a.estado !== 'propuesta' && a.estado !== 'hecha' && a.estado !== 'cancelada' && a.estado !== 'caducada')) return false;
+  }
+  // Validar fuentes si existen
+  if (x.fuentes && !Array.isArray(x.fuentes)) return false;
+  return true;
 }
 
 export function cargarHistorial(almacen: Almacen, usuario: string | null): Mensaje[] {

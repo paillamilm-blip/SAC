@@ -1,7 +1,7 @@
 import { compararConAnterior, obtenerAnalisis, type Db } from '../services/repositorio';
 import type { Veredicto } from '../domain/types';
 import PanelReporte, { type Pestana } from '../components/PanelReporte';
-import { BASE } from './ruta';
+import { BASE, hrefReporte } from './ruta';
 
 export default function ReportePage({
   db,
@@ -61,6 +61,11 @@ export default function ReportePage({
           onDominar={(bid) => onDominar(analisis.id, bid)}
           pestanaInicial={pestana}
           brechaInicialId={brechaId}
+          onPestana={(p) => {
+            const href = hrefReporte(analisisId, p, brechaId);
+            window.history.replaceState(null, '', href);
+            onIr(href);
+          }}
         />
       )}
     </div>

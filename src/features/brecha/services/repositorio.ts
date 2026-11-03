@@ -203,7 +203,41 @@ export function fusionarInvitado(cuenta: Db, invitado: Db): { db: Db; migrado: b
 function esDb(x: unknown): x is Db {
   if (typeof x !== 'object' || x === null) return false;
   const o = x as { version?: unknown; analisis?: unknown };
-  return o.version === 1 && Array.isArray(o.analisis);
+  if (o.version !== 1) return false;
+  if (!Array.isArray(o.analisis)) return false;
+  // Validar cada análisis
+  for (const a of o.analisis) {
+    if (!esAnalisis(a)) return false;
+  }
+  return true;
+}
+
+function esAnalisis(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const a = x as Partial<Analisis>;
+  if (typeof a.id !== 'string' || typeof a.creadoEn !== 'string') return false;
+  if (typeof a.ocupacion !== 'string' || typeof a.nivel !== 'string' || typeof a.resumen !== 'string') return false;
+  if (!Array.isArray(a.fortalezas) || !Array.isArray(a.brechas)) return false;
+  // Validar cada brecha
+  for (const b of a.brechas) {
+    if (!esBrecha(b)) return false;
+  }
+  return true;
+}
+
+function esBrecha(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const b = x as Partial<Brecha>;
+  if (typeof b.id !== 'string') return false;
+  if (typeof b.categoria !== 'string' || b.categoria !== 'dura' && b.categoria !== 'blanda' && b.categoria !== 'conocimiento' && b.categoria !== 'credencial') return false;
+  if (typeof b.titulo !== 'string' || typeof b.evidencia !== 'string' || typeof b.porQueImporta !== 'string') return false;
+  if (typeof b.severidad !== 'string' || b.severidad !== 'alta' && b.severidad !== 'media' && b.severidad !== 'baja') return false;
+  if (!b.aprender || typeof b.aprender.que !== 'string' || typeof b.aprender.como !== 'string' || typeof b.aprender.comoLoDemuestro !== 'string') return false;
+  // El veredicto puede ser null, 'confirmada' o 'rechazada'
+  if (b.veredicto !== null && b.veredicto !== 'confirmada' && b.veredicto !== 'rechazada') return false;
+  if (b.veredictoEn !== null && typeof b.veredictoEn !== 'string') return false;
+  if (b.dominadaEn !== null && typeof b.dominadaEn !== 'string') return false;
+  return true;
 }
 
 /** Lee la base; si no existe o está corrupta devuelve una vacía (nunca lanza). */

@@ -27,6 +27,7 @@ export interface Respuesta {
 export const ETIQUETA_ORIGEN: Record<Origen, string> = {
   analisis: 'De tu análisis',
   probado: 'Probado',
+  muestra: 'Muestra de ejemplo',
   estimacion: 'Estimación',
 };
 
