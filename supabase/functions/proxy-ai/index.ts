@@ -24,9 +24,11 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
-// gemini-2.0-flash se apagó el 2026-06-01 (el endpoint devuelve error). Mismo modelo que _shared/llm.ts.
-const GEMINI_MODEL = 'gemini-3.6-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// gemini-2.0-flash se apagó el 2026-06-01. Gemini va PRIMERO y en escalera: si un modelo
+// responde 503/429 (alta demanda, pasó el 2026-11-03) se salta al siguiente, sin esperar.
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+const geminiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 // Allowed origin for CORS (production domain)
 const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicrom.vercel.app';
@@ -57,7 +59,7 @@ const FREE_MODELS = [...RACE_MODELS, ...TAIL_MODELS];
 
 const RACE_ABORT_MS = 35000;      // techo de la carrera (los 2 nemotron en paralelo)
 const MODEL_ABORT_MS = 10000;     // cada intento del tail
-const GEMINI_ABORT_MS = 35000;    // último recurso
+const GEMINI_ABORT_MS = 20000;    // cada modelo de Gemini (los 503 llegan en <1 s)
 const RACE_FAST_FAIL_MS = 12000;  // si la carrera cayó antes de esto, el tail todavía sirve
 // Presupuesto total del server. Debe quedar DEBAJO del presupuesto del
 // cliente (75 s en gemini.ts) para que el error estructurado llegue al
@@ -67,7 +69,7 @@ const MIN_USEFUL_ATTEMPT_MS = 4000;
 // Huella de la versión desplegada. Un GET responde estos números en <1s y sin
 // gastar créditos: es la única forma de comprobar que el pegado del dashboard
 // realmente reemplazó la función (los timeouts viejos se cuelan igual).
-const BUILD = '6e-race-nothink-70s';
+const BUILD = '6f-gemini-first';
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -171,6 +173,57 @@ async function orChat(
   }
 }
 
+// Un intento contra Gemini. Devuelve el texto o tira un Error con la línea de debug.
+async function geminiChat(
+  model: string,
+  messages: AIMessage[],
+  opts: { maxTokens: number; temperature: number; jsonMode: boolean },
+  abortMs: number,
+): Promise<{ text: string; model: string; ms: number }> {
+  const controller = new AbortController();
+  // El timer cubre cabeceras Y cuerpo (igual que en orChat).
+  const timer = setTimeout(() => controller.abort(), abortMs);
+  const t0 = Date.now();
+  try {
+    const contents = messages.map((msg) => {
+      const role = msg.role === 'assistant' ? 'model' : 'user';
+      const text = msg.role === 'system' ? `System: ${msg.content}` : msg.content;
+      return { role, parts: [{ text }] };
+    });
+    const resp = await fetch(geminiUrl(model), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          maxOutputTokens: Math.min(opts.maxTokens, 4096),
+          temperature: Math.min(Math.max(opts.temperature, 0), 1.5),
+          responseMimeType: opts.jsonMode ? 'application/json' : 'text/plain',
+        },
+      }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => '');
+      // Sin saltos de línea: el debug se lee mejor en una sola línea.
+      throw new Error(`${model} → ${resp.status} en ${Date.now() - t0}ms: ${errBody.replace(/\s+/g, ' ').slice(0, 150)}`);
+    }
+    const data = await resp.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    if (!text) throw new Error(`${model} → 200 sin contenido en ${Date.now() - t0}ms`);
+    return { text: text.trim(), model, ms: Date.now() - t0 };
+  } catch (e) {
+    const err = e as Error;
+    if (err.message?.startsWith(`${model} →`)) throw err;
+    if (err.name === 'AbortError') {
+      throw new Error(`${model} → abort a los ${Math.round(abortMs / 1000)}s (real ${Date.now() - t0}ms)`);
+    }
+    throw new Error(`${model} → threw: ${String(err).slice(0, 100)} (${Date.now() - t0}ms)`);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 Deno.serve(async (req) => {
   // Compute CORS from the actual request origin as a local const to avoid
   // race conditions under concurrent requests in the same Deno isolate.
@@ -234,23 +287,46 @@ Deno.serve(async (req) => {
     const { maxTokens = 1024, temperature = 0.7, jsonMode = false } = body.options ?? {};
 
     // ══════════════════════════════════════════════════════════════════
-    // ESTRATEGIA (medida, no supuesta):
+    // ESTRATEGIA (desde 2026-11-03):
+    //   F0 Gemini en escalera (3.6 → 3.8 → 3.5-lite). Un 503/429 salta al
+    //      siguiente modelo en el acto. Es rápido y es lo que sí responde.
     //   F1 carrera en paralelo de los 2 nemotron, razonamiento apagado.
     //   F2 ladder secuencial del resto — SOLO si la carrera cayó rápido
     //      (si tardó 40 s el problema es la cola, y otro modelo en cola no
-    //      ayuda; ahí conviene más Gemini).
-    //   F3 Gemini como último recurso.
+    //      ayuda).
     // ══════════════════════════════════════════════════════════════════
 
-    // ── OpenRouter (PRIMARY) ──────────────────────────────────────────
     const debugLog: string[] = [];
     const serverDeadline = Date.now() + SERVER_BUDGET_MS;
     // NUNCA incluir caracteres de las keys: debugLog viaja al cliente en el 503.
     debugLog.push(`OPENROUTER_KEY: ${OPENROUTER_KEY ? 'present' : 'MISSING'}`);
     debugLog.push(`GEMINI_KEY: ${GEMINI_KEY ? 'present' : 'MISSING'}`);
 
+    const opts = { maxTokens, temperature, jsonMode };
+
+    // ── F0: Gemini (PRIMARY) ──────────────────────────────────────────
+    if (GEMINI_KEY) {
+      for (const model of GEMINI_MODELS) {
+        const budgetLeft = serverDeadline - Date.now();
+        if (budgetLeft < MIN_USEFUL_ATTEMPT_MS) {
+          debugLog.push(`presupuesto agotado antes de ${model}`);
+          break;
+        }
+        try {
+          const r = await geminiChat(model, body.messages, opts, Math.min(GEMINI_ABORT_MS, budgetLeft));
+          debugLog.push(`gemini OK ${model} en ${r.ms}ms`);
+          console.log(`[proxy-ai] gemini winner ${model} en ${r.ms}ms (${r.text.length} chars)`);
+          return json({ text: r.text, model: r.model });
+        } catch (err) {
+          const msg = (err as Error).message;
+          debugLog.push(msg);
+          console.error(`[proxy-ai] gemini failed: ${msg}`);
+        }
+      }
+    }
+
+    // ── OpenRouter (respaldo) ─────────────────────────────────────────
     if (OPENROUTER_KEY) {
-      const opts = { maxTokens, temperature, jsonMode };
       const alive = RACE_MODELS.filter(isModelAlive);
       const raceModels = alive.length > 0 ? alive : RACE_MODELS;
 
@@ -308,59 +384,6 @@ Deno.serve(async (req) => {
             }
           }
         }
-      }
-    }
-
-    // ── Try Gemini (FALLBACK only if OpenRouter failed) ───────────────
-    const geminiBudget = serverDeadline - Date.now();
-    if (GEMINI_KEY && geminiBudget >= MIN_USEFUL_ATTEMPT_MS) {
-      const geminiController = new AbortController();
-      const geminiTimer = setTimeout(() => geminiController.abort(), Math.min(GEMINI_ABORT_MS, geminiBudget));
-      try {
-        const contents = body.messages.map((msg) => {
-          const role = msg.role === 'assistant' ? 'model' : 'user';
-          const text = msg.role === 'system' ? `System: ${msg.content}` : msg.content;
-          return { role, parts: [{ text }] };
-        });
-
-        const geminiBody = {
-          contents,
-          generationConfig: {
-            maxOutputTokens: Math.min(maxTokens, 4096),
-            temperature: Math.min(Math.max(temperature, 0), 1.5),
-            responseMimeType: jsonMode ? 'application/json' : 'text/plain',
-          },
-        };
-
-        const geminiResp = await fetch(GEMINI_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': GEMINI_KEY,
-          },
-          body: JSON.stringify(geminiBody),
-          signal: geminiController.signal,
-        });
-
-        if (geminiResp.ok) {
-          const geminiData = await geminiResp.json();
-          const geminiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-          if (geminiText) {
-            return json({ text: geminiText.trim(), model: GEMINI_MODEL });
-          }
-          debugLog.push(`${GEMINI_MODEL} → 200 sin contenido`);
-        } else {
-          // Antes este fallo era silencioso: el debug no decía por qué Gemini no respondió.
-          const errBody = await geminiResp.text().catch(() => '');
-          debugLog.push(`${GEMINI_MODEL} → ${geminiResp.status}: ${errBody.slice(0, 150)}`);
-        }
-      } catch (e) {
-        debugLog.push(`${GEMINI_MODEL} → threw: ${String(e).slice(0, 100)}`);
-        console.warn('[proxy-ai] Gemini fallback also failed:', String(e).slice(0, 100));
-      } finally {
-        // Igual que en la ladder: el timeout tiene que cubrir la lectura del
-        // cuerpo, no solo las cabeceras.
-        clearTimeout(geminiTimer);
       }
     }
 
