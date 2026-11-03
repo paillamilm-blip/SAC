@@ -19,6 +19,11 @@ vi.mock('@/features/omicron/services/voice', () => ({
   stopOmicron: vi.fn(),
   isOmicronSpeaking: () => false,
 }));
+// Estas pruebas recorren la pantalla con la muestra fija: no hay IA ni un CV real.
+vi.mock('../services/proveedor', async () => {
+  const { crearProveedorDemostracion } = await import('../services/analizar');
+  return { proveedorActivo: crearProveedorDemostracion({ pausaMs: 0 }) };
+});
 // La racha diaria llama a Supabase: en pruebas no hay red.
 vi.mock('../hooks/useOmicronStats', () => ({ useOmicronStats: () => {} }));
 vi.mock('@/infrastructure/voice/recognition', () => ({
