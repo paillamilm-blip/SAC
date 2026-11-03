@@ -77,6 +77,12 @@ export interface DependenciasIA {
 
 const OPCIONES_IA: AIOptions = { maxTokens: 3000, temperature: 0.3, jsonMode: true, timeout: 75_000 };
 
+// El proxy corre una carrera de modelos gratis: a veces gana uno débil cuya
+// evidencia no supera la validación (medido 2026-11-03). Reintentar una vez
+// dispara una carrera nueva; el costo real es bajo porque los resultados
+// inválidos llegan de modelos rápidos (~20 s), no de timeouts.
+const INTENTOS_ANALISIS = 2;
+
 export function crearProveedorIA(deps: Partial<DependenciasIA> = {}): ProveedorAnalisis {
   const extraer = deps.extraer ?? extractCVText;
   const llamar = deps.llamar ?? callAI;
@@ -97,19 +103,31 @@ export function crearProveedorIA(deps: Partial<DependenciasIA> = {}): ProveedorA
       }
 
       alEvento('enviado');
-      let respuesta: string | null;
-      try {
-        respuesta = await llamar(mensajesParaCv(textoCv), OPCIONES_IA);
-      } catch (e) {
-        // AIError ya trae un mensaje pensado para la persona (créditos, tiempo, conexión).
-        throw new Error(e instanceof Error && e.message ? e.message : 'No se pudo conectar con la IA. Inténtalo de nuevo.');
-      }
-      if (!respuesta) throw new Error('La IA no respondió. Inténtalo de nuevo en unos minutos.');
+      let ultimoError: unknown = null;
+      for (let intento = 1; intento <= INTENTOS_ANALISIS; intento++) {
+        let respuesta: string | null;
+        try {
+          respuesta = await llamar(mensajesParaCv(textoCv), OPCIONES_IA);
+        } catch (e) {
+          // AIError ya trae un mensaje pensado para la persona (créditos, tiempo, conexión).
+          throw new Error(e instanceof Error && e.message ? e.message : 'No se pudo conectar con la IA. Inténtalo de nuevo.');
+        }
+        if (!respuesta) throw new Error('La IA no respondió. Inténtalo de nuevo en unos minutos.');
 
-      alEvento('leyendo');
-      const resultado = validarResultado(extraerJson(respuesta), textoCv);
-      alEvento('listo');
-      return resultado;
+        alEvento('leyendo');
+        try {
+          const resultado = validarResultado(extraerJson(respuesta), textoCv);
+          alEvento('listo');
+          return resultado;
+        } catch (e) {
+          ultimoError = e;
+          // Solo el resultado inválido se reintenta: es lotería del modelo, no
+          // un problema de la persona. Cualquier otro error se informa de una.
+          if (!(e instanceof AnalisisInvalido) || intento === INTENTOS_ANALISIS) throw e;
+          alEvento('enviado');
+        }
+      }
+      throw ultimoError instanceof Error ? ultimoError : new Error('El análisis falló. Inténtalo de nuevo.');
     },
   };
 }
