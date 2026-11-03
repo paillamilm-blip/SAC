@@ -20,22 +20,23 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 - `/anterior` es la app de siempre. Sus enlaces con parámetros (`/?tab=…`, perfiles compartidos) siguen en la raíz.
 - Elección de ruta: `src/App.tsx` y `src/features/brecha/ui/ruta.ts`.
 
-## Qué funciona (verificado por CI, no en vivo)
+## Qué funciona (verificado por CI y, desde el 3-nov-2026, también en vivo)
 - Escaneo real: `cvExtract` lee el PDF en el navegador y a la IA solo viaja el texto (`callAI` → `proxy-ai`). `domain/validar.ts` descarta cualquier evidencia que no sea una «cita literal» presente en el CV o «Ausente en el CV:». Si falla, error y reintentar; nunca cae a la muestra.
+- **IA en vivo probada el 3-nov-2026** en `https://sac-omi.vercel.app/u`: dos corridas completas (subir CV → análisis → reporte → confirmar brecha → Diagnóstico) con CV de prueba. `proxy-ai` corre el build `6g-gemini-first-frees-vivos`: Gemini primero en escalera (3.6 → 3.8 → 3.5-lite) y carrera en paralelo de los modelos gratis vivos de OpenRouter como respaldo. El proveedor de análisis reintenta una vez si el modelo devuelve evidencia no verificable (`analisisIA.ts`, con tests).
 - `VITE_BRECHA_ANALISIS=demostracion` fuerza la muestra fija (lo usa el recorrido visual de CI y los tests de `UApp`).
 - Asistente: una muestra fija se declara «Muestra de ejemplo»; «De tu análisis» solo con análisis real.
 - Al iniciar sesión, los análisis del invitado **se preguntan** (traer o descartar); nunca se mueven solos.
 - CI de SAC (`typecheck`, `lint`, `vitest`, `build`) y el recorrido visual de `/u` en navegador real pasan en `main`.
 
-## Pendiente de la persona (yo no tengo acceso)
-1. ~~**Vercel.**~~ **Hecho (3-nov-2026).** Proyecto `sac-omi` (equipo `tuprofendustrial-s-projects`), conectado a SAC. Dominio: **`https://sac-omi.vercel.app`** (producto en `/u`). Vercel reporta `success` sobre `d83cfb6` en `main`. No se pudo abrir el sitio desde el sandbox (403), así que el sitio vivo sigue sin verificarse.
-2. **Supabase → Edge Functions → Secrets:** `ALLOWED_ORIGINS=https://sac-omi.vercel.app`. Sin esto el navegador bloquea la IA en producción (`cors.ts` solo permite por código los previews `sac…-tuprofendustrial-s-projects.vercel.app`, no el dominio de producción).
-3. **Redesplegar las funciones una vez** para que lean el CORS nuevo: `supabase link --project-ref cuwuyqpxaibbqjrvamjb`, luego `supabase functions deploy proxy-ai` y `proxy-tts`.
-4. **Supabase → Authentication → URL Configuration:** agregar el dominio nuevo.
+## Pendiente de la persona (o por dashboard)
+1. ~~**Vercel.**~~ **Hecho (3-nov-2026).** Proyecto `sac-omi` (equipo `tuprofendustrial-s-projects`), conectado a SAC. Dominio: **`https://sac-omi.vercel.app`** (producto en `/u`). Sitio probado en vivo el 3-nov-2026.
+2. ~~**Supabase → Edge Functions → Secrets `ALLOWED_ORIGINS`.**~~ **Hecho y probado (3-nov-2026):** la llamada cruzada desde `sac-omi.vercel.app` entra a `proxy-ai` sin bloqueo CORS.
+3. ~~**Redesplegar las funciones.**~~ **Hecho (3-nov-2026):** `proxy-ai` (build `6g`) y `proxy-tts` redesplegadas con `supabase functions deploy`.
+4. **Supabase → Authentication → URL Configuration:** agregar el dominio nuevo. Pendiente (dashboard).
 5. Pasos detallados en `docs/despliegue-vercel.md`. El estado de Vercel ya aparece en los commits de SAC (`gh api repos/paillamilm-blip/SAC/commits/<sha>/status`, contexto `Vercel`).
 
 ## Siguiente trabajo, por prioridad
-1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El escaneo real nunca se ha probado con IA en vivo. Pedir los CVs a la persona. Ajustar el prompt en `services/analisisIA.ts`. Hoy no hay tests de `validar.ts` ni de `analisisIA.ts`.
+1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El 3-nov-2026 se probó en vivo con un CV de prueba (2 corridas completas); falta la matriz de rubros y los CVs reales de la persona. `analisisIA.ts` ya tiene tests; faltan los de `validar.ts`. Ajustar el prompt en `services/analisisIA.ts` si un rubro falla.
 2. Guardar en Supabase (tablas `brecha_*` con RLS) en vez de `localStorage`.
 3. Mapa: habilidades de Ómicrom con porcentaje como nodos sólidos y brechas como nodos huecos. **Acordar el diseño antes de tocar `MapaCapacidades`.**
 4. «Dominar» con examen real (`simulador-universal`, `register_exam_success`) y credencial verificable. Hoy «dominada» es autodeclarada.

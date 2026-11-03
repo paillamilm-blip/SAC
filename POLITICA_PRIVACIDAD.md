@@ -1,6 +1,6 @@
 # Política de Privacidad — Ómicron
 
-**Última actualización:** 9 de julio de 2026
+**Última actualización:** 3 de noviembre de 2026
 
 ---
 
@@ -20,6 +20,7 @@ Cuando se registra y utiliza la Plataforma, recopilamos:
 
 - **Información de cuenta:** nombre, apellido, username, email, contraseña (encriptada).
 - **Perfil profesional:** biografía, foto de perfil, credenciales (CV, títulos, certificados).
+- **Texto de tu CV:** al pedir un análisis, el archivo PDF no sale de tu dispositivo; en el navegador se extrae su texto y solo ese texto se envía al servicio de análisis con IA (ver sección 4.2).
 - **Datos de verificación:** documentos de identidad (para KYC cuando active retiros reales).
 - **Información financiera:** historial de transacciones de tokens, contratos, pagos.
 - **Contenido generado:** publicaciones en la Bóveda, mensajes en chat, calificaciones.
@@ -80,6 +81,7 @@ Compartimos datos con terceros que nos ayudan a operar la Plataforma:
 
 - **Supabase (PostgreSQL + Auth):** almacenamiento de datos y autenticación.
 - **Vercel:** alojamiento del frontend.
+- **Google (Gemini) y OpenRouter:** el texto de tu CV y tus mensajes al asistente los procesan modelos de lenguaje (Google Gemini primero; si no está disponible, modelos del catálogo de OpenRouter). Reciben solo el texto necesario para responder, nunca el archivo PDF.
 - **Stripe (futuro):** procesamiento de pagos cuando active retiros reales.
 - **Google Cloud (futuro):** análisis de datos y machine learning.
 
