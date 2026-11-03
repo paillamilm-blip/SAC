@@ -24,7 +24,8 @@ const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// gemini-2.0-flash se apagó el 2026-06-01 (el endpoint devuelve error). Mismo modelo que _shared/llm.ts.
+const GEMINI_MODEL = 'gemini-3.6-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Allowed origin for CORS (production domain)
@@ -347,8 +348,14 @@ Deno.serve(async (req) => {
           if (geminiText) {
             return json({ text: geminiText.trim(), model: GEMINI_MODEL });
           }
+          debugLog.push(`${GEMINI_MODEL} → 200 sin contenido`);
+        } else {
+          // Antes este fallo era silencioso: el debug no decía por qué Gemini no respondió.
+          const errBody = await geminiResp.text().catch(() => '');
+          debugLog.push(`${GEMINI_MODEL} → ${geminiResp.status}: ${errBody.slice(0, 150)}`);
         }
       } catch (e) {
+        debugLog.push(`${GEMINI_MODEL} → threw: ${String(e).slice(0, 100)}`);
         console.warn('[proxy-ai] Gemini fallback also failed:', String(e).slice(0, 100));
       } finally {
         // Igual que en la ladder: el timeout tiene que cubrir la lectura del
