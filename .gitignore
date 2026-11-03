@@ -18,3 +18,6 @@ __pycache__/
 # AI agent artifacts
 .agents/
 semantic-review/
+
+# Estado local del CLI de Supabase (puede traer URLs de conexión)
+supabase/.temp/
