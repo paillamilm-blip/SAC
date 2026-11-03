@@ -141,8 +141,8 @@ export default function UApp() {
     );
   }
 
-  // Invitado si la carga tardó más de 5s
-  const esInvitado = authStatus === 'loading' && cargaTiempoExcedido;
+  // Invitado: sin sesión, o con la carga atascada más de 5s (la carga normal ya salió arriba).
+  const esInvitado = authStatus !== 'authenticated';
 
   return (
     <div className="u-app" style={estiloColor}>
