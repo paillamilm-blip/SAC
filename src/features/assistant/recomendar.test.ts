@@ -54,7 +54,8 @@ describe('recomendar', () => {
     });
     const r = recomendar({ db: d, ahora: T0 });
     expect(r[0].id).toBe(`aprender:${brechas[0].id}`);
-    expect(r[0].origen).toBe('analisis');
+    // `base()` usa la muestra fija: el origen debe decirlo, no pasar por «De tu análisis».
+    expect(r[0].origen).toBe('muestra');
   });
 
   it('todo revisado y todo lo real dominado: cierra el ciclo con un nuevo escaneo', () => {
