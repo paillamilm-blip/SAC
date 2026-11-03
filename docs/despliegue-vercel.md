@@ -23,11 +23,19 @@ Las funciones de Supabase solo aceptan peticiones desde dominios conocidos (`sup
 Un proyecto de Vercel nuevo tiene otro dominio y el navegador bloquea el análisis con IA.
 
 - **Supabase → Edge Functions → Secrets**: crea `ALLOWED_ORIGINS` con tu dominio, por ejemplo
-  `https://sac.vercel.app` (varios, separados por coma).
+  `https://sac-omi.vercel.app` (varios, separados por coma).
 - **Una sola vez**, vuelve a desplegar las funciones para que lean ese secreto:
-  `supabase functions deploy` (o desde el panel).
+  `supabase link --project-ref cuwuyqpxaibbqjrvamjb`, luego `supabase functions deploy proxy-ai` y
+  `supabase functions deploy proxy-tts` (o desde el panel).
 
-Los despliegues de vista previa de un proyecto llamado `sac` en el equipo `tuprofendustrial-s-projects` ya están permitidos por código.
+Los despliegues de vista previa de proyectos cuyo nombre empieza por `sac` (como `sac-omi`) en el equipo `tuprofendustrial-s-projects` ya están permitidos por código. El dominio de producción `sac-omi.vercel.app` **no** lo está: necesita el secreto.
+
+## Estado de este despliegue
+
+- Proyecto de Vercel: `sac-omi` (equipo `tuprofendustrial-s-projects`), conectado a `paillamilm-blip/SAC`.
+- Dominio de producción: `https://sac-omi.vercel.app` (el producto está en `/u`).
+- Vercel ya despliega los commits de `main` (estado `Vercel: success` en `d83cfb6`).
+- Pendiente en Supabase: secreto `ALLOWED_ORIGINS`, redespliegue de `proxy-ai` y `proxy-tts`, y *URL Configuration*.
 
 ## 3. Autenticación
 
