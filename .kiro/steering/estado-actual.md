@@ -28,11 +28,11 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 - CI de SAC (`typecheck`, `lint`, `vitest`, `build`) y el recorrido visual de `/u` en navegador real pasan en `main`.
 
 ## Pendiente de la persona (yo no tengo acceso)
-1. **Vercel.** El proyecto «sac» que ya existe es una app **Next.js vieja** de un repo SAC anterior, ya borrado. No sirve para este repo. Crear un proyecto **nuevo** llamado `sac-omicrom` desde el repo SAC (Vite, `npm run build`, salida `dist`, sin variables). Nada ha desplegado desde la creación de SAC.
-2. **Supabase → Edge Functions → Secrets:** `ALLOWED_ORIGINS=https://sac-omicrom.vercel.app` (el dominio real que salga).
+1. ~~**Vercel.**~~ **Hecho (3-nov-2026).** Proyecto `sac-omi` (equipo `tuprofendustrial-s-projects`), conectado a SAC. Dominio: **`https://sac-omi.vercel.app`** (producto en `/u`). Vercel reporta `success` sobre `d83cfb6` en `main`. No se pudo abrir el sitio desde el sandbox (403), así que el sitio vivo sigue sin verificarse.
+2. **Supabase → Edge Functions → Secrets:** `ALLOWED_ORIGINS=https://sac-omi.vercel.app`. Sin esto el navegador bloquea la IA en producción (`cors.ts` solo permite por código los previews `sac…-tuprofendustrial-s-projects.vercel.app`, no el dominio de producción).
 3. **Redesplegar las funciones una vez** para que lean el CORS nuevo: `supabase link --project-ref cuwuyqpxaibbqjrvamjb`, luego `supabase functions deploy proxy-ai` y `proxy-tts`.
 4. **Supabase → Authentication → URL Configuration:** agregar el dominio nuevo.
-5. Pasos detallados en `docs/despliegue-vercel.md`. Cuando haya dominio, comprobar que el estado de Vercel aparezca en los commits de SAC (`gh api repos/paillamilm-blip/SAC/commits/<sha>/status`).
+5. Pasos detallados en `docs/despliegue-vercel.md`. El estado de Vercel ya aparece en los commits de SAC (`gh api repos/paillamilm-blip/SAC/commits/<sha>/status`, contexto `Vercel`).
 
 ## Siguiente trabajo, por prioridad
 1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El escaneo real nunca se ha probado con IA en vivo. Pedir los CVs a la persona. Ajustar el prompt en `services/analisisIA.ts`. Hoy no hay tests de `validar.ts` ni de `analisisIA.ts`.
