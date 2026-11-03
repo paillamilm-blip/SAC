@@ -6,6 +6,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
+import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
+import { InstallPWA } from '@/shared/components/InstallPWA';
 import ChatPanel from '@/features/assistant/ChatPanel';
 import type { Accion } from '@/features/assistant/recomendar';
 import { useApp } from '@/store/AppContext';
@@ -13,10 +15,11 @@ import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { ResultadoSubida } from '../components/SubirCv';
 import { useBrecha } from '../hooks/useBrecha';
 import { useOmicronStats } from '../hooks/useOmicronStats';
+import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import ReportePage from './ReportePage';
-import { BASE, RUTA_ANTERIOR, hrefReporte, useRuta } from './ruta';
+import { BASE, hrefReporte, useRuta } from './ruta';
 import '../styles/brecha.css';
 import '../styles/u-app.css';
 
@@ -41,6 +44,8 @@ export default function UApp() {
 
   // Estadísticas de Ómicrom (racha diaria, analítica de apertura)
   useOmicronStats();
+  // Regreso desde el correo de «olvidé mi contraseña»
+  const { recuperando, terminar: terminarRecuperacion } = useRecuperarClave();
 
   // Timeout para mostrar invitado si la carga tarda más de 5s (misma regla que forceGuest)
   useEffect(() => {
@@ -110,6 +115,9 @@ export default function UApp() {
     '--accent-soft': `color-mix(in srgb, ${color} 14%, transparent)`,
   } as React.CSSProperties;
 
+  // Mismo orden de prioridad que tenía la app de siempre: recuperar la clave va primero.
+  if (recuperando) return <ResetPasswordOverlay onDone={terminarRecuperacion} />;
+
   // Mostrar NoAccess si el usuario no tiene acceso
   if (authStatus === 'no_access') {
     return (
@@ -133,7 +141,6 @@ export default function UApp() {
               Ómicrom
             </a>
             <div className="topbar-right">
-              <a className="u-enlace-suave" href={RUTA_ANTERIOR}>Versión anterior</a>
               <div className="u-persona" title="Cargando...">
                 <span className="brand-dot" aria-hidden="true" />
               </div>
@@ -172,9 +179,6 @@ export default function UApp() {
             Ómicrom
           </a>
           <div className="topbar-right">
-            <a className="u-enlace-suave" href={RUTA_ANTERIOR}>
-              Versión anterior
-            </a>
             {esInvitado ? (
               <button type="button" className="boton boton-topbar" onClick={() => setPedirAuth(true)}>
                 Iniciar sesión
@@ -266,6 +270,10 @@ export default function UApp() {
       />
 
       {pedirAuth && authStatus !== 'authenticated' && <AuthOverlay onClose={() => setPedirAuth(false)} />}
+
+      <ErrorBoundary section="InstalarApp">
+        <InstallPWA />
+      </ErrorBoundary>
     </div>
   );
 }
