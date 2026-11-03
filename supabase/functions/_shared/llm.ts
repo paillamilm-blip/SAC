@@ -4,17 +4,19 @@
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
 
-const GEMINI_MODEL = 'gemini-3.6-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// Escalera de Gemini: un 503/429 (alta demanda, pasó el 2026-11-03) salta al siguiente modelo al instante.
+// gemini-2.0-flash se apagó el 2026-06-01. Misma lista que proxy-ai.
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+const geminiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Modelos gratis vivos al 2026-11-03 (los de la lista anterior devolvían 404: ya no son gratis).
 const OR_MODELS = [
-  'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'nvidia/nemotron-3-nano-30b-a3b:free',
-  'google/gemma-3n-e4b-it:free',
+  'nvidia/nemotron-3.5-lightning:free',
   'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'google/gemma-4-31b-it:free',
+  'openrouter/free',
 ];
 
 export interface ChatMessage {
@@ -36,11 +38,13 @@ export async function callLLM(
 ): Promise<string> {
   // ── Try Gemini first ──────────────────────────────────────────────
   if (GEMINI_KEY) {
-    try {
-      const result = await callGemini(messages, jsonMode, maxTokens);
-      if (result) return result;
-    } catch (e) {
-      console.warn('[llm] Gemini failed, falling back to OpenRouter:', String(e).slice(0, 150));
+    for (const model of GEMINI_MODELS) {
+      try {
+        const result = await callGemini(model, messages, jsonMode, maxTokens);
+        if (result) return result;
+      } catch (e) {
+        console.warn(`[llm] ${model} falló, sigo con el siguiente:`, String(e).slice(0, 150));
+      }
     }
   }
 
@@ -60,6 +64,7 @@ export function hasKey(): boolean {
 // ── Gemini ────────────────────────────────────────────────────────────
 
 async function callGemini(
+  model: string,
   messages: ChatMessage[],
   jsonMode: boolean,
   maxTokens: number,
@@ -82,9 +87,9 @@ async function callGemini(
 
   // Use AbortController with 25s timeout to avoid hanging requests
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 40000);
+  const timer = setTimeout(() => controller.abort(), 30000);
 
-  const resp = await fetch(GEMINI_URL, {
+  const resp = await fetch(geminiUrl(model), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -98,7 +103,7 @@ async function callGemini(
 
   if (!resp.ok) {
     const errText = await resp.text().catch(() => '');
-    throw new Error(`Gemini ${resp.status}: ${errText.slice(0, 200)}`);
+    throw new Error(`${model} ${resp.status}: ${errText.slice(0, 200)}`);
   }
 
   const data = await resp.json();
