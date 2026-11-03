@@ -36,6 +36,8 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 5. Pasos detallados en `docs/despliegue-vercel.md`. El estado de Vercel ya aparece en los commits de SAC (`gh api repos/paillamilm-blip/SAC/commits/<sha>/status`, contexto `Vercel`).
 
 ## Siguiente trabajo, por prioridad
+> El plan por fases, el flujo de la app y los bugs están en **`docs/plan-de-accion.md`** (3-nov-2026). Ahí manda el orden; la lista de abajo es el resumen anterior.
+
 1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El 3-nov-2026 se probó en vivo con un CV de prueba (2 corridas completas); falta la matriz de rubros y los CVs reales de la persona. `analisisIA.ts` ya tiene tests; faltan los de `validar.ts`. Ajustar el prompt en `services/analisisIA.ts` si un rubro falla.
 2. Guardar en Supabase (tablas `brecha_*` con RLS) en vez de `localStorage`.
 3. Mapa: habilidades de Ómicrom con porcentaje como nodos sólidos y brechas como nodos huecos. **Acordar el diseño antes de tocar `MapaCapacidades`.**
