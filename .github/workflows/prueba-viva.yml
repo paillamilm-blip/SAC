@@ -1,0 +1,47 @@
+name: Prueba en vivo de /u
+
+# Prueba el producto único CONTRA PRODUCCIÓN (https://sac-omi.vercel.app/u) con un CV de ejemplo
+# sintético y la cadena de IA real (proxy-ai). Guarda capturas y la respuesta de proxy-ai como
+# artefacto "prueba-viva". Plan de acción, fase 1.6.
+#
+# Es de DESPACHO MANUAL a propósito: pega contra el dominio vivo y consume créditos de IA, así que
+# no debe correr (ni ponerse lotería) en cada push. La persona lo dispara cuando quiere una
+# revisión de salud en vivo. Si proxy-ai responde 503, suele ser inestabilidad del campo gratis de
+# IA, no un bug del producto; el artefacto proxy-ai.json lo deja claro.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL del sitio a probar'
+        required: false
+        default: 'https://sac-omi.vercel.app'
+
+permissions:
+  contents: read
+
+jobs:
+  prueba:
+    name: Recorrido en vivo (IA real)
+    runs-on: ubuntu-24.04
+    # El análisis real tarda: el cliente espera hasta 75 s por intento y reintenta una vez.
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Instalar Playwright (solo para esta prueba)
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Prueba en vivo
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || 'https://sac-omi.vercel.app' }}
+        run: node scripts/prueba-viva.mjs
+      - name: Subir capturas y respuesta de proxy-ai
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prueba-viva
+          path: prueba-viva/
+          if-no-files-found: warn

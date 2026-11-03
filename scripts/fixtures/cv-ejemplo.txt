@@ -1,0 +1,28 @@
+CURRICULUM VITAE
+
+Nombre: Juan Perez Soto
+Edad: 28 anos
+Email: juan.perez@example.com
+Telefono: +56 9 1234 5678
+Ciudad: Santiago, Chile
+
+OCUPACION: Tecnico en Mantencion Industrial
+
+EXPERIENCIA LABORAL
+- Tecnico de mantencion, Empresa ABC (2020-2024)
+  Mantencion preventiva y correctiva de maquinaria industrial.
+- Ayudante tecnico, Taller XYZ (2018-2020)
+  Apoyo en reparacion de equipos electricos.
+
+EDUCACION
+- Tecnico de Nivel Superior en Mantencion Industrial, Inacap (2018)
+- Ensenanza Media, Liceo Industrial de Santiago (2016)
+
+HABILIDADES
+- Soldadura al arco
+- Interpretacion de planos
+- PLC basico
+- Trabajo en equipo
+
+CERTIFICACIONES
+- Ninguna vigente
