@@ -4,11 +4,14 @@ import { MUESTRA } from '../brecha/services/muestra';
 import { agregarAnalisis, dbVacia, type Db } from '../brecha/services/repositorio';
 
 const askOmicron = vi.fn();
-vi.mock('@/features/omicron/services/brain', () => ({ askOmicron: (...a: unknown[]) => askOmicron(...a) }));
-vi.mock('@/infrastructure/voice/engine', () => ({
-  speak: vi.fn(),
-  stopSpeaking: vi.fn(),
-  isSpeechSupported: () => false,
+vi.mock('@/features/omicron/services/brain', () => ({
+  askOmicron: (...a: unknown[]) => askOmicron(...a),
+  checkOmicronLimit: () => true,
+}));
+vi.mock('@/features/omicron/services/voice', () => ({
+  speakOmicron: vi.fn(() => Promise.resolve()),
+  stopOmicron: vi.fn(),
+  isOmicronSpeaking: () => false,
 }));
 vi.mock('@/infrastructure/voice/recognition', () => ({
   isSpeechAvailable: () => false,

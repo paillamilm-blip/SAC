@@ -3,9 +3,8 @@
 // Las acciones que propone NUNCA se ejecutan solas: aparecen como tarjeta y tú confirmas.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { checkOmicronLimit } from '@/features/omicron/services/brain';
-import { askOmicron } from '@/features/omicron/services/brain';
-import { speakOmicron, stopOmicron, isOmicronSpeaking } from '@/features/omicron/services/voice';
+import { askOmicron, checkOmicronLimit } from '@/features/omicron/services/brain';
+import { speakOmicron, stopOmicron } from '@/features/omicron/services/voice';
 import { isSpeechAvailable, startSpeechRecognition, type SpeechHandle } from '@/infrastructure/voice/recognition';
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis } from '../brecha/services/repositorio';
@@ -40,8 +39,8 @@ export interface ChatPanelProps {
   iaDisponible: boolean;
   abierto: boolean;
   onCerrar: () => void;
-  /** La pantalla ejecuta la acción ya confirmada por la persona. */
-  onEjecutar: (accion: Accion) => void;
+  /** La pantalla ejecuta la acción ya confirmada por la persona. Devuelve false si no pudo hacerla. */
+  onEjecutar: (accion: Accion) => boolean | void;
 }
 
 export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto, onCerrar, onEjecutar }: ChatPanelProps) {
@@ -65,6 +64,8 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
   }, [db]);
 
   const hayVoz = isSpeechAvailable();
+  // La voz del asistente es audio (proxy-tts); sin reproductor de audio no hay forma de leer en voz alta.
+  const puedeHablar = typeof window !== 'undefined' && typeof window.Audio !== 'undefined';
   const estado = useMemo(() => ({ db, ahora: new Date().toISOString() }), [db]);
 
   const nuevoId = () => `m${Date.now().toString(36)}${(contador.current++).toString(36)}`;
@@ -101,9 +102,9 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
     const previo = ajustes.guardarHistorial && a ? cargarHistorial(a, usuarioId) : [];
     if (previo.length > 0) {
       // Marcar acciones propuestas como caducadas
-      const historialMarcado = previo.map((m) => {
+      const historialMarcado: Mensaje[] = previo.map((m) => {
         if (m.accion && m.accion.estado === 'propuesta') {
-          return { ...m, accion: { ...m.accion, estado: 'caducada', porQue: 'Esta propuesta ya no está vigente' } };
+          return { ...m, accion: { ...m.accion, estado: 'caducada' as const, porQue: 'Esta propuesta ya no está vigente' } };
         }
         return m;
       });
@@ -264,15 +265,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
   function resolverAccion(id: string, confirmar: boolean) {
     const m = mensajes.find((x) => x.id === id);
     if (!m?.accion || m.accion.estado !== 'propuesta') return;
-    
-    // Si la acción ya es caducada, no ejecutar
-    if (m.accion.estado === 'caducada') {
-      setMensajes((prev) =>
-        prev.map((x) => (x.id === id && x.accion ? { ...x, accion: { ...x.accion, estado: 'cancelada' } } : x)),
-      );
-      return;
-    }
-    
+
     if (!confirmar) {
       // Cancelar acción
       setMensajes((prev) =>
@@ -281,19 +274,19 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
       return;
     }
     
-    // Ejecutar acción y verificar resultado
-    const exito = onEjecutar(m.accion.accion);
+    // Ejecutar y comprobar el resultado: solo `false` significa que no se pudo hacer.
+    const resultado = onEjecutar(m.accion.accion);
     setMensajes((prev) =>
       prev.map((x) => {
-        if (x.id === id && x.accion) {
-          if (exito) {
-            return { ...x, accion: { ...x.accion, estado: 'hecha' } };
-          } else {
-            // La acción no se ejecutó porque la brecha ya no está reconocida como real
-            return { ...x, accion: { ...x.accion, estado: 'caducada', porQue: 'No pude hacerlo: la brecha ya no está reconocida como real.' } };
-          }
+        if (x.id !== id || !x.accion) return x;
+        if (resultado === false) {
+          // La brecha ya no está reconocida como real, así que no se cambió nada.
+          return {
+            ...x,
+            accion: { ...x.accion, estado: 'caducada' as const, porQue: 'No pude hacerlo: la brecha ya no está reconocida como real.' },
+          };
         }
-        return x;
+        return { ...x, accion: { ...x.accion, estado: 'hecha' as const } };
       }),
     );
   }
@@ -442,7 +435,9 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
                     </button>
                   </div>
                 ) : (
-                  <p className="u-accion-estado">{m.accion.estado === 'hecha' ? 'Listo.' : 'Lo dejamos para después.'}</p>
+                  <p className="u-accion-estado">
+                    {m.accion.estado === 'hecha' ? 'Listo.' : m.accion.estado === 'caducada' ? 'Ya no se puede hacer.' : 'Lo dejamos para después.'}
+                  </p>
                 )}
               </div>
             )}

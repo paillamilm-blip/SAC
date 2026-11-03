@@ -13,12 +13,14 @@ vi.mock('@/features/auth/components/AuthOverlay', () => ({
 }));
 // useUserColor arrastra ColorPicker -> spatialAudio, que usa matchMedia (no existe en jsdom).
 vi.mock('@/shared/hooks/useUserColor', () => ({ useUserColor: () => '#7dd3fc' }));
-vi.mock('@/features/omicron/services/brain', () => ({ askOmicron: vi.fn() }));
-vi.mock('@/infrastructure/voice/engine', () => ({
-  speak: vi.fn(),
-  stopSpeaking: vi.fn(),
-  isSpeechSupported: () => false,
+vi.mock('@/features/omicron/services/brain', () => ({ askOmicron: vi.fn(), checkOmicronLimit: () => true }));
+vi.mock('@/features/omicron/services/voice', () => ({
+  speakOmicron: vi.fn(() => Promise.resolve()),
+  stopOmicron: vi.fn(),
+  isOmicronSpeaking: () => false,
 }));
+// La racha diaria llama a Supabase: en pruebas no hay red.
+vi.mock('../hooks/useOmicronStats', () => ({ useOmicronStats: () => {} }));
 vi.mock('@/infrastructure/voice/recognition', () => ({
   isSpeechAvailable: () => false,
   startSpeechRecognition: vi.fn(() => null),

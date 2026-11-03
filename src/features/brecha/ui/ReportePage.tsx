@@ -62,7 +62,7 @@ export default function ReportePage({
           pestanaInicial={pestana}
           brechaInicialId={brechaId}
           onPestana={(p) => {
-            const href = hrefReporte(analisisId, p, brechaId);
+            const href = hrefReporte(analisisId, p, brechaId ?? undefined);
             window.history.replaceState(null, '', href);
             onIr(href);
           }}

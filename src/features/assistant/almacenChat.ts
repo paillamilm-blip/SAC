@@ -67,8 +67,10 @@ function esMensaje(m: unknown): m is Mensaje {
   if (typeof x.id !== 'string' || typeof x.texto !== 'string' || (x.rol !== 'yo' && x.rol !== 'asistente')) return false;
   // Validar accion si existe
   if (x.accion) {
-    const a = x.accion as Partial<Accion>;
-    if (!a.accion || !a.etiqueta || !a.porQue || (a.estado !== 'propuesta' && a.estado !== 'hecha' && a.estado !== 'cancelada' && a.estado !== 'caducada')) return false;
+    const a = x.accion as Partial<NonNullable<Mensaje['accion']>>;
+    const estados: readonly EstadoAccion[] = ['propuesta', 'hecha', 'cancelada', 'caducada'];
+    const accionValida = typeof a.accion === 'object' && a.accion !== null && typeof (a.accion as { tipo?: unknown }).tipo === 'string';
+    if (!accionValida || typeof a.etiqueta !== 'string' || typeof a.porQue !== 'string' || !a.estado || !estados.includes(a.estado)) return false;
   }
   // Validar fuentes si existen
   if (x.fuentes && !Array.isArray(x.fuentes)) return false;

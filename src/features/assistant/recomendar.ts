@@ -8,12 +8,13 @@
 //   · 'muestra'    → es una muestra fija (no sale del PDF, TAREA-01)
 //   · 'probado'    → lo respalda un examen aprobado (reservado: aún no existe, TAREA-37)
 //   · 'estimacion' → consejo del asistente sin respaldo en un dato propio
+//   · 'sistema'    → aviso del propio asistente (límite, micrófono); no afirma nada sobre la persona
 
 import type { Analisis, Brecha } from '../brecha/domain/types';
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
 
-export type Origen = 'analisis' | 'muestra' | 'probado' | 'estimacion';
+export type Origen = 'analisis' | 'muestra' | 'probado' | 'estimacion' | 'sistema';
 
 export type Accion =
   | { tipo: 'escanear' }

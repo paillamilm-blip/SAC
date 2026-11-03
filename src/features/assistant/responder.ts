@@ -29,6 +29,7 @@ export const ETIQUETA_ORIGEN: Record<Origen, string> = {
   probado: 'Probado',
   muestra: 'Muestra de ejemplo',
   estimacion: 'Estimación',
+  sistema: 'Aviso del asistente',
 };
 
 export type Intencion =
