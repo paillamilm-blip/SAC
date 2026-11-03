@@ -109,27 +109,22 @@ async function recorrido(browser, nombre, viewport) {
   await ctx.close();
 }
 
-async function appAnterior(browser) {
-  // La raíz abre el producto único; la app de siempre vive en /anterior y no debe romperse.
+async function todoAbreElProducto(browser) {
+  // Es un solo producto: la raíz, /anterior y los enlaces viejos con parámetros terminan en /u.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-
-  const raiz = await ctx.newPage();
-  await raiz.goto(`${BASE}/`, { waitUntil: 'load' });
-  await raiz.waitForSelector('.u-app', { timeout: 15_000 }).catch(() => {});
-  if ((await raiz.locator('.u-app').count()) && new URL(raiz.url()).pathname === '/u') ok('la raíz / abre el producto único (/u)');
-  else falla('la raíz / no abrió el producto único');
-  await raiz.close();
-
-  const page = await ctx.newPage();
-  const errores = [];
-  page.on('pageerror', (e) => errores.push(String(e)));
-  await page.goto(`${BASE}/anterior`, { waitUntil: 'load' });
-  await page.waitForTimeout(2500);
-  await page.screenshot({ path: `${SALIDA}/anterior-raiz.png` });
-  const hayUApp = await page.locator('.u-app').count();
-  if (hayUApp) falla('/anterior muestra el producto único: debería mostrar la app de siempre');
-  else ok('/anterior sigue mostrando la app de siempre (sin .u-app)');
-  if (errores.length) console.log('(aviso) errores en /anterior:', errores.slice(0, 2).join(' | '));
+  for (const entrada of ['/', '/anterior', '/?tab=wallet', '/?source=pwa']) {
+    const page = await ctx.newPage();
+    const errores = [];
+    page.on('pageerror', (e) => errores.push(String(e)));
+    await page.goto(`${BASE}${entrada}`, { waitUntil: 'load' });
+    await page.waitForSelector('.u-app', { timeout: 15_000 }).catch(() => {});
+    const destino = new URL(page.url()).pathname;
+    if ((await page.locator('.u-app').count()) && destino === '/u') ok(`${entrada} abre el producto único (/u)`);
+    else falla(`${entrada} no abrió el producto único (terminó en ${destino})`);
+    if (await page.getByText('Versión anterior').count()) falla(`${entrada}: aparece un enlace a la «versión anterior»`);
+    if (errores.length) falla(`${entrada}: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
+    await page.close();
+  }
   await ctx.close();
 }
 
@@ -137,7 +132,7 @@ const browser = await chromium.launch();
 try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
-  await appAnterior(browser);
+  await todoAbreElProducto(browser);
 } catch (e) {
   falla(`el recorrido se interrumpió: ${e instanceof Error ? e.message : e}`);
   const p = browser.contexts()[0]?.pages()[0];
