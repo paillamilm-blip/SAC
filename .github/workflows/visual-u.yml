@@ -25,6 +25,8 @@ jobs:
       # Valores ficticios (no son secretos): el cliente de Supabase solo necesita existir al importarse.
       VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      # El recorrido usa la muestra fija: en CI no hay IA ni un CV de verdad.
+      VITE_BRECHA_ANALISIS: demostracion
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

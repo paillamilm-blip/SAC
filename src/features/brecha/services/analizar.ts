@@ -1,6 +1,6 @@
-// Proveedores de análisis de CV. Hoy solo existe el de DEMOSTRACIÓN.
-// El proveedor real (Edge Function `brecha-analizar` + Gemini) es la TAREA-32 y
-// necesita desplegarse en Supabase con una clave de IA: no se puede activar desde aquí.
+// Contrato de los proveedores de análisis de CV y el proveedor de DEMOSTRACIÓN (muestra fija).
+// El proveedor real (lee el PDF en el navegador y usa la IA de Ómicrom) está en analisisIA.ts;
+// proveedor.ts decide cuál se usa.
 //
 // El avance se informa con EVENTOS que el proveedor emite cuando ocurren, nunca con
 // pausas fijas de la interfaz (PRODUCT.md, principio 4: la interfaz no afirma más que el dato).
@@ -64,19 +64,17 @@ export function crearProveedorDemostracion(opciones: { esperar?: Esperar; pausaM
   };
 }
 
-export const proveedorActivo: ProveedorAnalisis = crearProveedorDemostracion();
-
 /** Texto de cada hito. Cuando el proveedor es una demostración, no se afirma que se envió nada. */
 export function textoHito(evento: EventoAnalisis, datos: { kb: string; totalBrechas: number | null; simulado: boolean }): string {
   switch (evento) {
     case 'recibido':
       return `PDF recibido (${datos.kb})`;
     case 'enviado':
-      return datos.simulado ? 'Preparado · nada sale de tu equipo' : 'Enviado al análisis';
+      return datos.simulado ? 'Preparado · nada sale de tu equipo' : 'Texto de tu CV enviado al análisis con IA';
     case 'leyendo':
       return datos.simulado
         ? 'Armando el análisis de muestra'
-        : 'Leyendo el documento, armando tu perfil de referencia y comparando';
+        : 'Comparando tu CV con lo que se espera de tu rol';
     case 'listo':
       return `${datos.totalBrechas ?? '…'} brechas registradas en tu mapa`;
   }

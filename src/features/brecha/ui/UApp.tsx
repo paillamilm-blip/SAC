@@ -13,7 +13,7 @@ import { useUserColor } from '@/shared/hooks/useUserColor';
 import type { ResultadoSubida } from '../components/SubirCv';
 import { useBrecha } from '../hooks/useBrecha';
 import { useOmicronStats } from '../hooks/useOmicronStats';
-import { proveedorActivo } from '../services/analizar';
+import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import ReportePage from './ReportePage';
 import { BASE, hrefReporte, useRuta } from './ruta';

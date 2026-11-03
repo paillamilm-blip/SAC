@@ -105,7 +105,7 @@ export default function SubirCv({
             ? `${peso(archivo.size)} · listo para analizar`
             : proveedor.simulado
               ? 'Solo PDF, hasta 15 MB. En esta demostración el archivo no sale de tu equipo.'
-              : 'Solo PDF, hasta 15 MB.'}
+              : 'Solo PDF con texto, hasta 15 MB. Tu PDF se lee en tu equipo; a la IA solo viaja su texto.'}
         </span>
         <input
           ref={inputRef}
