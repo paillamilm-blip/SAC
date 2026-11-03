@@ -16,8 +16,9 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 - SAC tiene el PR #1 abierto (`feat/orbe-armonico-consistencia`), ajeno al trabajo de `/u`.
 
 ## Rutas
-- `/` redirige a `/u` (el producto). `/u/reporte/:id` es el reporte.
-- `/anterior` es la app de siempre. Sus enlaces con parámetros (`/?tab=…`, perfiles compartidos) siguen en la raíz.
+- Es **un solo producto**. Cualquier dirección que no sea `/u` (la raíz, `/anterior`, enlaces viejos como `/?tab=…`) se reemplaza por `/u`, conservando `?query` y `#hash`. `/u/reporte/:id` es el reporte.
+- `?verificar=<token>` (credencial pública) se atiende antes de decidir la ruta. Los perfiles públicos `?perfil=` ya no existen.
+- La app anterior (orbe 3D, Academia, Red Viva, Bóveda, `AppShell`) **se retiró el 3-nov-2026** (PR #8, #9 y el de borrado). Recuperable en el historial de git.
 - Elección de ruta: `src/App.tsx` y `src/features/brecha/ui/ruta.ts`.
 
 ## Qué funciona (verificado por CI y, desde el 3-nov-2026, también en vivo)
@@ -42,7 +43,7 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 2. Guardar en Supabase (tablas `brecha_*` con RLS) en vez de `localStorage`.
 3. Mapa: habilidades de Ómicrom con porcentaje como nodos sólidos y brechas como nodos huecos. **Acordar el diseño antes de tocar `MapaCapacidades`.**
 4. «Dominar» con examen real (`simulador-universal`, `register_exam_success`) y credencial verificable. Hoy «dominada» es autodeclarada.
-5. Retirar la interfaz vieja, cabeceras CSP (probarlas con la app viva: PDF.js viene de cdnjs, además voz y Supabase), accesibilidad AA, actualización del service worker dentro de `/u`.
+5. ~~Retirar la interfaz vieja~~ (hecho). Quedan huérfanos fuera de las 4 features (ver `docs/plan-de-accion.md` §3.5). Cabeceras CSP (probarlas con la app viva: PDF.js viene de cdnjs, además voz y Supabase), accesibilidad AA, actualización del service worker dentro de `/u`.
 6. Actualizar `POLITICA_PRIVACIDAD.md`: el texto del CV pasa por Gemini u OpenRouter.
 
 ## Decisiones abiertas (preguntar, no suponer)

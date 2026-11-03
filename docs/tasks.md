@@ -457,10 +457,10 @@ FASE 5  35,36 → 40 (a11y) · 35 → 41 (movimiento) · 35,36 → 42 (rendimien
 - **Archivos afectados:** `src/features/gemelo/components/**`, `src/features/academia/components/**`, `src/features/redviva/components/**`, `src/features/omicron/components/**` salvo lo que se decida conservar (§3.4 de `producto-unico.md`); `src/App.tsx` (modificar)
 - **Criterio de aceptación binario:** `npm run typecheck && npm run lint && npm run test && npm run build && node scripts/check-layers.mjs` termina con código 0, y `node scripts/check-layers.mjs --rule no-orphans` no reporta módulos huérfanos nuevos.
 - **Modelo asignado:** Qwen Flash
-- **Estado:** Bloqueada
+- **Estado:** Hecha el 3-nov-2026 (PR #8, #9 y el de borrado); se adelantó a TAREA-37 porque no había usuarios en la app vieja. Ver `docs/plan-de-accion.md` §3.5
 - **Registro temporal:**
-  - Fecha y hora de inicio: —
-  - Fecha y hora de finalización: —
+  - Fecha y hora de inicio: 2026-11-03
+  - Fecha y hora de finalización: 2026-11-03
 - **Incidencias o notas:** Se retiran ≈ 11 500 líneas de UI (44 % de las 26 227 de producción). No se toca backend, migraciones ni datos. Queda recuperable en el historial de git. Un retiro por commit. Esperar a que el ciclo completo funcione (TAREA-37) y a la decisión de §3.4. Depende de TAREA-37.
 
 ### TAREA-39: Prueba de humo del ciclo del producto único

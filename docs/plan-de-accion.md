@@ -24,10 +24,10 @@ Este plan sale de leer el código y de lo que se probó en vivo el 3-nov-2026. L
 
 | Ruta | Pantalla | Qué hace |
 |---|---|---|
-| `/` | Redirige a `/u` | Salvo enlaces con parámetros de la app anterior (`/?tab=…`, perfiles compartidos) |
+| `/` | Redirige a `/u` | También cualquier otra dirección (`/anterior`, `/?tab=…`); se conservan `?query` y `#hash` |
 | `/u` | Inicio | Subir el CV, historial de análisis, resumen de avance |
 | `/u/reporte/:id` | Reporte | Tres pestañas: `mapa`, `brechas`, `diagnostico`. La URL admite `?tab=` y `?brecha=` |
-| `/anterior` | App de siempre | Sigue disponible mientras no se retire |
+| `?verificar=<token>` | Credencial pública | Se atiende antes de decidir la ruta; no requiere cuenta |
 
 El enrutado vive en `src/App.tsx` y `src/features/brecha/ui/ruta.ts`.
 
@@ -116,10 +116,28 @@ Examen real para «Dominar» (TAREA-37) y credencial verificable (paso 6).
 
 - Cabeceras de seguridad: CSP primero en modo «solo reporte», después bloqueando. PDF.js viene de cdnjs; además hay voz y Supabase. Probar con la app viva.
 - Accesibilidad AA.
-- Retirar la interfaz anterior (`/anterior`).
+- ~~Retirar la interfaz anterior~~ **Hecho el 3-nov-2026**, ver §3.5.
 - Actualización del service worker dentro de `/u`.
 
 ---
+
+### 3.5 Retiro de la app anterior (hecho el 3-nov-2026)
+
+Es un solo producto y no había usuarios en la app vieja. Se hizo en pasos, cada uno con CI en verde antes del siguiente:
+
+| Paso | Qué | PR |
+|---|---|---|
+| 1 | Mover a `/u` lo que solo hacía la app vieja: recuperar contraseña (`PASSWORD_RECOVERY`) e instalar la PWA; quitar «Versión anterior» | #8 |
+| 2 | Todo abre `/u`; se elimina `AppShell`; el recorrido visual de CI comprueba `/`, `/anterior`, `/?tab=wallet` y `/?source=pwa` | #9 |
+| 3 | Borrar el código sin uso de `omicron`, `gemelo`, `academia` y `redviva`: 70 archivos (≈ 15 600 líneas con sus pruebas) | este PR |
+
+**Se conserva** (lo usa `/u`): `gemelo/services/{cvExtract,cvAnalyzer,memory,reputation}` y `VerifyCredential`; `omicron/services/{brain,voice,emotion,tools}`; y, para el examen futuro, `redviva/services/examenSkill`, `redviva/hooks/useProbarHabilidad` y la prueba de `examenSkill`.
+
+**Se pierde a propósito:** orbe 3D, Academia, Red Viva, Bóveda, perfiles públicos `?perfil=`, red en vivo y audio espacial. El backend y los datos de Supabase no se tocaron.
+
+**Pendiente de limpieza (fuera de las 4 features, hoy huérfano):** `src/shared/motion/*`, varios `shared/components`, `hooks/useGemeloActivation` y otros, `infrastructure/ai/gemini.ts`, `infrastructure/pwa/push.ts` y `pages/TerminosServicio.tsx`. No se borraron: `TerminosServicio` es texto legal que `/u` debe enlazar y `push.ts` es la base de las notificaciones. También quedan `e2e/omicron.e2e.ts` (prueba la app vieja y no corre en CI) y dependencias de npm sin uso (por ejemplo las del orbe 3D), que exigen regenerar `package-lock.json` con `npm install`.
+
+**Examen:** `UniversalSimulator` y la pantalla de Red Viva se borraron; el examen para «Dominar» se construye dentro de `/u` sobre `examenSkill` y `useProbarHabilidad`.
 
 ## 4. Riesgos
 
@@ -133,6 +151,6 @@ Examen real para «Dominar» (TAREA-37) y credencial verificable (paso 6).
 
 1. ¿SAC queda público o privado? Hoy es público y contiene documentos de producto.
 2. ¿Hay usuarios reales desde ya, o es una salida de prueba? Si hay usuarios, la Fase 2 sube de prioridad.
-3. Examen: ¿dentro de `/u` o reutilizando el simulador de la app anterior? ¿Qué cuenta como «dominada»?
+3. Examen: se construye dentro de `/u` (el simulador anterior se retiró). ¿Qué cuenta como «dominada»: aprobar, o aprobar con cierta nota?
 4. Qué hacer con la revelación inicial, el pasaporte, la Academia y la reputación visible (`docs/fusion/producto-unico.md` §3.4).
 5. Rediseño del mapa: habilidades con porcentaje como nodos sólidos y brechas como nodos huecos.
