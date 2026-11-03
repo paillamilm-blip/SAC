@@ -35,29 +35,34 @@ const ALLOWED_ORIGIN = Deno.env.get('PUBLIC_SITE_URL') || 'https://sistema-omicr
 
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Dos medidas del 2026-10-24 sobre ESTE proyecto reescriben la estrategia:
-//   1) Las colas de los modelos gratis son independientes: dos requests
-//      concurrentes del mismo CV contestaron a los 23,7 s y 46,0 s. Correr dos
-//      modelos en paralelo rinde más que esperar más en uno solo.
-//   2) Nemotron es un modelo híbrido de razonamiento: 45-90 s para un JSON de
-//      ~1200 tokens, y el "thinking" aparece filtrado dentro de `content` (por
-//      eso a veces el cliente no encontraba el JSON). Apagar el razonamiento
-//      es la única palanca gratis que ataca la causa, no la cola.
-// Si `reasoning` no existiera en OpenRouter, un campo extra se ignora y la
-// ladder secuencial de abajo sigue siendo el piso probado.
+// Estado real del campo gratis de OpenRouter, medido 2026-11-03 con el prompt
+// del CV en vivo:
+//   · Murieron en las últimas 24 h (404 "unavailable for free"): nemotron-3-
+//     super-120b, minimax-m3, glm-5.2. gemma x2 dio 429 "temporarily
+//     rate-limited upstream" (transitorio, fallan en <500 ms).
+//   · nemotron-3-ultra: trivial en 1,8 s, pero 3/3 sobre la ventana de 35 s
+//     con el prompt del CV.
+//   · nemotron-3.5-lightning (nuevo): devolvió el JSON completo del CV en
+//     17,1 s y 23,1 s — dos de dos.
+//   → La carrera (respaldo de Gemini) lanza TODOS los vivos en paralelo: las
+//     colas son independientes (medido 2026-10-24) y Promise.any necesita uno
+//     solo; los muertos/limitados caen al instante sin consumir ventana.
 const RACE_MODELS = [
+  'nvidia/nemotron-3.5-lightning:free',       // 2/2 con el CV real (17-23 s)
   'nvidia/nemotron-3-ultra-550b-a55b:free',   // El único que devolvió el CV completo
-  'nvidia/nemotron-3-super-120b-a12b:free',   // Mismo proveedor, más chico
+  'xingchen-agi/xing4.0-29b-a4b:free',
+  'recursive/flint-v1.0:free',
+  'thinkingmachines/inkling:free',
+  'google/gemma-4-31b-it:free',               // 429 upstream transitorio
+  'google/gemma-4-26b-a4b-it:free',           // 429 upstream transitorio
+  'openrouter/free',                          // enrutador automático del pool gratis
 ];
-const TAIL_MODELS = [
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'minimax/minimax-m3:free',
-  'z-ai/glm-5.2:free',                        // 24,8 s medidos en un trivial: último
-];
+const TAIL_MODELS: string[] = [];
+// FREE_MODELS alimenta la ladder F2 (sin `reasoning`): sigue siendo el seguro
+// probado por si OpenRouter rechazara el campo con 400.
 const FREE_MODELS = [...RACE_MODELS, ...TAIL_MODELS];
 
-const RACE_ABORT_MS = 35000;      // techo de la carrera (los 2 nemotron en paralelo)
+const RACE_ABORT_MS = 35000;      // techo de la carrera (los frees vivos en paralelo)
 const MODEL_ABORT_MS = 10000;     // cada intento del tail
 const GEMINI_ABORT_MS = 20000;    // cada modelo de Gemini (los 503 llegan en <1 s)
 const RACE_FAST_FAIL_MS = 12000;  // si la carrera cayó antes de esto, el tail todavía sirve
@@ -69,7 +74,7 @@ const MIN_USEFUL_ATTEMPT_MS = 4000;
 // Huella de la versión desplegada. Un GET responde estos números en <1s y sin
 // gastar créditos: es la única forma de comprobar que el pegado del dashboard
 // realmente reemplazó la función (los timeouts viejos se cuelan igual).
-const BUILD = '6f-gemini-first';
+const BUILD = '6g-gemini-first-frees-vivos';
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -356,10 +361,9 @@ Deno.serve(async (req) => {
 
         // ── F2: la ladder secuencial PROBADA, solo si la carrera cayó
         //    rápido. Si tardó la ventana entera el problema es la cola:
-        //    repetir contra la misma cola no sirve, y ahí rinde más Gemini.
-        //    Ojo: incluye otra vez los dos nemotron — si el campo `reasoning`
-        //    fuera rechazado (400), este es el único camino que devolvió el
-        //    CV histórico y no se puede perder.
+        //    repetir contra la misma cola no sirve. Corre los mismos modelos
+        //    SIN `reasoning`: si OpenRouter rechazara el campo (400), este es
+        //    el camino que devolvió el CV histórico.
         if (raceElapsed < RACE_FAST_FAIL_MS) {
           const aliveTail = FREE_MODELS.filter(isModelAlive);
           const seqModels = aliveTail.length > 0 ? aliveTail : FREE_MODELS;
