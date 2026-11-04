@@ -4,8 +4,14 @@
 // - Cuando hay una versión nueva "esperando", muestra un aviso "Actualizar".
 // - Al tocar "Actualizar": ordena al SW activarse y recarga una sola vez.
 // Así el usuario nunca queda pegado en una versión vieja ni tiene que borrar caché.
+//
+// IMPORTANTE: la página solo se recarga si la persona PIDIÓ actualizar. En la primera visita el SW se instala,
+// se activa y toma el control (`clients.claim()`), y eso también dispara `controllerchange`: recargar ahí le
+// borraba lo que estuviera haciendo (un CV a medio subir, un texto escrito) a los pocos segundos de entrar.
 
 let registered = false;
+/** true solo después de que la persona tocó «Actualizar». */
+let actualizacionPedida = false;
 
 export function registerPWA(): void {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -35,10 +41,11 @@ export function registerPWA(): void {
       });
     }).catch((err) => console.warn('[Ómicrom] No se pudo registrar el service worker:', err));
 
-    // Tras activar la versión nueva (SKIP_WAITING), recargar una sola vez.
+    // Tras activar la versión nueva (SKIP_WAITING) que la persona pidió, recargar una sola vez.
+    // Sin ese pedido (primera instalación) NO se recarga.
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (reloaded) return;
+      if (!actualizacionPedida || reloaded) return;
       reloaded = true;
       window.location.reload();
     });
@@ -74,6 +81,7 @@ function showUpdateBanner(reg: ServiceWorkerRegistration): void {
   btn.onclick = () => {
     btn.textContent = 'Actualizando…';
     btn.disabled = true;
+    actualizacionPedida = true;
     if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     else window.location.reload();
   };
