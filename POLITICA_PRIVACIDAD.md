@@ -87,7 +87,18 @@ Compartimos datos con terceros que nos ayudan a operar la Plataforma:
 
 Todos estos proveedores están obligados por acuerdos de confidencialidad y solo procesan datos según nuestras instrucciones.
 
-**Dónde se guardan hoy tus análisis del mapa de capacidades (`/u`):** los análisis que generas (el texto procesado de tu CV, tus brechas, tu mapa y tu avance) se guardan **en el almacenamiento local de tu propio navegador** (localStorage), no en nuestros servidores. Viven solo en ese dispositivo y navegador: si borras los datos del navegador o cambias de equipo, pierdes ese historial. El archivo PDF de tu CV **no** se guarda ni se sube a ningún servidor: se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba. Estamos migrando esta persistencia a Supabase (con cifrado y acceso por usuario) para que tu historial ya no dependa del navegador; te avisaremos cuando esté activa.
+**Dónde se guardan tus análisis del mapa de capacidades (`/u`):**
+
+- **En tu dispositivo, siempre:** cada análisis se guarda en el almacenamiento local de tu navegador (localStorage). Si no has iniciado sesión (modo invitado), vive **solo ahí**: si borras los datos del navegador o cambias de equipo, pierdes ese historial.
+- **En tu cuenta, si inicias sesión:** además se guarda una copia en nuestra base de datos (Supabase), para que la encuentres desde otro navegador o equipo. Las reglas de seguridad de la base de datos (seguridad por fila) hacen que, a través de la aplicación, **solo tú puedas leer, modificar o borrar tu copia**. Quienes administran la base de datos tienen acceso técnico a ella.
+- **Qué contiene un análisis:** tu ocupación y nivel, un resumen, tus fortalezas y brechas (que incluyen **frases citadas de tu CV** como evidencia), el nombre y el tamaño del archivo, lo que decidiste sobre cada brecha y los exámenes que aprobaste. **No** contiene el texto completo de tu CV.
+- **Qué NO se guarda:** el archivo PDF de tu CV. Se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba; ese texto no se almacena en nuestros servidores.
+- Si inicias sesión después de haber usado el modo invitado, **te preguntamos** si quieres traer esos análisis a tu cuenta o descartarlos; nunca los movemos sin preguntarte.
+- Si usas la aplicación desde dos dispositivos a la vez y modificas el mismo análisis en ambos, se conserva la versión guardada más recientemente.
+
+**Exámenes:** para evaluar un examen, el servidor envía tus respuestas (a las preguntas, al caso práctico y a la repregunta) al servicio de IA descrito arriba, y **guarda esas respuestas y el resultado** como constancia del examen, asociadas a tu cuenta. El puntaje de las habilidades que apruebas queda registrado en tu perfil.
+
+**Credencial compartible:** si creas un enlace para compartir lo que demostraste, el enlace **contiene** (firmados) tu nombre, tu nombre de usuario, las habilidades que aprobaste, tu mejor puntaje en cada una y su fecha. **Cualquiera que tenga el enlace puede verlos, sin tener cuenta.** El enlace vence a los 12 meses; **antes de eso no se puede revocar** ni deja de funcionar si borras tu cuenta, porque la verificación se hace con la firma y no consulta tus datos. Compártelo solo con quien quieras que lo vea.
 
 ### 4.3 Autoridades Legales
 
@@ -152,7 +163,7 @@ Corregir datos inexactos o incompletos.
 
 ### 8.3 Eliminación
 
-Solicitar la eliminación de sus datos (sujeto a obligaciones legales de retención).
+Solicitar la eliminación de sus datos (sujeto a obligaciones legales de retención). Al eliminar tu cuenta se borran también, en cascada, tu copia de los análisis en la nube, las constancias de tus exámenes y el registro de tus habilidades aprobadas. Los datos guardados en el navegador de tus dispositivos los controlas tú (puedes borrarlos desde la configuración del navegador). Los enlaces de credencial que ya compartiste siguen siendo válidos hasta su vencimiento (ver sección 4.2).
 
 ### 8.4 Oposición
 

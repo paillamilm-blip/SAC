@@ -102,7 +102,7 @@ Condición para pasar de fase: 1.1 cumplida y 1.3 publicada. Avisar a quienes pr
 
 ### Fase 2: que los datos no se pierdan
 
-**Construida (3-nov-2026), falta aplicar el SQL.** Con sesión iniciada, los análisis se guardan además en la cuenta: tabla `brecha_db` (`supabase/migrations/10012_brecha_db.sql`), **una fila por persona** con todos sus análisis como documento, protegida por RLS (cada quien lee, crea, modifica y borra solo la suya; `anon` sin acceso; el documento debe ser un objeto con `analisis` arreglo y pesar ≤ 2 MB). Se eligió una fila-documento en vez de tablas por análisis y brecha: es lo mismo que ya guarda el navegador, se fusiona sin conversiones y a este volumen no justifica el riesgo extra.
+**Construida y activa (3-nov-2026): el SQL se aplicó y verificó.** Con sesión iniciada, los análisis se guardan además en la cuenta: tabla `brecha_db` (`supabase/migrations/10012_brecha_db.sql`), **una fila por persona** con todos sus análisis como documento, protegida por RLS (cada quien lee, crea, modifica y borra solo la suya; `anon` sin acceso; el documento debe ser un objeto con `analisis` arreglo y pesar ≤ 2 MB). Se eligió una fila-documento en vez de tablas por análisis y brecha: es lo mismo que ya guarda el navegador, se fusiona sin conversiones y a este volumen no justifica el riesgo extra.
 
 **Cómo se comporta** (`hooks/useBrecha.ts`, `services/nube.ts`, `services/repositorio.ts`):
 - Al iniciar sesión **primero lee la cuenta y la fusiona** con lo de este dispositivo (`fusionarDb`: la unión de análisis; en uno presente en ambos manda la copia modificada más recientemente, `actualizadoEn`; en empate, la de la cuenta). Recién después escribe.
@@ -113,7 +113,7 @@ Condición para pasar de fase: 1.1 cumplida y 1.3 publicada. Avisar a quienes pr
 
 **Cómo se probó:** la fusión, el servicio y el hook tienen pruebas con Vitest. El **SQL se prueba en CI contra un Postgres real** (`.github/workflows/sql.yml` + `supabase/tests/brecha_db.test.sql`): lo aplica dos veces y comprueba con personas simuladas que cada una ve y toca solo lo suyo, que no puede crear/modificar/borrar/regalar filas ajenas, que `anon` y una sesión sin identidad no acceden, que el documento se valida y que `updated_at` no se puede falsear.
 
-**Para activarla (lo hace la persona):** pegar `10012_brecha_db.sql` en el SQL Editor de Supabase (no `db push`) y comprobar que el `select` final dé `true | true | 4 | false | true`. **Después** actualizar `POLITICA_PRIVACIDAD.md` (hoy dice que los análisis viven solo en el navegador; no se tocó antes porque habría sido falso).
+**Activación:** la persona pegó `10012_brecha_db.sql` en el SQL Editor y el `select` final dio `true | true | 4 | false | true`. `POLITICA_PRIVACIDAD.md` ya se actualizó. Pendiente: probarlo con dos navegadores.
 
 **Límites conocidos:** dos dispositivos editando el mismo análisis a la vez: gana el último que guardó. La `prueba` de un examen dentro del documento es una copia para mostrar; lo verificable (la credencial) se lee siempre de `omicron_skill_proofs`.
 
