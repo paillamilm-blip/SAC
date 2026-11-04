@@ -13,12 +13,14 @@
 import type { Analisis, Brecha } from '../brecha/domain/types';
 import { estaDominada } from '../brecha/domain/dominio';
 import type { Db } from '../brecha/services/repositorio';
+import { armarPasaporte } from '../brecha/services/pasaporte';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
 
 export type Origen = 'analisis' | 'muestra' | 'probado' | 'estimacion' | 'sistema';
 
 export type Accion =
   | { tipo: 'escanear' }
+  | { tipo: 'abrir_pasaporte' }
   | { tipo: 'abrir_reporte'; analisisId: string; pestana: 'mapa' | 'brechas' | 'diagnostico'; brechaId?: string };
 
 export interface Recomendacion {
@@ -69,7 +71,7 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
       { id: 'mapa', nombre: 'Ver tu mapa', detalle: 'Aparece al escanear', estado: 'pendiente' },
       { id: 'revisar', nombre: 'Revisar tus brechas', detalle: 'Dices cuáles son reales', estado: 'pendiente' },
       { id: 'demostrar', nombre: 'Aprender y demostrar', detalle: 'Cierras una brecha', estado: 'pendiente' },
-      { id: 'compartir', nombre: 'Compartir tu pasaporte', detalle: 'Muestras lo que lograste', estado: 'pendiente' },
+      { id: 'compartir', nombre: 'Compartir tu pasaporte', detalle: 'Se llena con tus pruebas', estado: 'pendiente' },
     ];
   }
 
@@ -78,6 +80,7 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
   const reales = ultimo.brechas.filter((b) => b.veredicto === 'confirmada');
   const dominadas = reales.filter(estaDominada).length;
   const sinRevisar = total - revisadas;
+  const sellos = armarPasaporte(estado.db).sellos.length; // el mismo conteo que muestra el pasaporte
 
   const revisarEstado: EstadoPaso = sinRevisar === 0 ? 'hecho' : revisadas > 0 ? 'parcial' : 'ahora';
   const demostrarEstado: EstadoPaso =
@@ -114,8 +117,8 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
     {
       id: 'compartir',
       nombre: 'Compartir tu pasaporte',
-      detalle: 'Disponible cuando haya pruebas',
-      estado: 'pendiente',
+      detalle: sellos > 0 ? `${sellos} ${sellos === 1 ? 'sello listo' : 'sellos listos'}` : 'Se llena con tus pruebas',
+      estado: sellos > 0 ? 'ahora' : 'pendiente',
     },
   ];
 }

@@ -75,6 +75,12 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(500);
   await auditar(page, `${nombre} · reporte · diagnóstico`);
 
+  // Pasaporte con sellos (por ganar, porque en el recorrido se reconoce una brecha pero no se da el examen).
+  await page.goto(`${BASE}/u/pasaporte`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.u-pasaporte', { timeout: 10_000 });
+  await page.waitForTimeout(500);
+  await auditar(page, `${nombre} · pasaporte`);
+
   // El asistente se despliega solo al llegar al mapa: si ya está abierto, no hay botón que pulsar.
   if ((await page.locator('[role=dialog][aria-label^="Asistente"]').count()) === 0) {
     await page.getByRole('button', { name: 'Abrir el asistente' }).click();

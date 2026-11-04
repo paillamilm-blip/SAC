@@ -17,10 +17,15 @@ import { useBrecha } from '../hooks/useBrecha';
 import { useOmicronStats } from '../hooks/useOmicronStats';
 import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { obtenerAnalisis } from '../services/repositorio';
+import PerfilPanel from '../components/PerfilPanel';
+import { analizarPerfil } from '../services/analisisPerfil';
+import { medirEstandar, resumenCv } from '../services/estandar';
+import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
+import PasaportePage from './PasaportePage';
 import ReportePage from './ReportePage';
-import { BASE, hrefReporte, useRuta } from './ruta';
+import { BASE, HREF_PASAPORTE, hrefReporte, useRuta } from './ruta';
 import '../styles/brecha.css';
 import '../styles/u-app.css';
 
@@ -40,6 +45,9 @@ export default function UApp() {
   const contadorEventos = useRef(0);
   const guiaMapaDada = useRef(false);
   const [pedirAuth, setPedirAuth] = useState(false);
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
+  const botonPerfilRef = useRef<HTMLButtonElement>(null);
+  const perfilSeAbrio = useRef(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
   const botonAsistenteRef = useRef<HTMLButtonElement>(null);
   const chatSeAbrio = useRef(false);
@@ -77,6 +85,12 @@ export default function UApp() {
     else if (chatSeAbrio.current) botonAsistenteRef.current?.focus();
   }, [chatAbierto]);
 
+  // Al cerrar el perfil, el foco vuelve al botón que lo abrió.
+  useEffect(() => {
+    if (perfilAbierto) perfilSeAbrio.current = true;
+    else if (perfilSeAbrio.current) botonPerfilRef.current?.focus();
+  }, [perfilAbierto]);
+
   // Una vez iniciada la sesión, el formulario ya no hace falta.
   useEffect(() => {
     if (authStatus === 'authenticated') setPedirAuth(false);
@@ -102,6 +116,9 @@ export default function UApp() {
         ir(BASE);
         setAperturaEscaneo((n) => n + 1);
         window.setTimeout(() => document.querySelector<HTMLElement>('.u-app .dropzone')?.focus(), 80);
+      } else if (accion.tipo === 'abrir_pasaporte') {
+        setChatAbierto(false);
+        ir(HREF_PASAPORTE);
       } else if (accion.tipo === 'abrir_reporte') {
         setChatAbierto(false);
         ir(hrefReporte(accion.analisisId, accion.pestana, accion.brechaId));
@@ -175,7 +192,7 @@ export default function UApp() {
   // Invitado: sin sesión, o con la carga atascada más de 5s (la carga normal ya salió arriba).
   const esInvitado = authStatus !== 'authenticated';
 
-  const guiaVisible = chatAbierto && ruta.nombre === 'reporte' && ruta.pestana === 'mapa';
+  const guiaVisible = chatAbierto && ruta.nombre === 'reporte';
 
   return (
     <div className="u-app" style={estiloColor} data-guia={guiaVisible ? 'true' : undefined}>
@@ -197,15 +214,21 @@ export default function UApp() {
             Ómicrom
           </a>
           <div className="topbar-right">
-            {esInvitado ? (
+            {esInvitado && (
               <button type="button" className="boton boton-topbar" onClick={() => setPedirAuth(true)}>
                 Iniciar sesión
               </button>
-            ) : (
-              <span className="u-persona" title={nombre ?? undefined}>
-                {(nombre ?? 'Tú').slice(0, 1).toUpperCase()}
-              </span>
             )}
+            <button
+              ref={botonPerfilRef}
+              type="button"
+              className="u-persona u-persona-boton"
+              onClick={() => setPerfilAbierto(true)}
+              aria-haspopup="dialog"
+              aria-label={esInvitado ? 'Abrir mi perfil (invitado)' : `Abrir mi perfil, ${nombre ?? 'tu cuenta'}`}
+            >
+              {esInvitado ? 'T' : (nombre ?? 'Tú').slice(0, 1).toUpperCase()}
+            </button>
           </div>
         </div>
       </header>
@@ -268,6 +291,16 @@ export default function UApp() {
               aperturaEscaneo={aperturaEscaneo}
               sesionIniciada={authStatus === 'authenticated'}
             />
+          ) : ruta.nombre === 'pasaporte' ? (
+            <PasaportePage
+              db={db}
+              nombre={nombre}
+              sesionIniciada={authStatus === 'authenticated'}
+              colorUsuario={color}
+              onIr={ir}
+              onAccion={ejecutar}
+              onPedirSesion={() => setPedirAuth(true)}
+            />
           ) : (
             <ReportePage
               db={db}
@@ -307,8 +340,29 @@ export default function UApp() {
         onCerrar={() => setChatAbierto(false)}
         onEjecutar={ejecutar}
         evento={evento}
-        compacto={ruta.nombre === 'reporte' && ruta.pestana === 'mapa'}
+        compacto={ruta.nombre === 'reporte'}
       />
+
+      {perfilAbierto && (
+        <PerfilPanel
+          nombre={nombre}
+          correo={profile?.email ?? null}
+          esInvitado={esInvitado}
+          metricas={calcularMetricas(db)}
+          estandar={medirEstandar(db)}
+          perfil={analizarPerfil(db)}
+          cv={resumenCv(db)}
+          onCerrar={() => setPerfilAbierto(false)}
+          onVerPasaporte={() => {
+            setPerfilAbierto(false);
+            ir(HREF_PASAPORTE);
+          }}
+          onIniciarSesion={() => {
+            setPerfilAbierto(false);
+            setPedirAuth(true);
+          }}
+        />
+      )}
 
       {pedirAuth && authStatus !== 'authenticated' && <AuthOverlay onClose={() => setPedirAuth(false)} />}
 

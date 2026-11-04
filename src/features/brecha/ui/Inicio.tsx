@@ -8,6 +8,7 @@ import CompartirCredencial from '../components/CompartirCredencial';
 import SubirCv, { type ResultadoSubida } from '../components/SubirCv';
 import type { ProveedorAnalisis } from '../services/analizar';
 import { listarAnalisis, metricas, type Db } from '../services/repositorio';
+import { destinoPaso } from './destinoPaso';
 import { hrefReporte } from './ruta';
 
 function fecha(iso: string) {
@@ -47,6 +48,12 @@ export default function Inicio({
   const primera = recomendar(estado)[0];
   const pasos = pasosDelCiclo(estado);
   const sinAnalisis = historial.length === 0;
+  const ultimo = historial[0];
+
+  const irAlPaso = (id: (typeof pasos)[number]['id']) => {
+    if (!ultimo) return;
+    onAccion(destinoPaso(id, ultimo).accion);
+  };
 
   return (
     <div className="wrap u-inicio">
@@ -89,14 +96,21 @@ export default function Inicio({
             </h2>
             <ol className="u-ciclo">
               {pasos.map((p, i) => (
-                <li key={p.id} className="u-paso" data-estado={p.estado} aria-current={p.estado === 'ahora' ? 'step' : undefined}>
-                  <span className="u-paso-num" aria-hidden="true">
-                    {p.estado === 'hecho' ? '✓' : i + 1}
-                  </span>
-                  <span className="u-paso-texto">
-                    <b>{p.nombre}</b>
-                    <small>{p.progreso ? `${p.detalle} · ${p.progreso}` : p.detalle}</small>
-                  </span>
+                <li key={p.id} className="u-paso" data-estado={p.estado}>
+                  <button
+                    type="button"
+                    className="u-paso-boton"
+                    aria-current={p.estado === 'ahora' ? 'step' : undefined}
+                    onClick={() => irAlPaso(p.id)}
+                  >
+                    <span className="u-paso-num" aria-hidden="true">
+                      {p.estado === 'hecho' ? '✓' : i + 1}
+                    </span>
+                    <span className="u-paso-texto">
+                      <b>{p.nombre}</b>
+                      <small>{p.progreso ? `${p.detalle} · ${p.progreso}` : p.detalle}</small>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ol>

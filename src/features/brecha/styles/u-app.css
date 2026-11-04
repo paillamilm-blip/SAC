@@ -53,6 +53,118 @@
   background: var(--accent);
 }
 
+.u-app .u-persona-boton {
+  appearance: none;
+  border: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  /* 44px de zona de toque con el círculo de 36px */
+  position: relative;
+}
+.u-app .u-persona-boton::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.u-app .u-persona-boton:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.u-app .u-persona-grande {
+  width: 52px;
+  height: 52px;
+  font-size: 20px;
+  flex: none;
+}
+
+.u-app .u-perfil-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 2, 6, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.u-app .u-perfil {
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: grid;
+  /* sin esto la columna crece con el contenido más ancho y el diálogo se desborda hacia los lados */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+.u-app .u-perfil-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.u-app .u-perfil-id {
+  flex: 1;
+  min-width: 0;
+}
+.u-app .u-perfil-id h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+.u-app .u-perfil-id p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.u-app .u-perfil-nota {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.u-app .u-perfil-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+.u-app .u-perfil-metricas dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.u-app .u-perfil-metricas dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+.u-app .u-perfil-metricas dd small {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.u-app .u-perfil-acciones {
+  display: grid;
+  gap: 10px;
+  /* Siempre a la vista: aunque el perfil sea largo y haya que bajar, las acciones no se pierden. */
+  position: sticky;
+  bottom: 0;
+  margin: 0 -18px -18px;
+  padding: 12px 18px 18px;
+  background: var(--surface);
+  border-top: 1px solid var(--line-soft);
+}
+.u-app .u-perfil-acciones .boton {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+
 .u-app .u-banda {
   max-width: 1200px;
   margin: 14px auto 0;
@@ -120,19 +232,42 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 .u-app .u-paso {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
+}
+.u-app .u-paso-boton {
+  appearance: none;
+  width: 100%;
+  min-height: 44px;
   display: flex;
   gap: 10px;
   align-items: flex-start;
   padding: 12px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  border: none;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.u-app .u-paso-boton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .u-app .u-paso:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
 }
 .u-app .u-paso[data-estado='ahora'] {
   border-color: var(--accent);
 }
-.u-app .u-paso[data-estado='pendiente'] {
-  opacity: 0.7;
+.u-app .u-paso[data-estado='pendiente'] .u-paso-boton {
+  opacity: 0.75;
 }
 .u-app .u-paso-num {
   flex: none;
@@ -251,19 +386,28 @@
   }
 }
 
-/* La barra de pestañas (Mapa / Brechas / Diagnóstico) queda libre: el panel guía se apoya encima de ella. */
-.u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  height: min(640px, calc(100dvh - 108px));
+/* Con el reporte abierto el asistente NO tapa nada que se pueda tocar (botones, pestañas, nodos).
+   · Pantallas anchas: se acopla a la derecha y el contenido le cede su lugar.
+   · Pantallas angostas: hoja baja, apoyada sobre la barra de pestañas, y el contenido deja espacio debajo. */
+@media (min-width: 1100px) {
+  .u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    height: min(640px, calc(100dvh - 108px));
+  }
+  .u-app[data-guia='true'] main {
+    padding-right: 450px;
+  }
 }
-@media (max-width: 560px) {
-  /* Guiando sobre el mapa: panel bajo para que los nodos sigan a la vista y se puedan tocar. */
+@media (max-width: 1099px) {
   .u-app .u-chat[data-compacto='true'] {
+    inset: auto 0 0 0;
+    width: 100%;
+    right: 0;
     height: min(40dvh, 340px);
-    border-radius: 18px;
+    border-radius: 18px 18px 0 0;
   }
   .u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
-    height: min(40dvh, 340px);
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
   .u-app[data-guia='true'] main {
     padding-bottom: calc(min(40dvh, 340px) + 72px);
@@ -802,4 +946,319 @@
   font-size: 0.8rem;
   color: var(--dim);
   text-align: right;
+}
+
+/* ── Pasaporte con sellos ──────────────────────────────────────────────────────────────── */
+.u-app .u-pasaporte {
+  display: grid;
+  gap: var(--e4, 16px);
+  max-width: 900px;
+}
+.u-app .u-pas-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.u-app .u-pas-cab h1 {
+  margin: 4px 0 0;
+  font-size: clamp(26px, 6vw, 38px);
+  letter-spacing: -0.02em;
+}
+.u-app .u-pas-ocupacion {
+  margin: 4px 0 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+.u-app .u-pas-cuenta,
+.u-app .u-pas-nota,
+.u-app .u-pas-vacio,
+.u-app .u-pas-estado {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.u-app .u-pas-estado {
+  min-height: 1.5em;
+}
+.u-app .u-pas-nota + .boton,
+.u-app .u-pas-vacio + .boton {
+  margin-top: 12px;
+}
+.u-app .u-pas-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.u-app .u-pas-botones .boton,
+.u-app .u-pasaporte .boton {
+  min-height: 44px;
+}
+
+.u-app .u-sellos {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.u-app .u-sello {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  height: 100%;
+  min-height: 44px;
+  text-align: center;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
+}
+.u-app .u-sello:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .u-app .u-sello:hover {
+    border-color: var(--sello);
+    background: var(--surface);
+  }
+}
+.u-app .u-sello-aro {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1;
+  /* doble aro, como un sello de pasaporte */
+  border: 3px solid var(--sello);
+  box-shadow: 0 0 0 5px var(--surface-2), 0 0 0 6.5px color-mix(in srgb, var(--sello) 45%, transparent);
+}
+.u-app .u-sello-aro b {
+  font-size: 28px;
+}
+.u-app .u-sello-aro small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.u-app .u-sello[data-estado='por-ganar'] .u-sello-aro {
+  border-style: dashed;
+  color: var(--muted);
+  box-shadow: none;
+}
+.u-app .u-sello[data-estado='por-ganar'] {
+  border-style: dashed;
+}
+.u-app .u-sello-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.u-app .u-sello-fecha {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ── Mi perfil: cuánto te falta y tu CV ───────────────────────────────────────────────────── */
+.u-app .u-perfil-estandar {
+  display: grid;
+  gap: 10px;
+}
+.u-app .u-perfil h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.u-app .u-perfil h4 {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.u-app .u-perfil-pct {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.u-app .u-perfil-pct b {
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.u-app .u-perfil-pct span {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.u-app .u-perfil-barra {
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line-soft);
+  gap: 2px;
+}
+.u-app .u-perfil-barra span {
+  flex-basis: 0;
+  min-width: 0;
+}
+.u-app .u-perfil-barra [data-parte='prueba'] {
+  background: var(--ok);
+}
+.u-app .u-perfil-barra [data-parte='reconocida'] {
+  background: var(--accent);
+}
+.u-app .u-perfil-barra [data-parte='sin-revisar'] {
+  background: #4b545f;
+}
+.u-app .u-perfil-leyenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.u-app .u-perfil-leyenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+}
+.u-app .u-perfil-leyenda li::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  background: currentColor;
+}
+.u-app .u-perfil-leyenda li[data-parte='prueba']::before {
+  background: var(--ok);
+}
+.u-app .u-perfil-leyenda li[data-parte='reconocida']::before {
+  background: var(--accent);
+}
+.u-app .u-perfil-leyenda li[data-parte='sin-revisar']::before {
+  background: #4b545f;
+}
+.u-app .u-perfil-leyenda li[data-parte='descartada']::before {
+  background: #4b545f;
+}
+.u-app .u-perfil-leyenda li[data-parte='descartada'] {
+  opacity: 0.7;
+}
+.u-app .u-perfil-leyenda li[data-sev='alta']::before {
+  background: var(--rose, #ff5c7a);
+}
+.u-app .u-perfil-leyenda li[data-sev='media']::before {
+  background: var(--accent);
+}
+.u-app .u-perfil-leyenda li[data-sev='baja']::before {
+  background: var(--muted);
+}
+.u-app .u-perfil-mapa {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.u-app .u-perfil-cats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.u-app .u-perfil-cats li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  min-width: 0;
+}
+.u-app .u-perfil-cat-punto {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: none;
+}
+.u-app .u-perfil-cat-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.u-app .u-perfil-cat-cuenta {
+  flex: none;
+  font-weight: 600;
+}
+.u-app .u-perfil-cat-cuenta small {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+.u-app .u-perfil-cv {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.u-app .u-perfil-cv summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.u-app .u-perfil-cv {
+  min-width: 0;
+}
+.u-app .u-perfil-cv summary {
+  justify-content: space-between;
+  gap: 12px;
+}
+.u-app .u-perfil-cv summary span {
+  flex: none;
+  white-space: nowrap;
+}
+.u-app .u-perfil-cv summary small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12.5px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.u-app .u-perfil-cv summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.u-app .u-perfil-cv-cuerpo {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.u-app .u-perfil-cv-cuerpo p {
+  margin: 0;
+}
+.u-app .u-perfil-fortalezas {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
 }

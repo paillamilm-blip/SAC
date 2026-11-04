@@ -83,6 +83,30 @@ async function recorrido(browser, nombre, viewport) {
     else ok(`${nombre}/${etapa}: sin desborde horizontal`);
   };
 
+  // Ningún botón del reporte puede quedar tapado por otro elemento (p. ej. el asistente desplegado).
+  const tapados = async (etapa) => {
+    const lista = await page.evaluate(() => {
+      const tapadosAqui = [];
+      const candidatos = [...document.querySelectorAll('.u-app main button, .u-app main [role=button], .u-app .pestana-bar [role=tab]')];
+      for (const el of candidatos) {
+        if (el.closest('[aria-hidden=true]') || el.hasAttribute('disabled')) continue;
+        el.scrollIntoView({ block: 'center', behavior: 'instant' });
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;
+        const arriba = document.elementFromPoint(x, y);
+        if (arriba && !el.contains(arriba) && !arriba.contains(el)) {
+          tapadosAqui.push((el.getAttribute('aria-label') || el.textContent || el.className).trim().slice(0, 40));
+        }
+      }
+      return tapadosAqui;
+    });
+    if (lista.length) falla(`${nombre}/${etapa}: botones tapados por otro elemento: ${JSON.stringify(lista)}`);
+    else ok(`${nombre}/${etapa}: todos los botones se pueden tocar`);
+  };
+
   // 1. Inicio vacío
   await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.u-app .dropzone', { timeout: 20_000 });
@@ -101,6 +125,7 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(1200);
   await foto('03-reporte-mapa');
   await desborde('reporte-mapa');
+  await tapados('reporte-mapa');
   ok(`${nombre}: el análisis terminó y abrió el reporte`);
 
   // 3. Revisar una brecha
@@ -108,6 +133,7 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(400);
   await foto('04-reporte-brechas');
   await desborde('reporte-brechas');
+  await tapados('reporte-brechas');
   const esReal = page.getByRole('button', { name: 'Es real' }).first();
   if (await esReal.count()) {
     await esReal.click();
@@ -154,6 +180,55 @@ async function recorrido(browser, nombre, viewport) {
   if (await page.locator('.u-siguiente').count()) ok(`${nombre}: tras recargar se conserva el avance y aparece «Siguiente paso»`);
   else falla(`${nombre}: tras recargar no aparece «Siguiente paso»`);
   await desborde('inicio-con-avance');
+  await tapados('inicio-con-avance');
+
+  // Mi perfil: el avatar abre un diálogo y se cierra con Escape.
+  await page.getByRole('button', { name: /Abrir mi perfil/ }).click();
+  await page.waitForSelector('[role=dialog][aria-label], [role=dialog][aria-labelledby="u-perfil-t"]', { timeout: 5_000 });
+  await foto('09-perfil');
+  // El panel scrollea en vertical: un par de px de diferencia es la barra de scroll, no un desborde real.
+  const sobraPerfil = await page.evaluate(() => {
+    const d = document.querySelector('.u-perfil');
+    return d ? d.scrollWidth - d.clientWidth : -1;
+  });
+  if (sobraPerfil > 2) falla(`${nombre}: el diálogo «Mi perfil» se desborda ${sobraPerfil}px hacia los lados`);
+  else ok(`${nombre}: «Mi perfil» cabe sin desbordarse`);
+  const textoPerfil = (await page.locator('.u-perfil').textContent()) ?? '';
+  const okPerfil = /\d+ %/.test(textoPerfil) && /Tu CV en Ómicrom/.test(textoPerfil) && /Tu mapa mental, en números/.test(textoPerfil);
+  if (okPerfil) ok(`${nombre}: «Mi perfil» muestra cuánto falta, el análisis del mapa y «Tu CV en Ómicrom»`);
+  else falla(`${nombre}: «Mi perfil» no muestra el porcentaje, el análisis del mapa o el CV`);
+  await desborde('perfil');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  if ((await page.locator('#u-perfil-t').count()) === 0) ok(`${nombre}: «Mi perfil» abre y cierra con Escape`);
+  else falla(`${nombre}: «Mi perfil» no se cerró con Escape`);
+
+  // Cada paso de «Tu ciclo» es un botón que lleva a algún lado.
+  const pasos = await page.locator('.u-ciclo .u-paso-boton').count();
+  if (pasos === 5) ok(`${nombre}: los 5 pasos de «Tu ciclo» son botones`);
+  else falla(`${nombre}: «Tu ciclo» tiene ${pasos} botones (se esperaban 5)`);
+  // El paso 5 abre el pasaporte: sin pruebas muestra los sellos por ganar (nunca un botón muerto).
+  await page.locator('.u-ciclo .u-paso-boton').nth(4).click();
+  await page.waitForURL(/\/u\/pasaporte/, { timeout: 5_000 }).catch(() => {});
+  if (/\/u\/pasaporte/.test(page.url())) {
+    await page.waitForSelector('.u-pasaporte', { timeout: 5_000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    await foto('10-pasaporte');
+    await desborde('pasaporte');
+    await tapados('pasaporte');
+    const sellos = await page.locator('.u-sello').count();
+    if (sellos > 0) ok(`${nombre}: el pasaporte muestra ${sellos} sello(s) por ganar y se pueden tocar`);
+    else falla(`${nombre}: el pasaporte no muestra ningún sello por ganar tras reconocer una brecha`);
+    await page.goBack();
+    await page.waitForSelector('.u-ciclo', { timeout: 5_000 });
+  } else {
+    falla(`${nombre}: «Compartir tu pasaporte» no abrió el pasaporte (quedó en ${page.url()})`);
+  }
+
+  await page.locator('.u-ciclo .u-paso-boton').nth(1).click();
+  await page.waitForURL(/\/u\/reporte\//, { timeout: 5_000 }).catch(() => {});
+  if (/\/u\/reporte\//.test(page.url())) ok(`${nombre}: «Ver tu mapa» abre el mapa`);
+  else falla(`${nombre}: «Ver tu mapa» no abrió el mapa (quedó en ${page.url()})`);
 
   if (errores.length) falla(`${nombre}: errores de JavaScript: ${errores.slice(0, 3).join(' | ')}`);
   else ok(`${nombre}: sin errores de JavaScript`);

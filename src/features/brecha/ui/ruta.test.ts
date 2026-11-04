@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esRutaUnificada, hrefReporte, parsearRuta } from './ruta';
+import { esRutaUnificada, HREF_PASAPORTE, hrefReporte, parsearRuta } from './ruta';
 
 describe('ruta del producto único', () => {
   it('reconoce solo /u y sus subrutas', () => {
@@ -12,6 +12,13 @@ describe('ruta del producto único', () => {
   it('/u es el inicio', () => {
     expect(parsearRuta('/u', '')).toEqual({ nombre: 'inicio' });
     expect(parsearRuta('/u/', '')).toEqual({ nombre: 'inicio' });
+  });
+
+  it('/u/pasaporte es el pasaporte', () => {
+    expect(parsearRuta('/u/pasaporte', '')).toEqual({ nombre: 'pasaporte' });
+    expect(parsearRuta('/u/pasaporte/', '')).toEqual({ nombre: 'pasaporte' });
+    expect(parsearRuta(HREF_PASAPORTE, '')).toEqual({ nombre: 'pasaporte' });
+    expect(esRutaUnificada(HREF_PASAPORTE)).toBe(true);
   });
 
   it('lee reporte, pestaña y brecha', () => {
