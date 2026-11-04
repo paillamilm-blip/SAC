@@ -175,7 +175,7 @@ export default function UApp() {
   // Invitado: sin sesión, o con la carga atascada más de 5s (la carga normal ya salió arriba).
   const esInvitado = authStatus !== 'authenticated';
 
-  const guiaVisible = chatAbierto && ruta.nombre === 'reporte' && ruta.pestana === 'mapa';
+  const guiaVisible = chatAbierto && ruta.nombre === 'reporte';
 
   return (
     <div className="u-app" style={estiloColor} data-guia={guiaVisible ? 'true' : undefined}>
@@ -307,7 +307,7 @@ export default function UApp() {
         onCerrar={() => setChatAbierto(false)}
         onEjecutar={ejecutar}
         evento={evento}
-        compacto={ruta.nombre === 'reporte' && ruta.pestana === 'mapa'}
+        compacto={ruta.nombre === 'reporte'}
       />
 
       {pedirAuth && authStatus !== 'authenticated' && <AuthOverlay onClose={() => setPedirAuth(false)} />}

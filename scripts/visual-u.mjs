@@ -83,6 +83,30 @@ async function recorrido(browser, nombre, viewport) {
     else ok(`${nombre}/${etapa}: sin desborde horizontal`);
   };
 
+  // Ningún botón del reporte puede quedar tapado por otro elemento (p. ej. el asistente desplegado).
+  const tapados = async (etapa) => {
+    const lista = await page.evaluate(() => {
+      const tapadosAqui = [];
+      const candidatos = [...document.querySelectorAll('.u-app main button, .u-app main [role=button], .u-app .pestana-bar [role=tab]')];
+      for (const el of candidatos) {
+        if (el.closest('[aria-hidden=true]') || el.hasAttribute('disabled')) continue;
+        el.scrollIntoView({ block: 'center' });
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue;
+        const arriba = document.elementFromPoint(x, y);
+        if (arriba && !el.contains(arriba) && !arriba.contains(el)) {
+          tapadosAqui.push((el.getAttribute('aria-label') || el.textContent || el.className).trim().slice(0, 40));
+        }
+      }
+      return tapadosAqui;
+    });
+    if (lista.length) falla(`${nombre}/${etapa}: botones tapados por otro elemento: ${JSON.stringify(lista)}`);
+    else ok(`${nombre}/${etapa}: todos los botones se pueden tocar`);
+  };
+
   // 1. Inicio vacío
   await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.u-app .dropzone', { timeout: 20_000 });
@@ -101,6 +125,7 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(1200);
   await foto('03-reporte-mapa');
   await desborde('reporte-mapa');
+  await tapados('reporte-mapa');
   ok(`${nombre}: el análisis terminó y abrió el reporte`);
 
   // 3. Revisar una brecha
@@ -108,6 +133,7 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(400);
   await foto('04-reporte-brechas');
   await desborde('reporte-brechas');
+  await tapados('reporte-brechas');
   const esReal = page.getByRole('button', { name: 'Es real' }).first();
   if (await esReal.count()) {
     await esReal.click();
