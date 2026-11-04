@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { estaDominada } from "../domain/dominio";
+import { evidenciaAusente } from "../domain/validar";
 import type { Brecha, BrechaCerrada, CategoriaBrecha } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
@@ -241,6 +242,7 @@ export default function MapaCapacidades({
               style={{ animationDelay: `${nb.delay}ms` }}
               pathLength={1}
               data-apagado={nb.b.veredicto === "rechazada"}
+              data-evidencia={evidenciaAusente(nb.b.evidencia) ? "ausente" : "cita"}
             />
           ))}
         </g>
@@ -323,7 +325,9 @@ export default function MapaCapacidades({
               className={`mapa-nodo mapa-brecha mapa-brecha-${estado}${recienId === b.id ? " pulso" : ""}`}
               style={{ animationDelay: `${nb.delay}ms` }}
             >
-              <title>{`${b.titulo} · ${CATEGORIAS[b.categoria]} · impacto ${b.severidad} · ${estado}`}</title>
+              <title>{`${b.titulo} · ${CATEGORIAS[b.categoria]} · impacto ${b.severidad} · ${
+                evidenciaAusente(b.evidencia) ? "falta en el CV" : "con cita del CV"
+              } · ${estado}`}</title>
               {dominada && <circle cx={p.x} cy={p.y} r={r + 7} className="mapa-anillo" stroke={color} />}
               <circle
                 cx={p.x}
@@ -332,7 +336,7 @@ export default function MapaCapacidades({
                 fill={dominada ? color : confirmada ? `${color}2e` : "#171b21"}
                 stroke={rechazada ? "#454d57" : confirmada || dominada ? color : "#4b545f"}
                 strokeWidth={confirmada || dominada ? 2.4 : 1.6}
-                filter={confirmada || dominada ? "url(#u-brillo)" : undefined}
+                filter={dominada ? "url(#u-brillo)" : undefined}
               />
               {dominada && (
                 <path
@@ -353,7 +357,7 @@ export default function MapaCapacidades({
             <title>{`Cerrada desde el análisis anterior · ${c.titulo} · ${CATEGORIAS[c.categoria]} · ${
               c.motivo === "dominada" ? "la dominaste" : "ya no aparece en este CV"
             }`}</title>
-            <circle cx={p.x} cy={p.y} r={8.5} fill="#0e211a" stroke={COLOR_CERRADA} strokeWidth={2} filter="url(#u-brillo)" />
+            <circle cx={p.x} cy={p.y} r={8.5} fill="#0e211a" stroke={COLOR_CERRADA} strokeWidth={2} />
             <path
               d={`M ${r2(p.x - 3.4)} ${r2(p.y)} l 2.4 2.8 l 4.6 -5.4`}
               fill="none"
@@ -402,6 +406,14 @@ export default function MapaCapacidades({
         <span className="mapa-chip mapa-chip-estado">
           <i className="mapa-punto-estado" data-estado="rechazada" />
           descartada
+        </span>
+        <span className="mapa-chip">
+          <i className="mapa-linea" data-evidencia="cita" />
+          línea gruesa: el CV lo cita
+        </span>
+        <span className="mapa-chip">
+          <i className="mapa-linea" data-evidencia="ausente" />
+          línea fina: falta en el CV
         </span>
         {cerradas.length > 0 && (
           <span className="mapa-chip mapa-chip-estado">
