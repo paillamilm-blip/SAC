@@ -80,7 +80,8 @@ export default function SubirCv({
         data-bloqueado={escaneando}
         role="button"
         tabIndex={0}
-        aria-label="Elegir tu CV en PDF"
+        // Sin aria-label: el nombre accesible sale del texto visible (título y detalle), tal como se ve
+        // (WCAG 2.5.3, la etiqueta debe estar en el nombre).
         onClick={() => !escaneando && inputRef.current?.click()}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !escaneando) {
@@ -107,14 +108,17 @@ export default function SubirCv({
               ? 'Solo PDF, hasta 15 MB. En esta demostración el archivo no sale de tu equipo.'
               : 'Solo PDF con texto, hasta 15 MB. Tu PDF se lee en tu equipo; a la IA solo viaja su texto.'}
         </span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          aria-label="Archivo PDF de tu CV"
-          onChange={(e) => elegir(e.target.files?.[0])}
-        />
       </div>
+      {/* Fuera del botón: un control interactivo dentro de otro no es accesible. Oculto del todo (no entra al orden
+          del teclado ni al lector de pantalla); el botón de arriba es quien lo abre. */}
+      <input
+        ref={inputRef}
+        hidden
+        type="file"
+        accept="application/pdf"
+        aria-label="Archivo PDF de tu CV"
+        onChange={(e) => elegir(e.target.files?.[0])}
+      />
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
         <button type="button" className="boton boton-primario" onClick={analizar} disabled={!archivo || escaneando}>

@@ -735,6 +735,15 @@
   }
 }
 
+/* ── Contraste (WCAG 2.2 AA, criterio 1.4.3) ───────────────────────────────────────────
+   brecha.css es un archivo generado y trae --dim: #6d7885, que da 3.99:1 sobre las tarjetas (--surface) y 4.33:1
+   sobre el fondo (--bg); AA pide 4.5:1 para texto normal. Se corrige aquí, sin tocar el generado:
+   #808b99 da 5.62:1 sobre --bg, 5.19:1 sobre --surface y 4.83:1 sobre --surface-2, y sigue siendo más tenue que
+   --muted (#98a2b0). Lo comprueba scripts/a11y-u.mjs con axe en cada pantalla. */
+.u-app {
+  --dim: #808b99;
+}
+
 /* ── Compartir la credencial ───────────────────────────────────────────────────────── */
 .u-app .u-compartir-texto {
   margin: 0 0 12px;

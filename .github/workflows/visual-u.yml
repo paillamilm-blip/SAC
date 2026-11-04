@@ -14,6 +14,7 @@ on:
       - 'vite.config.*'
       - 'package.json'
       - 'scripts/visual-u.mjs'
+      - 'scripts/a11y-u.mjs'
       - '.github/workflows/visual-u.yml'
   workflow_dispatch:
 
@@ -38,9 +39,9 @@ jobs:
           cache: npm
       - name: Instalar dependencias
         run: npm install
-      - name: Instalar Playwright (solo para este recorrido)
+      - name: Instalar Playwright y axe (solo para este recorrido)
         run: |
-          npm install --no-save playwright
+          npm install --no-save playwright @axe-core/playwright
           npx playwright install --with-deps chromium
       - name: Build
         run: npm run build
@@ -50,10 +51,19 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://localhost:4173/u >/dev/null && break; sleep 1; done
       - name: Recorrido
         run: node scripts/visual-u.mjs
+      - name: Accesibilidad (WCAG 2.2 AA con axe)
+        # Bloquea ante violaciones graves (serious/critical). Corre aunque el recorrido anterior falle:
+        # son mediciones independientes. Es un piso automático: axe detecta ~30-40 % de los problemas.
+        if: ${{ !cancelled() }}
+        env:
+          A11Y_ESTRICTO: '1'
+        run: node scripts/a11y-u.mjs
       - name: Subir capturas
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visual-u
-          path: visual-u/
+          path: |
+            visual-u/
+            a11y-u/
           if-no-files-found: warn

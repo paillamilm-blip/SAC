@@ -19,6 +19,8 @@ export const MIN_CASO = 30;
 export const MIN_DEFENSA = 10;
 export const NOTA_APROBADO = 70;
 
+const ENFOCABLES = 'button, [href], input, textarea, select, summary, [tabindex]:not([tabindex="-1"])';
+
 const EJES: { clave: keyof Resultado['ejes']; nombre: string }[] = [
   { clave: 'ejecucion', nombre: 'Resolver el problema' },
   { clave: 'calidad', nombre: 'Rigor' },
@@ -89,6 +91,43 @@ export default function Examen({
   useEffect(() => {
     dialogoRef.current?.focus();
   }, [fase]);
+
+  // Foco (WCAG 2.4.3): al abrir se recuerda quién lo tenía —el botón «Demostrarlo»— y al cerrar se le devuelve;
+  // mientras está abierto, Tab y Mayús+Tab dan la vuelta dentro de la ventana en vez de escapar a la página de atrás.
+  // Se captura al renderizar, ANTES de cualquier efecto: el efecto de abajo que enfoca la ventana correría primero
+  // y se guardaría a sí misma como «quien tenía el foco».
+  const [previo] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
+  useEffect(() => () => previo?.focus?.(), [previo]);
+  useEffect(() => {
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const caja = dialogoRef.current;
+      if (!caja) return;
+      const foco = Array.from(caja.querySelectorAll<HTMLElement>(ENFOCABLES)).filter((el) => !el.hasAttribute('disabled'));
+      if (foco.length === 0) {
+        e.preventDefault();
+        caja.focus();
+        return;
+      }
+      const primero = foco[0];
+      const ultimo = foco[foco.length - 1];
+      const actual = document.activeElement;
+      if (!caja.contains(actual) || (actual === caja && e.shiftKey)) {
+        e.preventDefault();
+        (e.shiftKey ? ultimo : primero).focus();
+      } else if (e.shiftKey && actual === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && actual === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      }
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, []);
 
   // Mientras el servidor califica no se puede cerrar: el resultado se guardaría allá y aquí se perdería.
   const puedeCerrar = fase !== 'evaluando' && !trabajando;
