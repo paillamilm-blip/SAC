@@ -90,8 +90,11 @@
 .u-app .u-perfil {
   width: min(440px, 100%);
   max-height: calc(100dvh - 32px);
+  overflow-x: hidden;
   overflow-y: auto;
   display: grid;
+  /* sin esto la columna crece con el contenido más ancho y el diálogo se desborda hacia los lados */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: 18px;
   background: var(--surface);
@@ -1162,9 +1165,16 @@
   font-weight: 600;
   cursor: pointer;
 }
+.u-app .u-perfil-cv {
+  min-width: 0;
+}
 .u-app .u-perfil-cv summary {
   justify-content: space-between;
   gap: 12px;
+}
+.u-app .u-perfil-cv summary span {
+  flex: none;
+  white-space: nowrap;
 }
 .u-app .u-perfil-cv summary small {
   color: var(--muted);

@@ -186,6 +186,12 @@ async function recorrido(browser, nombre, viewport) {
   await page.getByRole('button', { name: /Abrir mi perfil/ }).click();
   await page.waitForSelector('[role=dialog][aria-label], [role=dialog][aria-labelledby="u-perfil-t"]', { timeout: 5_000 });
   await foto('09-perfil');
+  const sobraPerfil = await page.evaluate(() => {
+    const d = document.querySelector('#u-perfil-t')?.closest('section');
+    return d ? d.scrollWidth - d.clientWidth : -1;
+  });
+  if (sobraPerfil > 0) falla(`${nombre}: el diálogo «Mi perfil» se desborda ${sobraPerfil}px hacia los lados`);
+  else ok(`${nombre}: «Mi perfil» cabe sin desbordarse`);
   const textoPerfil = await page.locator('#u-perfil-t').locator('xpath=ancestor::section[1]').innerText();
   if (/\d+ %/.test(textoPerfil) && /Tu CV en Ómicrom/.test(textoPerfil)) ok(`${nombre}: «Mi perfil» muestra cuánto falta y «Tu CV en Ómicrom»`);
   else falla(`${nombre}: «Mi perfil» no muestra el porcentaje o el CV`);
