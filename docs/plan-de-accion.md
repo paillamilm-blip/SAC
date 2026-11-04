@@ -110,7 +110,7 @@ Examen real para «Dominar» (TAREA-37) y credencial verificable (paso 6).
 
 - Ya existe en el repo: funciones `simulador-universal`, `examen-ia` y `credential`; `register_exam_success` y la migración `10002` (examinar cualquier habilidad); `redviva/services/examenSkill.ts` y `hooks/useProbarHabilidad.ts`.
 - **Hecho (pendiente de prueba en vivo):** el examen se abre desde cada brecha real con «Demostrarlo», dentro de `/u` (`components/Examen.tsx`, `services/examen.ts`). El servidor genera el reto, califica y da el veredicto; la brecha guarda `prueba { actaId, puntaje, en }` solo si el servidor aprobó y dejó un acta. `estaDominada` (`domain/dominio.ts`) es la única definición de «dominada»; lo que se marcó a mano antes se conserva como «Marcada a mano · sin prueba» y no cuenta. El asistente ya no puede marcar nada: «ya lo aprendí» lleva a la brecha para dar el examen. Los invitados deben iniciar sesión.
-- **Falta:** mostrar lo probado en la credencial (paso 6) y que el asistente lea las pruebas para rotular «Probado».
+- ~~**Falta:**~~ El asistente ya lee las pruebas: «¿qué he demostrado?» lista las habilidades con examen aprobado (origen «Probado», única respuesta que usa esa etiqueta) y los resúmenes dicen «dominadas con prueba». La credencial del paso 6 está construida (ver §3.5).
 - **Decisiones tomadas:** el examen vive dentro de `/u`; «dominada» = veredicto APROBADO del servidor (70 o más de 100); la autodeclaración se eliminó.
 
 ### Fase 4: endurecer

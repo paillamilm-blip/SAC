@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MUESTRA } from '../brecha/services/muestra';
-import { agregarAnalisis, dbVacia, marcarBrecha, type Db } from '../brecha/services/repositorio';
+import { agregarAnalisis, dbVacia, marcarBrecha, registrarPrueba, type Db } from '../brecha/services/repositorio';
 import { detectarIntencion, responder, saludoInicial, sugerencias } from './responder';
 
 const META = { nombreArchivo: 'cv.pdf', tamanio: 1, proveedor: 'demostracion', simulado: true };
@@ -27,6 +27,10 @@ describe('detectarIntencion', () => {
     ['quiero escanear mi cv', 'escanear'],
     ['abre el mapa', 'mapa'],
     ['ya lo aprendí', 'dominar'],
+    ['¿Qué he demostrado?', 'demostrado'],
+    ['mis pruebas', 'demostrado'],
+    ['qué aprobé', 'demostrado'],
+    ['quiero compartir mi credencial', 'demostrado'],
     ['¿Qué puedes hacer?', 'ayuda'],
     ['Hola', 'saludo'],
     ['', 'desconocida'],
@@ -77,7 +81,7 @@ describe('responder', () => {
   it('"cómo voy" usa números con su escala', () => {
     const { db, a } = conAnalisis();
     const d = marcarBrecha(db, a.id, a.brechas[0].id, 'confirmada', T0);
-    expect(responder('cómo voy', estado(d))?.texto).toBe('1/8 reales · 0 dominadas · 100 % de precisión.');
+    expect(responder('cómo voy', estado(d))?.texto).toBe('1/8 reales · 0 dominadas con prueba · 100 % de precisión.');
   });
 
   it('"ya lo aprendí" NO marca nada: manda a demostrarlo con el examen de esa brecha', () => {
@@ -108,7 +112,7 @@ describe('responder', () => {
   it('ninguna respuesta se rotula "Probado" (el asistente todavía no lee la prueba del examen)', () => {
     const { db, a } = conAnalisis();
     const d = marcarBrecha(db, a.id, a.brechas[0].id, 'confirmada', T0);
-    for (const txt of ['hola', 'qué hago ahora', 'qué me falta', 'cómo voy', 'abre el mapa', 'ya lo aprendí', 'ayuda']) {
+    for (const txt of ['hola', 'qué hago ahora', 'qué me falta', 'cómo voy', 'abre el mapa', 'ya lo aprendí', 'ayuda', 'qué he demostrado']) {
       const r = responder(txt, estado(d));
       expect(r?.origen).not.toBe('probado');
       expect(r?.fuentes?.every((f) => f.origen !== 'probado') ?? true).toBe(true);
@@ -128,5 +132,103 @@ describe('saludoInicial y sugerencias', () => {
     for (const s of [...sugerencias(estado(dbVacia())), ...sugerencias(estado(db))]) {
       expect(detectarIntencion(s)).not.toBe('desconocida');
     }
+  });
+});
+
+describe('«¿qué he demostrado?» y la etiqueta «Probado»', () => {
+  const PRUEBA = (puntaje: number, en = '2026-11-03T12:00:00.000Z') => ({ actaId: 'acta-1', puntaje, en });
+
+  function conUnaProbada(puntaje = 82) {
+    const { db, a } = conAnalisis();
+    const b = a.brechas[0];
+    const d = registrarPrueba(marcarBrecha(db, a.id, b.id, 'confirmada', T0), a.id, b.id, PRUEBA(puntaje));
+    return { d, a, b };
+  }
+
+  it('sin ningún examen aprobado NO usa «Probado»: lo dice y lleva a las brechas', () => {
+    const { db, a } = conAnalisis();
+    const r = responder('¿qué he demostrado?', estado(db));
+    expect(r?.origen).toBe('estimacion');
+    expect(r?.fuentes).toBeUndefined();
+    expect(r?.texto).toContain('Todavía no has aprobado ningún examen');
+    expect(r?.accion?.accion).toEqual({ tipo: 'abrir_reporte', analisisId: a.id, pestana: 'brechas' });
+  });
+
+  it('una brecha solo reconocida o «marcada a mano» no cuenta como probada', () => {
+    const { db, a } = conAnalisis();
+    const real = marcarBrecha(db, a.id, a.brechas[0].id, 'confirmada', T0);
+    expect(responder('qué he demostrado', estado(real))?.origen).toBe('estimacion');
+    const amano = {
+      ...real,
+      analisis: real.analisis.map((x) => ({
+        ...x,
+        brechas: x.brechas.map((b, i) => (i === 0 ? { ...b, dominadaEn: T0, prueba: null } : b)),
+      })),
+    };
+    expect(responder('qué he demostrado', estado(amano))?.origen).toBe('estimacion');
+  });
+
+  it('sin análisis lleva a escanear', () => {
+    const r = responder('qué he demostrado', estado(dbVacia()));
+    expect(r?.accion?.accion).toEqual({ tipo: 'escanear' });
+  });
+
+  it('con un examen aprobado: origen «Probado», con el puntaje y escala de cada habilidad', () => {
+    const { d, a, b } = conUnaProbada(82);
+    const r = responder('¿qué he demostrado?', estado(d));
+    expect(r?.origen).toBe('probado');
+    expect(r?.texto).toContain('Has demostrado 1 brecha con un examen aprobado');
+    expect(r?.texto).toContain(`${b.titulo} · 82/100`);
+    expect(r?.fuentes).toEqual([
+      { cita: `«${b.titulo}»: examen aprobado con 82/100`, origen: 'probado', etiqueta: 'Probado' },
+    ]);
+    expect(r?.accion?.accion).toEqual({ tipo: 'abrir_reporte', analisisId: a.id, pestana: 'mapa' });
+  });
+
+  it('«Probado» aparece SOLO aquí: las demás respuestas siguen diciendo de dónde sale el dato', () => {
+    const { d } = conUnaProbada();
+    for (const txt of ['qué me falta', 'cómo voy', 'léeme la primera', 'abre el mapa', 'ya lo aprendí']) {
+      const r = responder(txt, estado(d));
+      expect(r?.origen).not.toBe('probado');
+      expect(r?.fuentes?.every((f) => f.origen !== 'probado') ?? true).toBe(true);
+    }
+  });
+
+  it('la misma habilidad en dos análisis cuenta una sola vez', () => {
+    const { d, a, b } = conUnaProbada(80);
+    const segundo = agregarAnalisis(d, MUESTRA, META, '2026-11-04T10:00:00.000Z', (() => { let n = 100; return () => `z${++n}`; })());
+    const b2 = segundo.analisis.brechas[0];
+    const conDos = registrarPrueba(
+      marcarBrecha(segundo.db, segundo.analisis.id, b2.id, 'confirmada', T0),
+      segundo.analisis.id,
+      b2.id,
+      PRUEBA(90, '2026-11-04T12:00:00.000Z'),
+    );
+    expect(b2.titulo).toBe(b.titulo);
+    const r = responder('qué he demostrado', estado(conDos));
+    expect(r?.texto).toContain('Has demostrado 1 brecha');
+    expect(r?.texto).toContain('90/100'); // la más reciente
+    expect(r?.fuentes).toHaveLength(1);
+    expect(a.id).not.toBe(segundo.analisis.id);
+  });
+
+  it('con más de 5 se muestran 5 y se dice cuántas faltan', () => {
+    const { db, a } = conAnalisis();
+    let d = db;
+    a.brechas.slice(0, 7).forEach((b, i) => {
+      d = registrarPrueba(marcarBrecha(d, a.id, b.id, 'confirmada', T0), a.id, b.id, PRUEBA(70 + i, `2026-11-03T1${i}:00:00.000Z`));
+    });
+    const r = responder('qué he demostrado', estado(d));
+    expect(r?.texto).toContain('Has demostrado 7 brechas');
+    expect(r?.texto).toContain('y 2 más.');
+    expect(r?.fuentes).toHaveLength(5);
+  });
+
+  it('la sugerencia «¿Qué he demostrado?» solo aparece cuando hay algo probado', () => {
+    const { db } = conAnalisis();
+    expect(sugerencias(estado(db))).not.toContain('¿Qué he demostrado?');
+    const { d } = conUnaProbada();
+    expect(sugerencias(estado(d))).toContain('¿Qué he demostrado?');
+    for (const s of sugerencias(estado(d))) expect(detectarIntencion(s)).not.toBe('desconocida');
   });
 });

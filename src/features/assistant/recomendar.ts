@@ -6,7 +6,7 @@
 // Cada recomendación declara su ORIGEN:
 //   · 'analisis'   → sale de datos del análisis de la persona (se muestra la frase)
 //   · 'muestra'    → es una muestra fija (no sale del PDF, TAREA-01)
-//   · 'probado'    → lo respalda un examen aprobado (reservado: aún no existe, TAREA-37)
+//   · 'probado'    → lo respalda un examen aprobado, calificado por el servidor (brecha.prueba)
 //   · 'estimacion' → consejo del asistente sin respaldo en un dato propio
 //   · 'sistema'    → aviso del propio asistente (límite, micrófono); no afirma nada sobre la persona
 
@@ -107,7 +107,7 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
     {
       id: 'demostrar',
       nombre: 'Aprender y demostrar',
-      detalle: reales.length === 0 ? 'Cuando reconozcas una brecha' : `${dominadas}/${reales.length} dominadas`,
+      detalle: reales.length === 0 ? 'Cuando reconozcas una brecha' : `${dominadas}/${reales.length} con prueba`,
       estado: demostrarEstado,
       progreso: demostrarEstado === 'parcial' ? `${dominadas} de ${reales.length}` : undefined,
     },
@@ -219,5 +219,5 @@ export function resumenProgreso(db: Db): string {
   const m = metricas(db);
   if (m.totalAnalisis === 0) return 'Aún no has escaneado tu CV.';
   if (m.revisadas === 0) return `${m.brechas} brechas por revisar.`;
-  return `${m.confirmadas}/${m.brechas} reales · ${m.dominadas} dominadas · ${m.precision} % de precisión.`;
+  return `${m.confirmadas}/${m.brechas} reales · ${m.dominadas} dominadas con prueba · ${m.precision} % de precisión.`;
 }
