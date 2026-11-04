@@ -156,6 +156,7 @@ export default function MapaCapacidades({
   const reconocidas = brechas.filter((b) => b.veredicto === "confirmada").length;
   const dominadas = brechas.filter(estaDominada).length;
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
+  const ausentes = brechas.filter((b) => evidenciaAusente(b.evidencia)).length;
 
   const lineasOcupacion = useMemo(() => {
     const palabras = ocupacion.split(" ");
@@ -200,7 +201,7 @@ export default function MapaCapacidades({
         className="mapa-svg"
         viewBox={movil ? "105 -10 770 780" : `0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Mapa de capacidades de ${ocupacion}: ${brechas.length} brechas detectadas, ${reconocidas} reconocidas, ${dominadas} dominadas y ${rechazadas} descartadas.${
+        aria-label={`Mapa de capacidades de ${ocupacion}: ${brechas.length} brechas detectadas, ${reconocidas} reconocidas, ${dominadas} dominadas y ${rechazadas} descartadas. ${brechas.length - ausentes} con cita del CV y ${ausentes} que faltan en el CV.${
           cerradas.length > 0 ? ` ${cerradas.length} brechas cerradas desde el análisis anterior.` : ""
         }`}
       >
