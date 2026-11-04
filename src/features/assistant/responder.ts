@@ -43,6 +43,7 @@ export type Intencion =
   | 'escanear'
   | 'mapa'
   | 'dominar'
+  | 'demostrado'
   | 'desconocida';
 
 function normalizar(t: string): string {
@@ -56,6 +57,7 @@ function normalizar(t: string): string {
 }
 
 const REGLAS: { intencion: Intencion; patron: RegExp }[] = [
+  { intencion: 'demostrado', patron: /\b(que (he |ya )?(demostrado|demostre|probado|probe|aprobado|aprobe|dominado|domino)|mis (pruebas|examenes|logros)|mi credencial|compartir (lo que|mis))\b/ },
   { intencion: 'dominar', patron: /\b(ya (lo )?(aprendi|domino|logre|termine)|marcala como dominada|la domine|ya la domine)\b/ },
   { intencion: 'escanear', patron: /\b(escane|escanear|subir (mi )?cv|analiza(r)? (mi )?cv|nuevo analisis|actualice (mi )?cv)\b/ },
   { intencion: 'leer_primera', patron: /\b(leeme|lee la primera|primera brecha|cual es la primera|la de mayor impacto)\b/ },
@@ -167,6 +169,52 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
       };
     }
 
+    case 'demostrado': {
+      // Lo único que lleva la etiqueta «Probado»: brechas con un examen aprobado y calificado por el servidor.
+      const probadas = listarAnalisis(estado.db)
+        .flatMap((a) => a.brechas.filter(estaDominada).map((b) => ({ analisisId: a.id, b })))
+        .sort((x, y) => (y.b.prueba?.en ?? '').localeCompare(x.b.prueba?.en ?? ''))
+        // La misma habilidad en dos análisis cuenta una vez (la prueba más reciente).
+        .filter((p, i, todas) => todas.findIndex((q) => q.b.titulo.trim().toLowerCase() === p.b.titulo.trim().toLowerCase()) === i);
+
+      if (probadas.length === 0) {
+        return {
+          texto: ultimo
+            ? 'Todavía no has aprobado ningún examen. Reconoce una brecha como real y pulsa «Demostrarlo»: si apruebas (70 de 100 o más), queda aquí con su puntaje.'
+            : 'Todavía no hay nada que demostrar. Primero escanea tu CV y reconoce tus brechas.',
+          origen: 'estimacion',
+          accion: ultimo
+            ? { accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas' }, etiqueta: 'Ver mis brechas', porQue: 'Revisar tus brechas' }
+            : { accion: { tipo: 'escanear' }, etiqueta: 'Escanear mi CV', porQue: 'Escanear tu CV' },
+        };
+      }
+
+      const MAX = 5;
+      const mostradas = probadas.slice(0, MAX);
+      const dia = new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'short' });
+      const lista = mostradas
+        .map(({ b }, i) => `${i + 1}. ${b.titulo} · ${b.prueba!.puntaje}/100 (${dia.format(new Date(b.prueba!.en))})`)
+        .join('\n');
+      const resto = probadas.length - mostradas.length;
+      return {
+        texto:
+          `Has demostrado ${probadas.length} ${probadas.length === 1 ? 'brecha' : 'brechas'} con un examen aprobado:\n${lista}` +
+          (resto > 0 ? `\ny ${resto} más.` : '') +
+          '\nPuedes compartirlo con un enlace desde el Inicio.',
+        origen: 'probado',
+        fuentes: mostradas.map(({ b }) => ({
+          cita: `«${b.titulo}»: examen aprobado con ${b.prueba!.puntaje}/100`,
+          origen: 'probado' as const,
+          etiqueta: ETIQUETA_ORIGEN.probado,
+        })),
+        accion: {
+          accion: { tipo: 'abrir_reporte', analisisId: mostradas[0].analisisId, pestana: 'mapa' },
+          etiqueta: 'Ver mi mapa',
+          porQue: 'Abrir tu mapa con lo que dominaste',
+        },
+      };
+    }
+
     case 'dominar': {
       if (!ultimo) return { texto: 'Aún no tienes brechas. Escanea tu CV primero.', origen: 'estimacion' };
       const candidata = ultimo.brechas
@@ -206,5 +254,6 @@ export function respuestaNoEntendida(): Respuesta {
 export function sugerencias(estado: Estado): string[] {
   const m = metricas(estado.db);
   if (m.totalAnalisis === 0) return ['Escanear mi CV', '¿Qué puedes hacer?'];
-  return ['¿Qué hago ahora?', '¿Qué me falta?', '¿Cómo voy?'];
+  const base = ['¿Qué hago ahora?', '¿Qué me falta?', '¿Cómo voy?'];
+  return m.dominadas > 0 ? [...base, '¿Qué he demostrado?'] : base;
 }

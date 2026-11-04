@@ -138,6 +138,6 @@ describe('resumenProgreso', () => {
     const { db, analisisId, brechas } = base();
     expect(resumenProgreso(db)).toBe('8 brechas por revisar.');
     const d = marcarBrecha(db, analisisId, brechas[0].id, 'confirmada', T0);
-    expect(resumenProgreso(d)).toBe('1/8 reales · 0 dominadas · 100 % de precisión.');
+    expect(resumenProgreso(d)).toBe('1/8 reales · 0 dominadas con prueba · 100 % de precisión.');
   });
 });
