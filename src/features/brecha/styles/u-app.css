@@ -148,6 +148,13 @@
 .u-app .u-perfil-acciones {
   display: grid;
   gap: 10px;
+  /* Siempre a la vista: aunque el perfil sea largo y haya que bajar, las acciones no se pierden. */
+  position: sticky;
+  bottom: 0;
+  margin: 0 -18px -18px;
+  padding: 12px 18px 18px;
+  background: var(--surface);
+  border-top: 1px solid var(--line-soft);
 }
 .u-app .u-perfil-acciones .boton {
   width: 100%;
@@ -1154,6 +1161,20 @@
   padding: 0 12px;
   font-weight: 600;
   cursor: pointer;
+}
+.u-app .u-perfil-cv summary {
+  justify-content: space-between;
+  gap: 12px;
+}
+.u-app .u-perfil-cv summary small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12.5px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .u-app .u-perfil-cv summary:focus-visible {
   outline: 2px solid var(--accent);

@@ -127,7 +127,10 @@ export default function PerfilPanel({
             </section>
 
             <details className="u-perfil-cv">
-              <summary>Tu CV en Ómicrom</summary>
+              <summary>
+                <span>Tu CV en Ómicrom</span>
+                <small>{cv.ocupacion}</small>
+              </summary>
               <div className="u-perfil-cv-cuerpo">
                 <p className="u-perfil-nota">
                   Esto es lo que leí de tu CV{cv.archivo ? ` («${cv.archivo}»)` : ''} el {fecha(cv.analizadoEn)}. No guardo el PDF,
