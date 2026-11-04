@@ -65,6 +65,7 @@ describe('crearProveedorIA — reintento ante resultado inválido', () => {
     const r = await crearProveedorIA(deps).analizar(archivoFake, (e) => eventos.push(e));
     expect(llamar).toHaveBeenCalledTimes(1);
     expect(r.brechas).toHaveLength(3);
+    expect(r.calidad?.intentos).toBe(1);
     expect(eventos).toEqual(['recibido', 'enviado', 'leyendo', 'listo']);
   });
 
@@ -74,6 +75,7 @@ describe('crearProveedorIA — reintento ante resultado inválido', () => {
     const r = await crearProveedorIA(deps).analizar(archivoFake, (e) => eventos.push(e));
     expect(llamar).toHaveBeenCalledTimes(2);
     expect(r.brechas).toHaveLength(3);
+    expect(r.calidad?.intentos).toBe(2);
     // El segundo intento vuelve a marcar 'enviado' para que la interfaz
     // refleje el trabajo real, no un estado inventado.
     expect(eventos).toEqual(['recibido', 'enviado', 'leyendo', 'enviado', 'leyendo', 'listo']);

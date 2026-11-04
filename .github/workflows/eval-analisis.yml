@@ -1,0 +1,37 @@
+name: Evaluación del análisis de CV
+
+# Pasa los CVs sintéticos de scripts/fixtures/cvs por el prompt, el proxy-ai REAL y la misma validación que la app,
+# y publica los conteos en el resumen del job. De despacho manual: consume créditos de IA y depende del campo gratis.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Sitio del que se leen la URL y la clave pública de Supabase'
+        required: false
+        default: 'https://sac-omi.vercel.app'
+
+permissions:
+  contents: read
+
+jobs:
+  evaluar:
+    name: Evaluar análisis (IA real)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Evaluar
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || 'https://sac-omi.vercel.app' }}
+        run: node --experimental-strip-types scripts/eval-analisis.mjs
+      - name: Subir resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-analisis
+          path: eval-analisis/
+          if-no-files-found: warn

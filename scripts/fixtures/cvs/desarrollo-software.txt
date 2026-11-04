@@ -1,0 +1,20 @@
+CURRICULUM VITAE
+Nombre: Diego Fuentes Molina (persona ficticia)
+Ciudad: Valparaiso, Chile
+
+OCUPACION: Desarrollador de software
+
+EXPERIENCIA LABORAL
+- Desarrollador web, Agencia Pixel (2021-2024)
+  Desarrollo de sitios en JavaScript y React para clientes pequenos. Mantencion de sitios en WordPress.
+  Consumo de APIs REST. Uso de Git para versionar el codigo.
+- Practicante de TI, Municipalidad de Quilpue (2020-2021)
+  Soporte a usuarios y reparacion de computadores.
+
+EDUCACION
+- Ingenieria en Informatica (sin titulo, 7 semestres), Universidad Tecnica Federico Santa Maria
+
+HABILIDADES
+- JavaScript, React, HTML y CSS
+- Git
+- SQL basico

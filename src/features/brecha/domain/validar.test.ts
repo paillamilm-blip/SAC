@@ -163,4 +163,34 @@ describe('validarResultado', () => {
     const r = validarResultado(analisis(TRES_RESPALDADAS, [larga]), TEXTO_CV);
     expect(r.fortalezas).toHaveLength(0);
   });
+  describe('calidad', () => {
+    it('cuenta lo propuesto, lo aceptado y cuántas brechas citan el CV o declaran su ausencia', () => {
+      const r = validarResultado(
+        analisis(
+          [
+            brecha('Ausente en el CV: certificaciones'),
+            brecha('Menciona «soldadura al arco» sin más'),
+            brecha('Solo aparece «mantencion preventiva»'),
+            brecha('El CV dice «operacion de gruas horquilla»'), // cita inventada: se descarta
+          ],
+          ['Experto en «soldadura al arco»', 'Liderazgo de equipos'],
+        ),
+        TEXTO_CV,
+      );
+      expect(r.calidad).toEqual({
+        brechasPropuestas: 4,
+        brechasAceptadas: 3,
+        conCita: 2,
+        ausentes: 1,
+        fortalezasPropuestas: 2,
+        fortalezasAceptadas: 1,
+        intentos: 1,
+      });
+    });
+
+    it('conCita + ausentes siempre suma las aceptadas', () => {
+      const { calidad } = validarResultado(analisis(TRES_RESPALDADAS), TEXTO_CV);
+      expect((calidad?.conCita ?? -1) + (calidad?.ausentes ?? -1)).toBe(calidad?.brechasAceptadas);
+    });
+  });
 });

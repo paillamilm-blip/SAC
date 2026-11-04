@@ -87,6 +87,7 @@ export function agregarAnalisis(
       dominadaEn: null,
       prueba: null,
     })),
+    ...(resultado.calidad ? { calidad: { ...resultado.calidad } } : {}),
   };
   return { db: { ...db, analisis: [...db.analisis, analisis] }, analisis };
 }
