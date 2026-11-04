@@ -8,7 +8,7 @@ import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
 import { InstallPWA } from '@/shared/components/InstallPWA';
-import ChatPanel from '@/features/assistant/ChatPanel';
+import ChatPanel, { type EventoApp } from '@/features/assistant/ChatPanel';
 import type { Accion } from '@/features/assistant/recomendar';
 import { useApp } from '@/store/AppContext';
 import { useUserColor } from '@/shared/hooks/useUserColor';
@@ -16,6 +16,7 @@ import type { ResultadoSubida } from '../components/SubirCv';
 import { useBrecha } from '../hooks/useBrecha';
 import { useOmicronStats } from '../hooks/useOmicronStats';
 import { useRecuperarClave } from '../hooks/useRecuperarClave';
+import { obtenerAnalisis } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import ReportePage from './ReportePage';
@@ -35,6 +36,9 @@ export default function UApp() {
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
   const { db, persistente, estadoNube, agregar, marcar, probar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
   const [chatAbierto, setChatAbierto] = useState(false);
+  const [evento, setEvento] = useState<EventoApp | null>(null);
+  const contadorEventos = useRef(0);
+  const guiaMapaDada = useRef(false);
   const [pedirAuth, setPedirAuth] = useState(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
   const botonAsistenteRef = useRef<HTMLButtonElement>(null);
@@ -107,6 +111,21 @@ export default function UApp() {
     [ir],
   );
 
+  // Al llegar al mapa el asistente se despliega solo, una vez, y enseña qué hacer: tocar un nodo.
+  useEffect(() => {
+    if (ruta.nombre !== 'reporte' || ruta.pestana !== 'mapa' || guiaMapaDada.current) return;
+    if (!obtenerAnalisis(db, ruta.analisisId)) return;
+    guiaMapaDada.current = true;
+    setEvento({ n: ++contadorEventos.current, tipo: 'mapa', analisisId: ruta.analisisId });
+    setChatAbierto(true);
+  }, [ruta, db]);
+
+  // Tocar un nodo del mapa: el asistente se abre (si estaba cerrado) y cuenta ese nodo.
+  const alNodo = useCallback((analisisId: string, brechaId: string) => {
+    setEvento({ n: ++contadorEventos.current, tipo: 'nodo', analisisId, brechaId });
+    setChatAbierto(true);
+  }, []);
+
   const estiloColor = {
     '--accent': color,
     '--accent-soft': `color-mix(in srgb, ${color} 14%, transparent)`,
@@ -156,8 +175,10 @@ export default function UApp() {
   // Invitado: sin sesión, o con la carga atascada más de 5s (la carga normal ya salió arriba).
   const esInvitado = authStatus !== 'authenticated';
 
+  const guiaVisible = chatAbierto && ruta.nombre === 'reporte' && ruta.pestana === 'mapa';
+
   return (
-    <div className="u-app" style={estiloColor}>
+    <div className="u-app" style={estiloColor} data-guia={guiaVisible ? 'true' : undefined}>
       <a className="u-saltar" href="#u-contenido">
         Saltar al contenido
       </a>
@@ -258,6 +279,7 @@ export default function UApp() {
               onProbar={probar}
               sesionIniciada={authStatus === 'authenticated'}
               onPedirSesion={() => setPedirAuth(true)}
+              onNodo={alNodo}
             />
           )}
         </ErrorBoundary>
@@ -284,6 +306,8 @@ export default function UApp() {
         abierto={chatAbierto}
         onCerrar={() => setChatAbierto(false)}
         onEjecutar={ejecutar}
+        evento={evento}
+        compacto={ruta.nombre === 'reporte' && ruta.pestana === 'mapa'}
       />
 
       {pedirAuth && authStatus !== 'authenticated' && <AuthOverlay onClose={() => setPedirAuth(false)} />}

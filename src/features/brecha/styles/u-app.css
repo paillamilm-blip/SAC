@@ -251,6 +251,25 @@
   }
 }
 
+/* La barra de pestañas (Mapa / Brechas / Diagnóstico) queda libre: el panel guía se apoya encima de ella. */
+.u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  height: min(640px, calc(100dvh - 108px));
+}
+@media (max-width: 560px) {
+  /* Guiando sobre el mapa: panel bajo para que los nodos sigan a la vista y se puedan tocar. */
+  .u-app .u-chat[data-compacto='true'] {
+    height: min(40dvh, 340px);
+    border-radius: 18px;
+  }
+  .u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
+    height: min(40dvh, 340px);
+  }
+  .u-app[data-guia='true'] main {
+    padding-bottom: calc(min(40dvh, 340px) + 72px);
+  }
+}
+
 .u-app .u-chat-cab {
   display: flex;
   align-items: center;

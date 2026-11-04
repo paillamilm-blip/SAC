@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { estaDominada } from "../domain/dominio";
 import { evidenciaAusente } from "../domain/validar";
-import type { Brecha, BrechaCerrada, CategoriaBrecha } from "../domain/types";
+import type { Brecha, BrechaCerrada, CalidadAnalisis, CategoriaBrecha } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
 const ORDEN: CategoriaBrecha[] = ["dura", "blanda", "conocimiento", "credencial"];
@@ -15,6 +15,13 @@ const COLOR_CAT: Record<CategoriaBrecha, string> = {
 
 const COLOR_CERRADA = "#3ddc97";
 
+const RADIO_HIT = 28;
+const ETIQUETA_ESTADO = {
+  pendiente: "Detectada",
+  confirmada: "Reconocida",
+  dominada: "Dominada",
+  rechazada: "Descartada",
+} as const;
 const RADIO_CAT = 170;
 const RADIO_BRECHA = 296;
 const RADIO_LOGRO = 352;
@@ -62,13 +69,20 @@ export default function MapaCapacidades({
   brechas,
   recienId,
   cerradas,
+  calidad,
+  onNodo,
 }: {
   ocupacion: string;
   brechas: Brecha[];
   recienId: string | null;
   cerradas: BrechaCerrada[];
+  /** Conteos de la validación del análisis; los análisis antiguos no la traen. */
+  calidad?: CalidadAnalisis;
+  /** Si se da, el detalle de cada nodo lo cuenta el asistente; si no, se muestra bajo el mapa. */
+  onNodo?: (brechaId: string) => void;
 }) {
   const [semilla, setSemilla] = useState(0);
+  const [seleccionId, setSeleccionId] = useState<string | null>(null);
   const [movil, setMovil] = useState(false);
 
   useEffect(() => {
@@ -158,6 +172,18 @@ export default function MapaCapacidades({
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
   const ausentes = brechas.filter((b) => evidenciaAusente(b.evidencia)).length;
 
+  const elegir = (id: string) => {
+    if (onNodo) {
+      setSeleccionId(id);
+      onNodo(id);
+    } else {
+      setSeleccionId((actual) => (actual === id ? null : id));
+    }
+  };
+  const seleccionada = onNodo ? null : (brechas.find((b) => b.id === seleccionId) ?? null);
+  const estadoDe = (b: Brecha) =>
+    b.veredicto === "rechazada" ? "rechazada" : estaDominada(b) ? "dominada" : b.veredicto === "confirmada" ? "confirmada" : "pendiente";
+
   const lineasOcupacion = useMemo(() => {
     const palabras = ocupacion.split(" ");
     const lineas: string[] = [];
@@ -200,7 +226,7 @@ export default function MapaCapacidades({
         key={semilla}
         className="mapa-svg"
         viewBox={movil ? "105 -10 770 780" : `0 0 ${W} ${H}`}
-        role="img"
+        role="group"
         aria-label={`Mapa de capacidades de ${ocupacion}: ${brechas.length} brechas detectadas, ${reconocidas} reconocidas, ${dominadas} dominadas y ${rechazadas} descartadas. ${brechas.length - ausentes} con cita del CV y ${ausentes} que faltan en el CV.${
           cerradas.length > 0 ? ` ${cerradas.length} brechas cerradas desde el análisis anterior.` : ""
         }`}
@@ -246,6 +272,22 @@ export default function MapaCapacidades({
               data-evidencia={evidenciaAusente(nb.b.evidencia) ? "ausente" : "cita"}
             />
           ))}
+        </g>
+
+        {/* Impulsos: un destello que recorre solo las conexiones que la persona reconoció (la señal real). */}
+        <g key={`impulsos-${semilla}`} aria-hidden="true">
+          {modelo.nodosBrecha.map((nb, i) =>
+            nb.b.veredicto === "confirmada" ? (
+              <path
+                key={`im-${nb.b.id}`}
+                d={curva(nb.pCat, nb.p, i)}
+                className="mapa-impulso"
+                stroke={COLOR_CAT[nb.b.categoria]}
+                style={{ animationDelay: `${nb.delay + 800}ms` }}
+                pathLength={1}
+              />
+            ) : null,
+          )}
         </g>
 
         {modelo.camino && (
@@ -325,10 +367,23 @@ export default function MapaCapacidades({
               key={b.id}
               className={`mapa-nodo mapa-brecha mapa-brecha-${estado}${recienId === b.id ? " pulso" : ""}`}
               style={{ animationDelay: `${nb.delay}ms` }}
+              role="button"
+              tabIndex={0}
+              aria-pressed={seleccionId === b.id}
+              aria-label={`${b.titulo}. ${CATEGORIAS[b.categoria]}, impacto ${b.severidad}, ${ETIQUETA_ESTADO[estado].toLowerCase()}. Ver detalle`}
+              onClick={() => elegir(b.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  elegir(b.id);
+                }
+              }}
             >
               <title>{`${b.titulo} · ${CATEGORIAS[b.categoria]} · impacto ${b.severidad} · ${
                 evidenciaAusente(b.evidencia) ? "falta en el CV" : "con cita del CV"
               } · ${estado}`}</title>
+              <circle cx={p.x} cy={p.y} r={RADIO_HIT} className="mapa-hit" />
+              {seleccionId === b.id && <circle cx={p.x} cy={p.y} r={r + 11} className="mapa-seleccion" stroke={color} />}
               {dominada && <circle cx={p.x} cy={p.y} r={r + 7} className="mapa-anillo" stroke={color} />}
               <circle
                 cx={p.x}
@@ -423,6 +478,49 @@ export default function MapaCapacidades({
           </span>
         )}
       </div>
+
+      {seleccionada ? (
+        <div className="mapa-detalle" role="region" aria-label={`Detalle de ${seleccionada.titulo}`}>
+          <div className="mapa-detalle-cab">
+            <span className="mapa-chip">
+              <i style={{ background: COLOR_CAT[seleccionada.categoria] }} />
+              {CATEGORIAS[seleccionada.categoria]}
+            </span>
+            <span className="mapa-detalle-estado" data-estado={estadoDe(seleccionada)}>
+              {ETIQUETA_ESTADO[estadoDe(seleccionada)]} · impacto {seleccionada.severidad}
+            </span>
+            <button className="boton" onClick={() => setSeleccionId(null)}>
+              Cerrar
+            </button>
+          </div>
+          <h3 className="mapa-detalle-titulo">{seleccionada.titulo}</h3>
+          <p className="mapa-detalle-texto">
+            <strong>{evidenciaAusente(seleccionada.evidencia) ? "Lo que falta en tu CV: " : "Lo que dice tu CV: "}</strong>
+            {seleccionada.evidencia.replace(/^ausente en el cv:\s*/i, "")}
+          </p>
+          <p className="mapa-detalle-texto">
+            <strong>Por qué importa: </strong>
+            {seleccionada.porQueImporta}
+          </p>
+        </div>
+      ) : (
+        <p className="mapa-ayuda">
+          {onNodo
+            ? "Toca un nodo (cada círculo del mapa) y el asistente te cuenta qué dice tu CV y por qué importa."
+            : "Toca un nodo (cada círculo del mapa) para ver su evidencia y por qué importa."}
+        </p>
+      )}
+
+      {brechas.length > 0 && (
+        <p className="mapa-calidad">
+          {brechas.length - ausentes} de {brechas.length} {brechas.length === 1 ? "brecha cita" : "brechas citan"} tu CV
+          · {ausentes} {ausentes === 1 ? "señala" : "señalan"} lo que falta
+          {calidad && calidad.brechasPropuestas > calidad.brechasAceptadas
+            ? ` · la IA propuso ${calidad.brechasPropuestas} y ${calidad.brechasAceptadas} superaron la comprobación contra tu CV`
+            : ""}
+          {calidad && calidad.intentos > 1 ? ` · hizo falta ${calidad.intentos} intentos` : ""}
+        </p>
+      )}
 
       <div className="camino-caja">
         <h3 className="card-titulo">El camino que llevas recorrido</h3>

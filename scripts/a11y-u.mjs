@@ -75,7 +75,10 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(500);
   await auditar(page, `${nombre} · reporte · diagnóstico`);
 
-  await page.getByRole('button', { name: 'Abrir el asistente' }).click();
+  // El asistente se despliega solo al llegar al mapa: si ya está abierto, no hay botón que pulsar.
+  if ((await page.locator('[role=dialog][aria-label^="Asistente"]').count()) === 0) {
+    await page.getByRole('button', { name: 'Abrir el asistente' }).click();
+  }
   await page.waitForSelector('[role=dialog][aria-label^="Asistente"]', { timeout: 5_000 });
   await page.getByLabel('Mensaje para el asistente').fill('¿qué me falta?');
   await page.getByLabel('Mensaje para el asistente').press('Enter');

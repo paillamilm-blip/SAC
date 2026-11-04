@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MUESTRA } from '../brecha/services/muestra';
 import { agregarAnalisis, dbVacia, marcarBrecha, registrarPrueba, type Db } from '../brecha/services/repositorio';
-import { detectarIntencion, responder, saludoInicial, sugerencias } from './responder';
+import { describirNodo, detectarIntencion, guiaMapa, responder, saludoInicial, sugerencias } from './responder';
 
 const META = { nombreArchivo: 'cv.pdf', tamanio: 1, proveedor: 'demostracion', simulado: true };
 const T0 = '2026-11-02T10:00:00.000Z';
@@ -230,5 +230,49 @@ describe('«¿qué he demostrado?» y la etiqueta «Probado»', () => {
     const { d } = conUnaProbada();
     expect(sugerencias(estado(d))).toContain('¿Qué he demostrado?');
     for (const s of sugerencias(estado(d))) expect(detectarIntencion(s)).not.toBe('desconocida');
+  });
+});
+
+describe('guiaMapa y describirNodo (el asistente comenta el mapa)', () => {
+  it('la guía explica qué es un nodo y cuenta cuántas brechas hay', () => {
+    const { db, a } = conAnalisis();
+    const r = guiaMapa(estado(db), a.id);
+    expect(r?.texto).toContain('nodo');
+    expect(r?.texto).toContain(`${a.brechas.length} brechas`);
+    expect(r?.origen).toBe('muestra'); // la muestra fija nunca se presenta como «tu análisis»
+  });
+
+  it('sin análisis no hay guía ni descripción: no inventa', () => {
+    expect(guiaMapa(estado(dbVacia()), 'x')).toBeNull();
+    expect(describirNodo(estado(dbVacia()), 'x', 'y')).toBeNull();
+  });
+
+  it('describir un nodo usa solo los datos de esa brecha y propone abrirla', () => {
+    const { db, a } = conAnalisis();
+    const b = a.brechas[0];
+    const r = describirNodo(estado(db), a.id, b.id);
+    expect(r?.texto).toContain(b.titulo);
+    expect(r?.texto).toContain(b.porQueImporta);
+    expect(r?.texto).toContain('Aún no me dices si es real.');
+    expect(r?.accion?.accion).toEqual({ tipo: 'abrir_reporte', analisisId: a.id, pestana: 'brechas', brechaId: b.id });
+    expect(r?.accion?.etiqueta).toBe('Decir si es real');
+  });
+
+  it('una brecha «Ausente en el CV» dice lo que falta, sin repetir el prefijo ni citarla como fuente', () => {
+    const { db, a } = conAnalisis();
+    const b = a.brechas.find((x) => /^ausente en el cv:/i.test(x.evidencia))!;
+    const r = describirNodo(estado(db), a.id, b.id);
+    expect(r?.texto).toContain('Lo que falta en tu CV');
+    expect(r?.texto).not.toMatch(/ausente en el cv:/i);
+    expect(r?.fuentes).toBeUndefined();
+  });
+
+  it('una brecha reconocida propone demostrarla', () => {
+    const { db, a } = conAnalisis();
+    const b = a.brechas[0];
+    const db2 = marcarBrecha(db, a.id, b.id, 'confirmada', T0);
+    const r = describirNodo(estado(db2), a.id, b.id);
+    expect(r?.texto).toContain('La reconociste como real.');
+    expect(r?.accion?.etiqueta).toBe('Demostrarlo');
   });
 });
