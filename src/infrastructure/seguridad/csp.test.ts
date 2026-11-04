@@ -2,15 +2,14 @@
 // no se debilite por descuido y que cubra lo que el código realmente carga. El navegador real lo prueban
 // scripts/visual-u.mjs (la aplica en modo bloqueo sobre el build) y scripts/prueba-viva.mjs (contra producción).
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const RAIZ = resolve(__dirname, '../../..');
-const leer = (ruta: string) => readFileSync(resolve(RAIZ, ruta), 'utf8');
+import vercelCrudo from '../../../vercel.json?raw';
+import cvExtractCrudo from '../../features/gemelo/services/cvExtract.ts?raw';
+import clienteCrudo from '../supabase/client.ts?raw';
+import cssCrudo from '../../index.css?raw';
 
 function politica(): Map<string, string[]> {
-  const config = JSON.parse(leer('vercel.json')) as { headers: { source: string; headers: { key: string; value: string }[] }[] };
+  const config = JSON.parse(vercelCrudo) as { headers: { source: string; headers: { key: string; value: string }[] }[] };
   const global = config.headers.find((h) => h.source === '/(.*)');
   const cab = global?.headers.find((h) => /^content-security-policy(-report-only)?$/i.test(h.key));
   if (!cab) throw new Error('vercel.json no define Content-Security-Policy');
@@ -52,15 +51,13 @@ describe('política de seguridad de contenido (vercel.json)', () => {
   });
 
   it('cubre todo script externo que el código carga (si se agrega un CDN, la política lo exige)', () => {
-    const fuente = leer('src/features/gemelo/services/cvExtract.ts');
-    const urls = [...fuente.matchAll(/https:\/\/[^\s'"`)]+/g)].map((m) => origen(m[0]));
+    const urls = [...cvExtractCrudo.matchAll(/https:\/\/[^\s'"`)]+/g)].map((m) => origen(m[0]));
     expect(urls.length).toBeGreaterThan(0);
     for (const o of new Set(urls)) expect(csp.get('script-src'), o).toContain(o);
   });
 
   it('permite el proyecto de Supabase que el cliente usa por defecto (datos y tiempo real)', () => {
-    const cliente = leer('src/infrastructure/supabase/client.ts');
-    const url = cliente.match(/DEFAULT_SUPABASE_URL = '([^']+)'/)?.[1];
+    const url = clienteCrudo.match(/DEFAULT_SUPABASE_URL = '([^']+)'/)?.[1];
     expect(url).toBeTruthy();
     const host = new URL(url!).host;
     expect(csp.get('connect-src')).toContain(`https://${host}`);
@@ -68,8 +65,7 @@ describe('política de seguridad de contenido (vercel.json)', () => {
   });
 
   it('permite las fuentes de Google que importa index.css y nada más en estilos', () => {
-    const css = leer('src/index.css');
-    expect(css).toContain('https://fonts.googleapis.com');
+    expect(cssCrudo).toContain('https://fonts.googleapis.com');
     expect(csp.get('style-src')).toEqual(["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
     expect(csp.get('font-src')).toContain('https://fonts.gstatic.com');
   });
