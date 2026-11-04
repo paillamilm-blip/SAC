@@ -31,14 +31,24 @@ Estados: `[ ]` pendiente · `[x]` hecha y verificada · `[!]` bloqueada (anotar 
 Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrás de `main`.
 **No se fusionan crudas.** Se leen y se clasifica cada hallazgo.
 
-- [ ] 0.5.1 `git fetch origin seguridad/strix-ci` y leer su `.security/HALLAZGOS-2026-09.md`.
+- [x] 0.5.1 `git fetch origin seguridad/strix-ci` y leer su `.security/HALLAZGOS-2026-09.md`.
       Comparar contra R1–R11 de este plan y marcar cada punto como **ya hecho / pendiente / descartado**.
+      - Leído (`origin/seguridad/strix-ci:.security/HALLAZGOS-2026-09.md`). Hallazgo crítico que **falta en R1–R11**:
+        `check_and_consume_credit` (en `APLICAR_EN_SUPABASE.sql`, no versionada en `supabase/migrations/`) es
+        **fail-open fijo** (`allowed:true`, `remaining:99`) y `_shared/iaCredits.ts` recibe `userAuthHeader` y
+        **nunca lo usa** → `auth.uid()` es NULL dentro de la RPC. **Alimenta la Fase 2 (coste de IA)**: el límite
+        diario no existe hoy; 2.1–2.4 deben contar con que la RPC de crédito no cuenta nada.
 - [ ] 0.5.2 `git show origen/seguridad/perfil-lista-blanca:supabase/migrations/0083_perfil_lista_blanca.sql`.
       Verificar si está aplicada en producción (consulta de 0.1b) y confirmar que protege el `UPDATE`
       de columnas — **complementa** R1, no la resuelve.
-- [ ] 0.5.3 `git show origen/fix/working-openrouter-models:supabase/functions/proxy-ai/index.ts` y
+- [x] 0.5.3 `git show origin/fix/working-openrouter-models:supabase/functions/proxy-ai/index.ts` y
       extraer la lista de modelos confirmados disponibles: es insumo directo para 4.1.4 (la carrera de
       modelos) y no se vuelve a averiguar desde cero.
+      - **OJO:** esa rama es de **ago-2026** y su lista está obsoleta frente a lo que ya se desplegó en esta
+        sesión. En esa rama: `GEMINI_MODEL = 'gemini-2.0-flash'` (apagado) y `FREE_MODELS` con modelos hoy
+        muertos (`z-ai/glm-5.2:free`, `minimax/minimax-m3:free`, gemma/nemotron antiguos). La verdad vigente
+        es `proxy-ai` en producción (BUILD `6g-gemini-first-frees-vivos`): Gemini 3.x primero + OpenRouter
+        gratis vivos de respaldo. **No usar la lista de esta rama para 4.1.4**: tomarla del `index.ts` desplegado.
 - [ ] 0.5.4 Decidir el destino de las tres ramas (¿se reimplementa el hallazgo y se borra la rama?) y
       anotarlo aquí. Borrar una rama ajena sin confirmación no es tarea de este plan.
 
@@ -50,9 +60,13 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 
 ### 1.1 Lectura anónima de `profiles` (R1 — confirmado vivo)
 
-- [ ] 1.1.1 Re-chequear el trazado: `grep -rn "from('profiles')" src/` y confirmar que ningún lector
+- [x] 1.1.1 Re-chequear el trazado: `grep -rn "from('profiles')" src/` y confirmar que ningún lector
       es anónimo (la auditoría verificó los cinco actuales: `ProfileContext.tsx:57,:139`,
       `onboardingSync.ts:96,:104`, `userColorSync.ts:47`).
+      - Confirmado en código (2026-11-04): los cinco usos siguen siendo exactamente esos y todos ocurren con
+        sesión. **El riesgo R1 no es un lector del front, es la política `profiles_select_all` abierta en la
+        base**: se cierra en 1.1.2 y se mide en 0.1b. Ninguna casilla que escriba SQL se toca sin la copia
+        del proyecto (1.1.3).
 - [ ] 1.1.2 Escribir `10013_perfiles_sin_lectura_anonima.sql`: `drop policy if exists profiles_select_all`,
       crear `profiles_select_own` con `to authenticated using (id = auth.uid())`, y las consultas de
       verificación al final (patrón de `10011:46-50`).
@@ -69,6 +83,9 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 - [ ] 1.2.1 `10014_tablas_sociales_sin_lectura_anonima.sql`: restringir `job_matches`
       (`0004_jobs_chat.sql:39`), `follows` (`0067_social_follows_ghosts.sql:18`) y `freelance_needs`
       (`0069_freelance_needs.sql:39`) con `to authenticated` + `auth.uid()`.
+      - Verificado en código (2026-11-04): las tres son `FOR SELECT USING (true)` tal cual dice la auditoría
+        (`0004:39`, `0067:18`, `0069:39`), más `job_postings` `jobs_read USING (true)` (`0004:36`) que no
+        figuraba y conviene cerrar en el mismo lote. Confirmar en 1.2.2 si alguna pantalla viva de `/u` las lee.
 - [ ] 1.2.2 Antes de escribir: verificar si alguna pantalla viva de `/u` lee esas tablas. Si no
       (producto recortado), la política se cierra sin riesgo; si sí, se anota cuál.
 - [ ] 1.2.3 Copia → verificar → producción. Mismo procedimiento que 1.1.3–1.1.6.
@@ -105,6 +122,8 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 - [ ] 2.5 `analytics_events`: insert sólo con sesión (`0068_analytics_events.sql:26-34`,
       `GRANT INSERT ... TO anon` → quitar). Confirmar que la analítica propia del sitio
       (`src/shared/utils/analytics.ts:63`) sigue registrando eventos para quien tiene cuenta.
+      - Verificado en código (2026-11-04): `0068:34 GRANT INSERT ON public.analytics_events TO anon;` existe
+        (y `:35` a `authenticated`). El grant a `anon` es el que se quita. Queda para migración nueva, no editar `0068`.
 - [ ] 2.6 Decidir y anotar: ¿qué se hace con los eventos ya contaminados? (no se borran sin decisión)
 
 ### 2.7 La reputación deja de ser writable desde el navegador (R13)
@@ -366,6 +385,8 @@ paso = un commit, y el ciclo de cinco pasos se corre después de cada uno.
 ### 7.20 Dependencias muertas (R20)
 
 - [ ] 7.20.1 `decimal.js`: 0 imports en `src`, y `PRODUCT.md:11` lo cita como "para dinero". Retirar.
+      - Re-verificado (2026-11-04): `grep -rln "decimal" src/` = 0. La persona pidió antes no regenerar el
+        lockfile hasta tener las pruebas listas; cuando lo haga: `npm uninstall decimal.js`.
 - [ ] 7.20.2 `@tanstack/react-query`: sólo el provider en `App.tsx` y `infrastructure/query/client.ts`
       (27 líneas), con 0 `useQuery`/`useMutation` en todo `src`. Retirar provider y cliente junto con la
       dependencia, o empezar a usarlo de verdad. La primera opción es más chica y más honesta.
