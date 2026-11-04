@@ -182,6 +182,16 @@ async function recorrido(browser, nombre, viewport) {
   await desborde('inicio-con-avance');
   await tapados('inicio-con-avance');
 
+  // Mi perfil: el avatar abre un diálogo y se cierra con Escape.
+  await page.getByRole('button', { name: /Abrir mi perfil/ }).click();
+  await page.waitForSelector('[role=dialog][aria-label], [role=dialog][aria-labelledby="u-perfil-t"]', { timeout: 5_000 });
+  await foto('09-perfil');
+  await desborde('perfil');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  if ((await page.locator('#u-perfil-t').count()) === 0) ok(`${nombre}: «Mi perfil» abre y cierra con Escape`);
+  else falla(`${nombre}: «Mi perfil» no se cerró con Escape`);
+
   // Cada paso de «Tu ciclo» es un botón que lleva a algún lado.
   const pasos = await page.locator('.u-ciclo .u-paso-boton').count();
   if (pasos === 5) ok(`${nombre}: los 5 pasos de «Tu ciclo» son botones`);

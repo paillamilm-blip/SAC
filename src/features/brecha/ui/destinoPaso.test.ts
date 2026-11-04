@@ -51,7 +51,16 @@ describe('destinoPaso: cada paso de «Tu ciclo» lleva a algún lado', () => {
     expect(id).not.toBe(b1.id);
   });
 
-  it('compartir lleva a la tarjeta de la credencial', () => {
-    expect(destinoPaso('compartir', nuevo().a)).toEqual({ tipo: 'credencial' });
+  it('compartir con sesión y pruebas lleva a la tarjeta de la credencial', () => {
+    expect(destinoPaso('compartir', nuevo().a, { sesionIniciada: true, dominadas: 1 })).toEqual({ tipo: 'credencial' });
+  });
+
+  it('compartir como invitado con pruebas pide iniciar sesión (la credencial se firma en el servidor)', () => {
+    expect(destinoPaso('compartir', nuevo().a, { sesionIniciada: false, dominadas: 1 })).toEqual({ tipo: 'pedir_sesion' });
+  });
+
+  it('compartir sin pruebas no queda muerto: lleva a conseguir una (la tarjeta aún no existe)', () => {
+    const { a } = nuevo();
+    expect(destinoPaso('compartir', a, { sesionIniciada: true, dominadas: 0 })).toEqual(destinoPaso('demostrar', a));
   });
 });

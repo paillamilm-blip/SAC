@@ -17,6 +17,8 @@ import { useBrecha } from '../hooks/useBrecha';
 import { useOmicronStats } from '../hooks/useOmicronStats';
 import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { obtenerAnalisis } from '../services/repositorio';
+import PerfilPanel from '../components/PerfilPanel';
+import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import ReportePage from './ReportePage';
@@ -40,6 +42,9 @@ export default function UApp() {
   const contadorEventos = useRef(0);
   const guiaMapaDada = useRef(false);
   const [pedirAuth, setPedirAuth] = useState(false);
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
+  const botonPerfilRef = useRef<HTMLButtonElement>(null);
+  const perfilSeAbrio = useRef(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
   const botonAsistenteRef = useRef<HTMLButtonElement>(null);
   const chatSeAbrio = useRef(false);
@@ -76,6 +81,12 @@ export default function UApp() {
     if (chatAbierto) chatSeAbrio.current = true;
     else if (chatSeAbrio.current) botonAsistenteRef.current?.focus();
   }, [chatAbierto]);
+
+  // Al cerrar el perfil, el foco vuelve al botón que lo abrió.
+  useEffect(() => {
+    if (perfilAbierto) perfilSeAbrio.current = true;
+    else if (perfilSeAbrio.current) botonPerfilRef.current?.focus();
+  }, [perfilAbierto]);
 
   // Una vez iniciada la sesión, el formulario ya no hace falta.
   useEffect(() => {
@@ -197,15 +208,21 @@ export default function UApp() {
             Ómicrom
           </a>
           <div className="topbar-right">
-            {esInvitado ? (
+            {esInvitado && (
               <button type="button" className="boton boton-topbar" onClick={() => setPedirAuth(true)}>
                 Iniciar sesión
               </button>
-            ) : (
-              <span className="u-persona" title={nombre ?? undefined}>
-                {(nombre ?? 'Tú').slice(0, 1).toUpperCase()}
-              </span>
             )}
+            <button
+              ref={botonPerfilRef}
+              type="button"
+              className="u-persona u-persona-boton"
+              onClick={() => setPerfilAbierto(true)}
+              aria-haspopup="dialog"
+              aria-label={esInvitado ? 'Abrir mi perfil (invitado)' : `Abrir mi perfil, ${nombre ?? 'tu cuenta'}`}
+            >
+              {esInvitado ? 'T' : (nombre ?? 'Tú').slice(0, 1).toUpperCase()}
+            </button>
           </div>
         </div>
       </header>
@@ -309,6 +326,20 @@ export default function UApp() {
         evento={evento}
         compacto={ruta.nombre === 'reporte'}
       />
+
+      {perfilAbierto && (
+        <PerfilPanel
+          nombre={nombre}
+          correo={profile?.email ?? null}
+          esInvitado={esInvitado}
+          metricas={calcularMetricas(db)}
+          onCerrar={() => setPerfilAbierto(false)}
+          onIniciarSesion={() => {
+            setPerfilAbierto(false);
+            setPedirAuth(true);
+          }}
+        />
+      )}
 
       {pedirAuth && authStatus !== 'authenticated' && <AuthOverlay onClose={() => setPedirAuth(false)} />}
 

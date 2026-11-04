@@ -52,9 +52,13 @@ export default function Inicio({
 
   const irAlPaso = (id: (typeof pasos)[number]['id']) => {
     if (!ultimo) return;
-    const d = destinoPaso(id, ultimo);
+    const d = destinoPaso(id, ultimo, { sesionIniciada, dominadas: m.dominadas });
     if (d.tipo === 'accion') {
       onAccion(d.accion);
+      return;
+    }
+    if (d.tipo === 'pedir_sesion') {
+      window.dispatchEvent(new Event('omicron:request-auth'));
       return;
     }
     const el = document.getElementById('u-compartir');

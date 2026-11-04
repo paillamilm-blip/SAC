@@ -109,6 +109,23 @@ describe('UApp', () => {
     expect(screen.queryByRole('button', { name: 'Iniciar sesión' })).toBeNull();
   });
 
+  it('el avatar abre «Mi perfil» con la cuenta y se puede cerrar', () => {
+    authStatus = 'authenticated';
+    render(<UApp />);
+    expect(screen.queryByRole('dialog', { name: 'Ana' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Abrir mi perfil, Ana/ }));
+    expect(screen.getByRole('dialog', { name: 'Ana' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar mi perfil' }));
+    expect(screen.queryByRole('dialog', { name: 'Ana' })).toBeNull();
+  });
+
+  it('un invitado también abre su perfil, con la opción de iniciar sesión', () => {
+    render(<UApp />);
+    fireEvent.click(screen.getByRole('button', { name: /Abrir mi perfil \(invitado\)/ }));
+    expect(screen.getByRole('dialog', { name: 'Invitado' })).toBeTruthy();
+  });
+
   it('el botón flotante abre y cierra el asistente', () => {
     render(<UApp />);
     expect(screen.queryByRole('dialog', { name: 'Asistente de Ómicrom' })).toBeNull();
