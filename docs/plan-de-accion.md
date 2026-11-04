@@ -62,7 +62,7 @@ Reglas que no se rompen (`PRODUCT.md`): la interfaz no afirma más que el dato, 
 | 3. Mapa | Existe. Rediseño pendiente | Acordar el diseño antes de tocar `MapaCapacidades` |
 | 4. Brechas | Funciona, **solo en el navegador** | Se guarda en `localStorage` |
 | 5. Aprender y demostrar | **Construido, sin probar en vivo** | «Demostrarlo» abre un examen dentro de `/u` (PR del examen). Dominada = aprobado (70 o más) calificado por el servidor. Ya no existe la autodeclaración. Requiere desplegar el PR #11 |
-| 6. Credencial | **Falta** | Nada en `/u` usa `credential` ni `?verificar=` |
+| 6. Credencial | **Construida, sin probar en vivo** | «Comparte lo que demostraste» en el Inicio crea un enlace `?verificar=` con las habilidades aprobadas (versión 2 de `credential`). Requiere volver a desplegar `credential` |
 | 7. Re-escaneo | Existe | `comparar.ts` y capturas en `docs/fusion/visual-brecha/` |
 
 ---

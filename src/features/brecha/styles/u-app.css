@@ -734,3 +734,34 @@
     transition: none;
   }
 }
+
+/* ── Compartir la credencial ───────────────────────────────────────────────────────── */
+.u-app .u-compartir-texto {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.u-app .u-compartir-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.u-app .u-compartir-lista label {
+  font-size: 0.85rem;
+  color: var(--dim);
+}
+.u-app .u-compartir-enlace {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.85rem;
+}
+.u-app .u-compartir-enlace:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
