@@ -2,7 +2,7 @@ import { useState } from "react";
 import Examen from "./Examen";
 import MapaCapacidades from "./MapaCapacidades";
 import { esDeclaradaSinPrueba, estaDominada } from "../domain/dominio";
-import type { Brecha, CategoriaBrecha, ComparacionAnalisis, PruebaExamen, Veredicto } from "../domain/types";
+import type { Brecha, CalidadAnalisis, CategoriaBrecha, ComparacionAnalisis, PruebaExamen, Veredicto } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
 const ORDEN: CategoriaBrecha[] = ["dura", "blanda", "conocimiento", "credencial"];
@@ -63,6 +63,7 @@ export default function PanelReporte({
   pestanaInicial,
   brechaInicialId,
   onPestana,
+  calidad,
 }: {
   ocupacion: string;
   nivel: string;
@@ -83,6 +84,7 @@ export default function PanelReporte({
   pestanaInicial?: Pestana;
   brechaInicialId?: string | null;
   onPestana?: (pestana: Pestana) => void;
+  calidad?: CalidadAnalisis;
 }) {
   const [recienId, setRecienId] = useState<string | null>(null);
   const [abiertaId, setAbiertaId] = useState<string | null>(
@@ -351,6 +353,7 @@ export default function PanelReporte({
             brechas={brechas}
             recienId={recienId}
             cerradas={comparacion?.cerradas ?? SIN_CERRADAS}
+            calidad={calidad}
           />
         </section>
       )}

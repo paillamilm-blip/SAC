@@ -59,6 +59,7 @@ export default function ReportePage({
           resumen={analisis.resumen}
           fortalezas={analisis.fortalezas}
           brechas={analisis.brechas}
+          calidad={analisis.calidad}
           comparacion={compararConAnterior(db, analisis)}
           onMarcar={(bid, v) => onMarcar(analisis.id, bid, v)}
           onProbar={(bid, prueba) => onProbar(analisis.id, bid, prueba)}
