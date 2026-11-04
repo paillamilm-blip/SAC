@@ -16,6 +16,7 @@ inclusion: always
 | **HACER:** [qué] | Lo implemento inmediato | GSD + Ponytail + Claude Mem + Verification + Sinergia |
 | **PENSAR:** [idea/problema] | Te digo si conviene, cómo, y el plan | Superpowers + Context Mode + Doubt-Driven + Autoplan |
 | **DISEÑAR:** [pantalla/componente] | Te diseño una UI increíble (ver `pipeline-diseno.md`) | UI/UX Pro Max (dato) → DESIGN.md (filtro) → Taste Skill (solo si es superficie de conversión) → Impeccable (ejecuta) → Animate (motion) |
+| **OBRA MAESTRA BRUTAL:** [pantalla] | Combo máximo de diseño visual con auditoría real (ver `obra-maestra-brutal.md`) | design-taste-frontend + awesome-design-md + UI/UX Pro Max + Impeccable + Animate + Web Design Guidelines + Playwright CLI |
 | **REVISAR** | Reviso tu código buscando bugs y mejoras | Code Review Ultra + Ponytail Review + Performance + Security + Sinergia |
 | **LANZAR** | Preparo todo para producción | Ship + Shipping & Launch + Security + Performance + QA + Sinergia + Verification |
 | **ARREGLAR:** [problema] | Encuentro el problema y lo soluciono | Systematic Debugging + QA Memoria + GSD + Ponytail + Verification |
