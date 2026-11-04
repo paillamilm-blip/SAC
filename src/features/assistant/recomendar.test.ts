@@ -4,13 +4,14 @@ import {
   agregarAnalisis,
   dbVacia,
   marcarBrecha,
-  marcarDominada,
+  registrarPrueba,
   type Db,
 } from '../brecha/services/repositorio';
 import { DIAS_PARA_REESCANEAR, pasosDelCiclo, recomendar, resumenProgreso } from './recomendar';
 
 const META = { nombreArchivo: 'cv.pdf', tamanio: 1, proveedor: 'demostracion', simulado: true };
 const T0 = '2026-11-02T10:00:00.000Z';
+const PRUEBA = { actaId: 'acta-1', puntaje: 82, en: T0 };
 
 function ids() {
   let n = 0;
@@ -64,7 +65,7 @@ describe('recomendar', () => {
     brechas.forEach((b, i) => {
       d = marcarBrecha(d, analisisId, b.id, i === 0 ? 'confirmada' : 'rechazada', T0);
     });
-    d = marcarDominada(d, analisisId, brechas[0].id, T0);
+    d = registrarPrueba(d, analisisId, brechas[0].id, PRUEBA);
     const r = recomendar({ db: d, ahora: T0 });
     expect(r[0].id).toBe('ciclo-completo');
     expect(r[0].accion).toEqual({ tipo: 'escanear' });
@@ -94,14 +95,14 @@ describe('recomendar', () => {
     for (const e of estados) {
       const r = recomendar({ db: e, ahora: T0 });
       expect(r.length).toBeGreaterThan(0);
-      // 'dominar' modificaría datos: el motor nunca la propone por sí mismo.
-      expect(r.every((x) => x.accion.tipo !== 'dominar')).toBe(true);
+      // Solo se proponen acciones de navegación: ninguna modifica datos por sí sola.
+      expect(r.every((x) => x.accion.tipo === 'escanear' || x.accion.tipo === 'abrir_reporte')).toBe(true);
     }
   });
 
-  it('jamás declara "probado": todavía no existe ninguna prueba por examen', () => {
+  it('todavía no rotula nada como "probado" (el asistente no lee la prueba del examen)', () => {
     const { db, analisisId, brechas } = base();
-    const d = marcarDominada(marcarBrecha(db, analisisId, brechas[0].id, 'confirmada', T0), analisisId, brechas[0].id, T0);
+    const d = registrarPrueba(marcarBrecha(db, analisisId, brechas[0].id, 'confirmada', T0), analisisId, brechas[0].id, PRUEBA);
     for (const e of [dbVacia(), db, d]) {
       expect(recomendar({ db: e, ahora: T0 }).every((x) => x.origen !== 'probado')).toBe(true);
     }

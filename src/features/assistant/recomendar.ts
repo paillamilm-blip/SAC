@@ -11,6 +11,7 @@
 //   · 'sistema'    → aviso del propio asistente (límite, micrófono); no afirma nada sobre la persona
 
 import type { Analisis, Brecha } from '../brecha/domain/types';
+import { estaDominada } from '../brecha/domain/dominio';
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
 
@@ -18,8 +19,7 @@ export type Origen = 'analisis' | 'muestra' | 'probado' | 'estimacion' | 'sistem
 
 export type Accion =
   | { tipo: 'escanear' }
-  | { tipo: 'abrir_reporte'; analisisId: string; pestana: 'mapa' | 'brechas' | 'diagnostico'; brechaId?: string }
-  | { tipo: 'dominar'; analisisId: string; brechaId: string };
+  | { tipo: 'abrir_reporte'; analisisId: string; pestana: 'mapa' | 'brechas' | 'diagnostico'; brechaId?: string };
 
 export interface Recomendacion {
   id: string;
@@ -76,7 +76,7 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
   const total = ultimo.brechas.length;
   const revisadas = ultimo.brechas.filter((b) => b.veredicto !== null).length;
   const reales = ultimo.brechas.filter((b) => b.veredicto === 'confirmada');
-  const dominadas = reales.filter((b) => b.dominadaEn).length;
+  const dominadas = reales.filter(estaDominada).length;
   const sinRevisar = total - revisadas;
 
   const revisarEstado: EstadoPaso = sinRevisar === 0 ? 'hecho' : revisadas > 0 ? 'parcial' : 'ahora';
@@ -145,7 +145,7 @@ export function recomendar(estado: Estado): Recomendacion[] {
   const recs: Recomendacion[] = [];
   const sinRevisar = ultimo.brechas.filter((b) => b.veredicto === null).sort(porImpacto);
   const reales = ultimo.brechas.filter((b) => b.veredicto === 'confirmada');
-  const realesPendientes = reales.filter((b) => !b.dominadaEn).sort(porImpacto);
+  const realesPendientes = reales.filter((b) => !estaDominada(b)).sort(porImpacto);
 
   // 2. Hay brechas sin revisar: empezar por la de mayor impacto.
   if (sinRevisar.length > 0) {

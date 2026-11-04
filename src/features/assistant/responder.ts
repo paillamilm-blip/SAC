@@ -5,6 +5,7 @@
 // Regla de producto: cada respuesta lleva su ORIGEN y NUNCA propone ejecutar algo por
 // sí sola; las acciones salen como propuesta y la persona las confirma.
 
+import { estaDominada } from '../brecha/domain/dominio';
 import type { Analisis, Brecha } from '../brecha/domain/types';
 import { CATEGORIAS } from '../brecha/domain/types';
 import { listarAnalisis, metricas } from '../brecha/services/repositorio';
@@ -169,7 +170,7 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
     case 'dominar': {
       if (!ultimo) return { texto: 'Aún no tienes brechas. Escanea tu CV primero.', origen: 'estimacion' };
       const candidata = ultimo.brechas
-        .filter((b) => b.veredicto === 'confirmada' && !b.dominadaEn)
+        .filter((b) => b.veredicto === 'confirmada' && !estaDominada(b))
         .sort((a, b) => PESO[a.severidad] - PESO[b.severidad])[0];
       if (!candidata) {
         return {
@@ -179,12 +180,12 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
         };
       }
       return {
-        texto: `¿Quieres marcar «${candidata.titulo}» como dominada? Ojo: por ahora lo declaras tú, todavía no hay un examen que lo compruebe. Por eso no cuenta como «Probado».`,
+        texto: `Para dar «${candidata.titulo}» por dominada hay que demostrarlo: es un examen corto con preguntas y un caso práctico, y necesitas tener la sesión iniciada. No se puede marcar a mano.`,
         origen: 'estimacion',
         accion: {
-          accion: { tipo: 'dominar', analisisId: ultimo.id, brechaId: candidata.id },
-          etiqueta: 'Sí, ya la aprendí',
-          porQue: `Marcar «${candidata.titulo}» como dominada`,
+          accion: { tipo: 'abrir_reporte', analisisId: ultimo.id, pestana: 'brechas', brechaId: candidata.id },
+          etiqueta: 'Ir a demostrarlo',
+          porQue: `Abrir «${candidata.titulo}» para dar el examen`,
         },
       };
     }

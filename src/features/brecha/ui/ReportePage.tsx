@@ -1,5 +1,5 @@
 import { compararConAnterior, obtenerAnalisis, type Db } from '../services/repositorio';
-import type { Veredicto } from '../domain/types';
+import type { PruebaExamen, Veredicto } from '../domain/types';
 import PanelReporte, { type Pestana } from '../components/PanelReporte';
 import { BASE, hrefReporte } from './ruta';
 
@@ -10,7 +10,9 @@ export default function ReportePage({
   brechaId,
   onIr,
   onMarcar,
-  onDominar,
+  onProbar,
+  sesionIniciada,
+  onPedirSesion,
 }: {
   db: Db;
   analisisId: string;
@@ -18,7 +20,9 @@ export default function ReportePage({
   brechaId: string | null;
   onIr: (href: string) => void;
   onMarcar: (analisisId: string, brechaId: string, v: Veredicto) => void;
-  onDominar: (analisisId: string, brechaId: string) => void;
+  onProbar: (analisisId: string, brechaId: string, prueba: PruebaExamen) => void;
+  sesionIniciada: boolean;
+  onPedirSesion: () => void;
 }) {
   const analisis = obtenerAnalisis(db, analisisId);
 
@@ -57,7 +61,9 @@ export default function ReportePage({
           brechas={analisis.brechas}
           comparacion={compararConAnterior(db, analisis)}
           onMarcar={(bid, v) => onMarcar(analisis.id, bid, v)}
-          onDominar={(bid) => onDominar(analisis.id, bid)}
+          onProbar={(bid, prueba) => onProbar(analisis.id, bid, prueba)}
+          sesionIniciada={sesionIniciada}
+          onPedirSesion={onPedirSesion}
           pestanaInicial={pestana}
           brechaInicialId={brechaId}
           onPestana={(p) => {

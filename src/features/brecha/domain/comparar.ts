@@ -1,3 +1,4 @@
+import { estaDominada } from "./dominio";
 import type { Brecha, BrechaCerrada, ComparacionAnalisis } from "./types";
 
 // Comparar dos análisis no puede exigirle una coincidencia literal al texto de la IA:
@@ -58,8 +59,8 @@ export function compararAnalisis(
       titulo: b.titulo,
       categoria: b.categoria,
       severidad: b.severidad,
-      fecha: b.dominadaEn ?? fechaActual,
-      motivo: b.dominadaEn ? ("dominada" as const) : ("no_aparece" as const),
+      fecha: estaDominada(b) && b.dominadaEn ? b.dominadaEn : fechaActual,
+      motivo: estaDominada(b) ? ("dominada" as const) : ("no_aparece" as const),
     }))
     .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
