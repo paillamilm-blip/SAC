@@ -696,6 +696,14 @@
 .u-app .mapa-trazo-suave {
   opacity: 0.32;
 }
+.u-app .mapa-trazo[data-evidencia="cita"] {
+  stroke-width: 2.4;
+  opacity: 0.58;
+}
+.u-app .mapa-trazo[data-evidencia="ausente"] {
+  stroke-width: 1;
+  opacity: 0.24;
+}
 .u-app .mapa-trazo[data-apagado="true"] {
   opacity: 0.09;
 }
@@ -791,6 +799,16 @@
   gap: 7px;
   font-size: 12.5px;
   color: var(--muted);
+}
+.u-app .mapa-chip i.mapa-linea {
+  width: 18px;
+  height: 0;
+  border-radius: 0;
+  background: none;
+  border-top: 2.4px solid var(--muted);
+}
+.u-app .mapa-chip i.mapa-linea[data-evidencia="ausente"] {
+  border-top-width: 1px;
 }
 .u-app .mapa-chip i {
   width: 10px;

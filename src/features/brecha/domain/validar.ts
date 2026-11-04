@@ -67,8 +67,13 @@ export function citaVerificada(frase: string, textoCv: string): boolean {
   return citas.every((c) => base.includes(c));
 }
 
+/** ¿La brecha dice «Ausente en el CV:»? (no hay cita: lo que falta, no lo que el CV muestra). */
+export function evidenciaAusente(evidencia: string): boolean {
+  return PREFIJO_AUSENTE.test(evidencia.trim());
+}
+
 function evidenciaValida(evidencia: string, textoCv: string): boolean {
-  return PREFIJO_AUSENTE.test(evidencia.trim()) || citaVerificada(evidencia, textoCv);
+  return evidenciaAusente(evidencia) || citaVerificada(evidencia, textoCv);
 }
 
 export class AnalisisInvalido extends Error {
@@ -96,7 +101,7 @@ export function validarResultado(crudo: unknown, textoCv: string): ResultadoAnal
     const r = BrechaSchema.safeParse(candidata);
     if (r.success && evidenciaValida(r.data.evidencia, textoCv)) {
       brechas.push(r.data);
-      if (PREFIJO_AUSENTE.test(r.data.evidencia.trim())) ausentes++;
+      if (evidenciaAusente(r.data.evidencia)) ausentes++;
     }
     if (brechas.length === MAX_BRECHAS) break;
   }
