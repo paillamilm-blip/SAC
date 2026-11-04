@@ -23,6 +23,25 @@ const CV = {
   fortalezas: ['Domina «soldadura al arco»'],
   esMuestra: false,
 };
+const PERFIL = {
+  ocupacion: 'Técnico en mantención',
+  nivel: 'Semi-senior · 5 a 8 años',
+  analizadoEn: '2026-11-03T10:00:00.000Z',
+  esMuestra: false,
+  total: 8,
+  detectadas: 4,
+  reconocidas: 1,
+  dominadas: 2,
+  descartadas: 1,
+  conCita: 6,
+  ausentes: 2,
+  severidad: { alta: 3, media: 3, baja: 1 },
+  porCategoria: [
+    { categoria: 'dura', etiqueta: 'Habilidad dura', total: 5, detectadas: 2, reconocidas: 1, dominadas: 2, descartadas: 0 },
+    { categoria: 'credencial', etiqueta: 'Credencial', total: 3, detectadas: 2, reconocidas: 0, dominadas: 0, descartadas: 1 },
+  ],
+  cerradas: 1,
+};
 const METRICAS = { totalAnalisis: 2, brechas: 8, revisadas: 3, confirmadas: 2, rechazadas: 1, dominadas: 1, precision: 67 };
 
 function pintar(extra: Partial<Parameters<typeof PerfilPanel>[0]> = {}) {
@@ -33,6 +52,7 @@ function pintar(extra: Partial<Parameters<typeof PerfilPanel>[0]> = {}) {
     metricas: METRICAS,
     estandar: ESTANDAR as Parameters<typeof PerfilPanel>[0]['estandar'],
     cv: CV as Parameters<typeof PerfilPanel>[0]['cv'],
+    perfil: PERFIL as Parameters<typeof PerfilPanel>[0]['perfil'],
     onCerrar: vi.fn(),
     onVerPasaporte: vi.fn(),
     onIniciarSesion: vi.fn(),
@@ -129,5 +149,32 @@ describe('PerfilPanel', () => {
     const d = screen.getByRole('dialog', { name: 'Matías' });
     expect(d.textContent).toContain('no queda nada por cubrir');
     expect(d.textContent).not.toContain('0 %');
+  });
+
+  it('entrega el análisis de perfil con todas las variables del mapa', () => {
+    pintar();
+    const d = screen.getByRole('dialog', { name: 'Matías' });
+    expect(d.textContent).toContain('Tu mapa mental, en números');
+    // por estado
+    expect(d.textContent).toContain('Dominadas con examen: 2');
+    expect(d.textContent).toContain('Reconocidas, sin examen: 1');
+    expect(d.textContent).toContain('Detectadas, por revisar: 4');
+    expect(d.textContent).toContain('Descartadas («no aplica»): 1');
+    // por categoría
+    expect(d.textContent).toContain('Habilidad dura');
+    expect(d.textContent).toContain('2/5');
+    // por impacto
+    expect(d.textContent).toContain('Impacto alto: 3');
+    expect(d.textContent).toContain('Impacto bajo: 1');
+    // por evidencia
+    expect(d.textContent).toContain('Con cita de tu CV: 6');
+    expect(d.textContent).toContain('Que señalan lo ausente: 2');
+    // cerradas
+    expect(d.textContent).toContain('Cerradas desde el análisis anterior: 1');
+  });
+
+  it('sin análisis no muestra el análisis de perfil', () => {
+    pintar({ estandar: null, cv: null, perfil: null });
+    expect(screen.queryByText('Tu mapa mental, en números')).toBeNull();
   });
 });

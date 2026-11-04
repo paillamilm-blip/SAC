@@ -18,6 +18,7 @@ import { useOmicronStats } from '../hooks/useOmicronStats';
 import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { obtenerAnalisis } from '../services/repositorio';
 import PerfilPanel from '../components/PerfilPanel';
+import { analizarPerfil } from '../services/analisisPerfil';
 import { medirEstandar, resumenCv } from '../services/estandar';
 import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
@@ -349,6 +350,7 @@ export default function UApp() {
           esInvitado={esInvitado}
           metricas={calcularMetricas(db)}
           estandar={medirEstandar(db)}
+          perfil={analizarPerfil(db)}
           cv={resumenCv(db)}
           onCerrar={() => setPerfilAbierto(false)}
           onVerPasaporte={() => {

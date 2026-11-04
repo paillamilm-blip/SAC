@@ -193,8 +193,9 @@ async function recorrido(browser, nombre, viewport) {
   if (sobraPerfil > 0) falla(`${nombre}: el diálogo «Mi perfil» se desborda ${sobraPerfil}px hacia los lados`);
   else ok(`${nombre}: «Mi perfil» cabe sin desbordarse`);
   const textoPerfil = await page.locator('#u-perfil-t').locator('xpath=ancestor::section[1]').innerText();
-  if (/\d+ %/.test(textoPerfil) && /Tu CV en Ómicrom/.test(textoPerfil)) ok(`${nombre}: «Mi perfil» muestra cuánto falta y «Tu CV en Ómicrom»`);
-  else falla(`${nombre}: «Mi perfil» no muestra el porcentaje o el CV`);
+  const okPerfil = /\d+ %/.test(textoPerfil) && /Tu CV en Ómicrom/.test(textoPerfil) && /Tu mapa mental, en números/.test(textoPerfil);
+  if (okPerfil) ok(`${nombre}: «Mi perfil» muestra cuánto falta, el análisis del mapa y «Tu CV en Ómicrom»`);
+  else falla(`${nombre}: «Mi perfil» no muestra el porcentaje, el análisis del mapa o el CV`);
   await desborde('perfil');
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);

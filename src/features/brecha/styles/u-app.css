@@ -1152,6 +1152,62 @@
 .u-app .u-perfil-leyenda li[data-parte='sin-revisar']::before {
   background: #4b545f;
 }
+.u-app .u-perfil-leyenda li[data-parte='descartada']::before {
+  background: #4b545f;
+}
+.u-app .u-perfil-leyenda li[data-parte='descartada'] {
+  opacity: 0.7;
+}
+.u-app .u-perfil-leyenda li[data-sev='alta']::before {
+  background: var(--rose, #ff5c7a);
+}
+.u-app .u-perfil-leyenda li[data-sev='media']::before {
+  background: var(--accent);
+}
+.u-app .u-perfil-leyenda li[data-sev='baja']::before {
+  background: var(--muted);
+}
+.u-app .u-perfil-mapa {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.u-app .u-perfil-cats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.u-app .u-perfil-cats li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  min-width: 0;
+}
+.u-app .u-perfil-cat-punto {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: none;
+}
+.u-app .u-perfil-cat-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.u-app .u-perfil-cat-cuenta {
+  flex: none;
+  font-weight: 600;
+}
+.u-app .u-perfil-cat-cuenta small {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
 .u-app .u-perfil-cv {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);

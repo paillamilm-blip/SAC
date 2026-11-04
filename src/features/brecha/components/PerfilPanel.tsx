@@ -17,6 +17,7 @@ export default function PerfilPanel({
   esInvitado,
   metricas,
   estandar,
+  perfil,
   cv,
   onCerrar,
   onVerPasaporte,
@@ -28,6 +29,8 @@ export default function PerfilPanel({
   metricas: Metricas;
   /** Cuánto falta para cubrir las brechas detectadas; null si aún no hay análisis. */
   estandar: Estandar | null;
+  /** Corte del mapa mental con todas sus variables; null si aún no hay análisis. */
+  perfil: AnalisisPerfil | null;
   /** Lo que se leyó del CV; null si aún no hay análisis. */
   cv: ResumenCv | null;
   onCerrar: () => void;
@@ -125,6 +128,51 @@ export default function PerfilPanel({
                 .
               </p>
             </section>
+
+            {perfil && perfil.total > 0 && (
+              <section className="u-perfil-mapa" aria-labelledby="u-perfil-mapa-t">
+                <h3 id="u-perfil-mapa-t">Tu mapa mental, en números</h3>
+                <p className="u-perfil-nota">Las mismas variables que dibuja el mapa, contadas sobre tus {perfil.total} brechas.</p>
+
+                <h4>Por estado</h4>
+                <ul className="u-perfil-leyenda">
+                  <li data-parte="prueba">Dominadas con examen: {perfil.dominadas}</li>
+                  <li data-parte="reconocida">Reconocidas, sin examen: {perfil.reconocidas}</li>
+                  <li data-parte="sin-revisar">Detectadas, por revisar: {perfil.detectadas}</li>
+                  <li data-parte="descartada">Descartadas («no aplica»): {perfil.descartadas}</li>
+                </ul>
+
+                <h4>Por categoría</h4>
+                <ul className="u-perfil-cats">
+                  {perfil.porCategoria.map((c) => (
+                    <li key={c.categoria}>
+                      <span className="u-perfil-cat-punto" aria-hidden="true" style={{ background: COLOR_CAT[c.categoria] }} />
+                      <span className="u-perfil-cat-nombre">{c.etiqueta}</span>
+                      <span className="u-perfil-cat-cuenta">
+                        {c.dominadas}/{c.total} <small>dominadas</small>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <h4>Por impacto</h4>
+                <ul className="u-perfil-leyenda">
+                  <li data-sev="alta">Impacto alto: {perfil.severidad.alta}</li>
+                  <li data-sev="media">Impacto medio: {perfil.severidad.media}</li>
+                  <li data-sev="baja">Impacto bajo: {perfil.severidad.baja}</li>
+                </ul>
+                <p className="u-perfil-nota">Impacto cuenta solo las brechas que aún aplican (no las descartadas).</p>
+
+                <h4>Por evidencia</h4>
+                <ul className="u-perfil-leyenda">
+                  <li>Con cita de tu CV: {perfil.conCita}</li>
+                  <li>Que señalan lo ausente: {perfil.ausentes}</li>
+                </ul>
+                {perfil.cerradas > 0 && (
+                  <p className="u-perfil-nota">Cerradas desde el análisis anterior: {perfil.cerradas}.</p>
+                )}
+              </section>
+            )}
 
             <details className="u-perfil-cv">
               <summary>
