@@ -3,6 +3,8 @@
 
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { supabase } from '@/infrastructure/supabase/client';
+import { COLOR_CAT } from '../domain/colores';
+import type { AnalisisPerfil } from '../services/analisisPerfil';
 import type { Estandar, ResumenCv } from '../services/estandar';
 import type { Metricas } from '../services/repositorio';
 
