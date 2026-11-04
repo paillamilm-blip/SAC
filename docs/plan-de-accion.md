@@ -115,7 +115,7 @@ Examen real para «Dominar» (TAREA-37) y credencial verificable (paso 6).
 
 ### Fase 4: endurecer
 
-- Cabeceras de seguridad: CSP primero en modo «solo reporte», después bloqueando. PDF.js viene de cdnjs; además hay voz y Supabase. Probar con la app viva.
+- Cabeceras de seguridad: **CSP en modo «solo reporte» ya declarada en `vercel.json`** (`Content-Security-Policy-Report-Only`). Permite solo el propio sitio, `cdnjs.cloudflare.com` (PDF.js y mammoth), Google Fonts, el proyecto de Supabase (HTTPS y WebSocket), y `blob:` para el worker de PDF.js y el audio de la voz; sin `eval` ni scripts en línea. **Cómo se verifica:** (1) `scripts/visual-u.mjs` aplica la misma política **en modo bloqueo** sobre el build real y falla si algo se bloquea; (2) `src/infrastructure/seguridad/csp.test.ts` impide debilitarla por descuido y exige que cubra cada CDN que el código carga; (3) `prueba-viva` (manual, contra producción) lista las violaciones que vería un navegador real, incluida la carga de PDF.js. **Para activarla:** correr `prueba-viva` tras desplegar; si `csp.json` no lista violaciones, cambiar la clave a `Content-Security-Policy`. Si cambia el proyecto de Supabase o se agrega un CDN, hay que actualizar la política (la prueba avisa).
 - Accesibilidad AA.
 - ~~Retirar la interfaz anterior~~ **Hecho el 3-nov-2026**, ver §3.5.
 - Actualización del service worker dentro de `/u`.

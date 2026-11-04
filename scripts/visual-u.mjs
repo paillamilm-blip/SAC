@@ -4,7 +4,7 @@
 //
 // Uso (lo ejecuta .github/workflows/visual-u.yml):  BASE_URL=http://localhost:4173 node scripts/visual-u.mjs
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:4173';
@@ -18,10 +18,58 @@ const falla = (msg) => {
 };
 const ok = (msg) => console.log('✓', msg);
 
+// ── Política de seguridad de contenido ───────────────────────────────────────────────────────
+// La política que declara vercel.json se aplica aquí en MODO BLOQUEO sobre el build real: si la app carga o hace
+// algo que la política no permite, el recorrido falla. Así se prueba la CSP antes de desplegarla.
+function cargarCsp() {
+  const cfg = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const global = cfg.headers.find((h) => h.source === '/(.*)');
+  const cab = global?.headers.find((h) => /^content-security-policy/i.test(h.key));
+  if (!cab) throw new Error('vercel.json no define Content-Security-Policy');
+  let valor = cab.value;
+  // En CI el proyecto de Supabase es un valor ficticio: se sustituye el host de la política para no dar falsos positivos.
+  if (process.env.VITE_SUPABASE_URL) {
+    valor = valor.replaceAll('cuwuyqpxaibbqjrvamjb.supabase.co', new URL(process.env.VITE_SUPABASE_URL).host);
+  }
+  return valor;
+}
+const CSP = cargarCsp();
+const violacionesCsp = new Set();
+
+async function aplicarCsp(ctx) {
+  await ctx.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (e) => {
+      console.error(`CSPVIOLATION|${e.effectiveDirective}|${e.blockedURI}|${e.sourceFile || ''}`);
+    });
+  });
+  ctx.on('page', (p) =>
+    p.on('console', (m) => {
+      const t = m.text();
+      if (t.startsWith('CSPVIOLATION|')) {
+        const [, directiva, bloqueado, origen] = t.split('|');
+        violacionesCsp.add(`${directiva} bloqueó ${bloqueado}${origen ? ` (desde ${origen})` : ''}`);
+      } else if (/Content Security Policy/i.test(t)) {
+        violacionesCsp.add(t.slice(0, 220));
+      }
+    }),
+  );
+  // Solo el documento HTML lleva la cabecera (en vite preview no existen las de vercel.json).
+  await ctx.route('**/*', async (route) => {
+    const req = route.request();
+    if (req.resourceType() !== 'document' || !req.url().startsWith(BASE)) return route.continue();
+    const resp = await route.fetch();
+    const headers = { ...resp.headers() };
+    delete headers['content-security-policy-report-only'];
+    headers['content-security-policy'] = CSP;
+    return route.fulfill({ response: resp, headers });
+  });
+}
+
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
 
 async function recorrido(browser, nombre, viewport) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'es-CL' });
+  await aplicarCsp(ctx);
   const page = await ctx.newPage();
   const errores = [];
   page.on('pageerror', (e) => errores.push(String(e)));
@@ -112,6 +160,7 @@ async function recorrido(browser, nombre, viewport) {
 async function todoAbreElProducto(browser) {
   // Es un solo producto: la raíz, /anterior y los enlaces viejos con parámetros terminan en /u.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await aplicarCsp(ctx);
   for (const entrada of ['/', '/anterior', '/?tab=wallet', '/?source=pwa']) {
     const page = await ctx.newPage();
     const errores = [];
@@ -133,6 +182,11 @@ try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
   await todoAbreElProducto(browser);
+  if (violacionesCsp.size) {
+    for (const v of violacionesCsp) falla(`CSP: ${v}`);
+  } else {
+    ok('la política de seguridad (CSP) se cumplió en todo el recorrido, sin violaciones');
+  }
 } catch (e) {
   falla(`el recorrido se interrumpió: ${e instanceof Error ? e.message : e}`);
   const p = browser.contexts()[0]?.pages()[0];

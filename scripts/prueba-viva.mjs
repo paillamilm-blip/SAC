@@ -35,6 +35,11 @@ const ok = (msg) => console.log('✓', msg);
 // Todas las respuestas de proxy-ai (puede haber 2 si el primer resultado no supera la validación).
 const llamadasProxy = [];
 
+// Violaciones de la política de seguridad (CSP) vistas en producción. Mientras la política esté en modo
+// «solo reporte» NO hacen fallar la prueba: sirven para descubrir qué bloquearía antes de activarla.
+const violacionesCsp = new Set();
+let cabeceraCsp = null;
+
 async function main() {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({
@@ -42,10 +47,30 @@ async function main() {
     deviceScaleFactor: 1,
     locale: 'es-CL',
   });
+  await ctx.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (e) => {
+      console.error(`CSPVIOLATION|${e.disposition}|${e.effectiveDirective}|${e.blockedURI}|${e.sourceFile || ''}`);
+    });
+  });
   const page = await ctx.newPage();
 
   const errores = [];
   page.on('pageerror', (e) => errores.push(String(e)));
+  page.on('console', (m) => {
+    const t = m.text();
+    if (t.startsWith('CSPVIOLATION|')) {
+      const [, modo, directiva, bloqueado, origen] = t.split('|');
+      violacionesCsp.add(`[${modo}] ${directiva} → ${bloqueado}${origen ? ` (desde ${origen})` : ''}`);
+    } else if (/Content Security Policy/i.test(t)) {
+      violacionesCsp.add(t.slice(0, 220));
+    }
+  });
+  // La cabecera de la política que realmente sirve producción (documento principal).
+  page.on('response', (res) => {
+    if (res.request().resourceType() !== 'document' || !res.url().startsWith(BASE) || cabeceraCsp) return;
+    const h = res.headers();
+    cabeceraCsp = h['content-security-policy'] ?? h['content-security-policy-report-only'] ?? null;
+  });
 
   // Capturar la respuesta de la Edge Function proxy-ai (estado, modelo, tiempo y cuerpo).
   page.on('response', async (res) => {
@@ -148,6 +173,7 @@ async function main() {
   } finally {
     // Guardar la respuesta de proxy-ai como artefacto (diagnóstico si la IA falló).
     writeFileSync(join(SALIDA, 'proxy-ai.json'), JSON.stringify(llamadasProxy, null, 2));
+    writeFileSync(join(SALIDA, 'csp.json'), JSON.stringify({ cabecera: cabeceraCsp, violaciones: [...violacionesCsp] }, null, 2));
     await browser.close();
   }
 
@@ -163,6 +189,16 @@ async function main() {
       const erroresIA = llamadasProxy.map((c) => c.error).filter(Boolean);
       falla(`proxy-ai no devolvió texto usable (estados: ${estados}). Errores: ${erroresIA.slice(0, 2).join(' | ') || 'sin detalle'}. Puede ser inestabilidad del campo gratis de IA, no un bug del producto.`);
     }
+  }
+
+  // CSP: informativo mientras esté en modo «solo reporte».
+  if (!cabeceraCsp) {
+    console.log('⚠ producción no sirve ninguna política de seguridad (CSP): ¿se desplegó vercel.json?');
+  } else if (violacionesCsp.size === 0) {
+    ok('la política de seguridad (CSP) no tuvo ninguna violación en el recorrido completo (con PDF.js, voz y datos)');
+  } else {
+    console.log(`⚠ CSP: ${violacionesCsp.size} violación(es) (aún no bloquean, pero bloquearían al activar la política):`);
+    for (const v of violacionesCsp) console.log(`   - ${v}`);
   }
 
   // Leer el cuerpo de la última llamada para el reporte humano.
