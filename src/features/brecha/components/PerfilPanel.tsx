@@ -98,7 +98,8 @@ export default function PerfilPanel({
         </div>
 
         <div className="u-perfil-acciones">
-          <button type="button" className="boton boton-primario" onClick={onVerPasaporte}>
+          {/* Una sola acción principal: invitado → iniciar sesión; con cuenta → ver el pasaporte. */}
+          <button type="button" className={esInvitado ? 'boton' : 'boton boton-primario'} onClick={onVerPasaporte}>
             Ver mi pasaporte
           </button>
           {esInvitado ? (

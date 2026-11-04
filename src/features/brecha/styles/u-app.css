@@ -145,6 +145,10 @@
   font-weight: 400;
   color: var(--muted);
 }
+.u-app .u-perfil-acciones {
+  display: grid;
+  gap: 10px;
+}
 .u-app .u-perfil-acciones .boton {
   width: 100%;
   min-height: 44px;
@@ -968,6 +972,10 @@
 }
 .u-app .u-pas-estado {
   min-height: 1.5em;
+}
+.u-app .u-pas-nota + .boton,
+.u-app .u-pas-vacio + .boton {
+  margin-top: 12px;
 }
 .u-app .u-pas-botones {
   display: flex;
