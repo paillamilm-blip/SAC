@@ -176,16 +176,100 @@ El estado actual es 1 solo commit con 380.693 líneas. Eso impide volver atrás.
 cada tarea de `tasks.md` es un commit, cada punto es un PR y se etiqueta al cerrar la fase
 (`v0.11-post-auditoria`). No se intenta "rehacer" la historia: se empieza limpia desde acá.
 
+## Decisión 11 — Separar "sin permiso" de "no llegó la respuesta" (R12)
+
+Hoy `catch` en `ProfileContext.tsx:180-186` colapsa ambos casos en `no_access`. Es la decisión más
+barata del plan y la de mayor impacto en confianza.
+
+Se introduce un estado distinguible (`error_transitorio`) con su propia acción de reintento, y
+`no_access` queda reservado para 403 / RLS. **No se toca `NoAccess.tsx` para "agregar un botón"**: si
+el estado ya no llega ahí por red, la pantalla sigue siendo correcta para lo que es (acceso denegado).
+
+Riesgo a controlar: el reintento no debe convertirse en un bucle contra una base caída. Un reintento
+manual con contador visible, no automático infinito.
+
+## Decisión 12 — La reputación es del servidor, o el pasaporte no vale (R13)
+
+Misma lógica que R2: **el navegador no escribe nada que luego se firma como prueba.** Se poda
+`reputation.ts` (conservando tipos) y el `upsert` de `ProfileContext.tsx:138-162` se convierte en RPC.
+
+Orden sin ruptura: primero se confirma que ninguna vista lee `gemelo` (verificado: 0 consumidores,
+R17) — así que borrar el cálculo del cliente **no cambia lo que nadie ve**. Eso hace que esta tarea
+sea de riesgo bajo y beneficio alto, y por eso va temprano pese a ser "de mantenimiento".
+
+## Decisión 13 — El micrófono se arregla en la capa de infraestructura, no en la pantalla (R14)
+
+El aviso ya está bien escrito y bien conectado (`ChatPanel.tsx:254-258`, `:272-285`). Agregar otro
+`try/catch` en `ChatPanel` sería pintar sobre el síntoma. El arreglo es:
+
+1. `recognition.ts:96` — capturar `start()`, tiparlo `void | Promise<void>` en `:31`, y rechazar con el
+   nombre del error para que el mapa existente (`not-allowed`, `no-speech`, `audio-capture`) lo traduzca.
+2. `ChatPanel.tsx:236-270` — un `try/catch` que enrute a `decir(...)`, para que ningún camino quede sin
+   mensaje.
+3. Un test con `isSpeechAvailable: () => true` y `start()` rechazando. **Sin este paso el bug puede
+   volver**: los mocks actuales (`ChatPanel.test.tsx:17`, `UApp.test.tsx:46`) excluyen la rama por
+   construcción.
+
+## Decisión 14 — El podado se hace por consumo demostrado, no por nombre de archivo (R17, R19, R20)
+
+La regla que evita romper: **sólo se borra lo que tiene 0 consumidores medidos**, y la prueba es el
+`grep` del símbolo, no la intuición. Por eso el informe adjunta el conteo por archivo.
+
+Orden dentro del podado:
+
+1. Primero lo que no se renderiza y no se lee (`memory.ts`, `RealtimeContext` + `useRealtimeNetwork`,
+   `voiceAnalyser`, `cvAnalyzer`, `theme/{animations,layout,shadows}`).
+2. Después lo que **sí** tiene efecto en tiempo de ejecución y por eso se nota al borrar
+   (`voiceAnalyser` libera AudioContext; `RealtimeContext` cierra canales). Un paso por commit, con el
+   ciclo de cinco puntos corrido después.
+3. `Toast.tsx` se decide aparte y **después de R12/R15**: es el componente que esos dos arreglos
+   necesitan. Borrarlo antes sería destruir la solución que se está buscando.
+4. `ColorPicker` y `userColorSync` requieren una decisión de producto (¿la usuaria elige su color en
+   `/u`?) antes que una de código.
+5. `decimal.js` y `@tanstack/react-query` (R20) recién cuando no quede ningún importador.
+6. `noUnusedLocals: true` se reactiva al final, como verificador del conjunto.
+
+## Decisión 15 — Primero la malla de seguridad, después el volumen (R21)
+
+El orden importa: si se poda código (R17) antes de tener cobertura, se borra a ciegas; si se podan los
+tests que protegen código muerto antes de podar el código, se pierde el registro de qué estaba protegiendo.
+
+Regla operativa: **el test se retira en la misma PR que su código** (ya anotado en R21). Y las dos
+pruebas nuevas que valen más que cualquier porcentaje de cobertura son las que cubren los bugs de esta
+auditoría: `ProfileContext.test.tsx` con `fetch` fallando (R12) y `AuthOverlay.test.tsx` con RPC ausente
+(R15). `AuthOverlay.tsx` tiene 682 líneas y es el archivo más grande de `src`: cubrilo no para el
+número, sino porque ahí viven dos de los cuatro fallos que expulsan o engañan a la usuaria.
+
+## Decisión 16 — Leer septiembre antes de escribir noviembre (R23)
+
+Antes de implementar R1 y R7, sacar y leer las tres ramas detenidas:
+
+- `seguridad/strix-ci` → `.security/HALLAZGOS-2026-09.md` (¿qué ya se encontró y no se aplicó?).
+- `seguridad/perfil-lista-blanca` → `0083_perfil_lista_blanca.sql` (protege `UPDATE` de columnas del
+  perfil; **complementa** la lectura anónima de R1, no la resuelve).
+- `fix/working-openrouter-models` → lista de modelos OpenRouter confirmados disponibles, que es insumo
+  directo para el reintento y la carrera de modelos de R7.
+
+Las tres están 120–212 commits por detrás de `main` y sin PR abierto, así que **no se fusionan crudas**.
+Se leen, y cada hallazgo se marca aquí como *ya hecho / pendiente / descartado*. Fusionar `main` en una
+de esas ramas para rescatar un commit puntual es más caro que reimplementarlo.
+
 ## Orden de fases
 
 | Fase | Contenido | Condición para pasar a la siguiente |
 |---|---|---|
-| 0 | Medir producción (Decisión 1) | Las tres consultas respondidas y anotadas |
-| 1 | R1, R2, R4 — datos de personas y falsificación | Ciclo completo verde con cuenta de prueba |
-| 2 | R3, R10 (analítica) — coste y métricas | Coste por visitante desconocido ≈ 0 |
-| 3 | R8, R7 — lo que siente la usuaria | El examen rinde a la primera y `/u` tiene cerrar sesión |
-| 4 | R5, R6 — CSP y obligaciones legales | Escáner verde con cabecera aplicativa |
-| 5 | R9, R10, R11 — accesibilidad, repo, dependencias |axe en verde, README dice la verdad |
+| 0 | Medir producción (Decisión 1) + leer septiembre (Decisión 16) | Consultas respondidas y las tres ramas clasificadas |
+| 1 | R1, R2, R4 — datos de las personas y falsificación | Ciclo completo verde con cuenta de prueba |
+| 2 | R3, R10 (analítica), R13 — coste, métricas y reputación | El navegador no escribe nada que se firme |
+| 3 | R12, R15, R14, R19 — lo que expulsan o engañan a la usuaria | Ningún clic sin respuesta; términos legibles |
+| 4 | R8, R7 — el ciclo y el examen | El examen rinde a la primera y `/u` tiene cerrar sesión |
+| 5 | R5, R6 — CSP y obligaciones legales | Escáner verde con cabecera aplicativa |
+| 6 | R21 — malla de pruebas antes de tocar volumen | `ProfileContext` y `AuthOverlay` cubiertos |
+| 7 | R16, R17, R18, R20, R22, R9, R11 — podado, estilo, docs, dependencias | `noUnusedLocals` reactivo y verde; README y PRODUCT dicen la verdad |
 
 Fase 0 no se salta. Fases 1 y 2 van antes que cualquier arreglo cosmético: son las únicas donde un
-tercero puede causar daño hoy.
+tercero puede causar daño hoy. **Fase 6 va antes que la 7**: no se poda sin red que avise si se rompió
+algo, y el podado es la fase con más líneas tocadas del plan.
+
+Por qué R12 y R15 van antes que R8 (el ciclo): una persona expulsada por un corte de red no llega
+nunca al paso 5 del ciclo. Primero que la puerta no mienta.
