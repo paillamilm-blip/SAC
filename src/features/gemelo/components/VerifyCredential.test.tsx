@@ -6,7 +6,9 @@ vi.mock('@/infrastructure/supabase/client', () => ({ supabase: { functions: { in
 
 import { VerifyCredentialView } from './VerifyCredential';
 
-beforeEach(() => invoke.mockReset());
+beforeEach(() => {
+  invoke.mockReset();
+});
 afterEach(cleanup);
 
 const v2 = {

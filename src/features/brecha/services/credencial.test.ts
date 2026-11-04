@@ -9,7 +9,9 @@ const conContexto = (status: number, cuerpo: unknown) => ({
   context: { status, json: async () => cuerpo, clone() { return this; } },
 });
 
-beforeEach(() => invoke.mockReset());
+beforeEach(() => {
+  invoke.mockReset();
+});
 
 describe('emitirCredencial', () => {
   it('pide emitir SIN mandar habilidades ni puntajes (las lee el servidor) y arma el enlace público', async () => {
