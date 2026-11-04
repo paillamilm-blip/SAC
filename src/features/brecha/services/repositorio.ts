@@ -6,10 +6,12 @@
 // la migración; este módulo es la costura donde se enchufará.
 
 import { compararAnalisis } from '../domain/comparar';
+import { estaDominada } from '../domain/dominio';
 import type {
   Analisis,
   Brecha,
   ComparacionAnalisis,
+  PruebaExamen,
   ResultadoAnalisis,
   Veredicto,
 } from '../domain/types';
@@ -77,6 +79,7 @@ export function agregarAnalisis(
       veredicto: null,
       veredictoEn: null,
       dominadaEn: null,
+      prueba: null,
     })),
   };
   return { db: { ...db, analisis: [...db.analisis, analisis] }, analisis };
@@ -105,7 +108,7 @@ function actualizarBrecha(
   return tocado ? { ...db, analisis } : db;
 }
 
-/** Marca "Es real" / "No aplica" o la quita (null). Quitar "Es real" también quita "dominada". */
+/** Marca "Es real" / "No aplica" o la quita (null). Quitar "Es real" también quita "dominada" y su prueba. */
 export function marcarBrecha(
   db: Db,
   analisisId: string,
@@ -118,17 +121,17 @@ export function marcarBrecha(
     veredicto,
     veredictoEn: veredicto ? ahora : null,
     dominadaEn: veredicto === 'confirmada' ? b.dominadaEn : null,
+    prueba: veredicto === 'confirmada' ? b.prueba : null,
   }));
 }
 
 /**
- * Autodeclara una brecha como dominada. Solo se puede dominar lo que antes se
- * reconoció como real (misma regla que brecha). Cuando exista el examen
- * (TAREA-37) esto pasará a exigir una prueba registrada.
+ * Registra el examen aprobado de una brecha. Ya no existe la autodeclaración: dominar exige una prueba que el
+ * servidor calificó. Solo se puede dominar lo que antes se reconoció como real, y una sola vez.
  */
-export function marcarDominada(db: Db, analisisId: string, brechaId: string, ahora: string): Db {
+export function registrarPrueba(db: Db, analisisId: string, brechaId: string, prueba: PruebaExamen): Db {
   return actualizarBrecha(db, analisisId, brechaId, (b) =>
-    b.veredicto === 'confirmada' && !b.dominadaEn ? { ...b, dominadaEn: ahora } : null,
+    b.veredicto === 'confirmada' && !estaDominada(b) ? { ...b, dominadaEn: prueba.en, prueba: { ...prueba } } : null,
   );
 }
 
@@ -182,7 +185,7 @@ export function metricas(db: Db): Metricas {
     revisadas,
     confirmadas,
     rechazadas,
-    dominadas: brechas.filter((b) => b.dominadaEn).length,
+    dominadas: brechas.filter(estaDominada).length,
     precision: revisadas ? Math.round((confirmadas / revisadas) * 100) : null,
   };
 }
@@ -241,7 +244,27 @@ function esBrecha(x: unknown): boolean {
   if (b.veredicto !== null && b.veredicto !== 'confirmada' && b.veredicto !== 'rechazada') return false;
   if (b.veredictoEn !== null && typeof b.veredictoEn !== 'string') return false;
   if (b.dominadaEn !== null && typeof b.dominadaEn !== 'string') return false;
+  // `prueba` no existía en los datos guardados antes del examen: undefined se acepta (y se normaliza a null al cargar).
+  if (b.prueba !== undefined && b.prueba !== null && !esPrueba(b.prueba)) return false;
   return true;
+}
+
+function esPrueba(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const p = x as Partial<PruebaExamen>;
+  return (
+    typeof p.actaId === 'string' &&
+    typeof p.puntaje === 'number' && Number.isFinite(p.puntaje) && p.puntaje >= 0 && p.puntaje <= 100 &&
+    typeof p.en === 'string'
+  );
+}
+
+/** Los datos guardados antes del examen no traen `prueba`: se completa con null para que el tipo sea verdad. */
+function conPrueba(db: Db): Db {
+  return {
+    ...db,
+    analisis: db.analisis.map((a) => ({ ...a, brechas: a.brechas.map((b) => ({ ...b, prueba: b.prueba ?? null })) })),
+  };
 }
 
 /** Lee la base; si no existe o está corrupta devuelve una vacía (nunca lanza). */
@@ -250,7 +273,7 @@ export function cargar(almacen: Almacen, clave: string): Db {
     const crudo = almacen.getItem(clave);
     if (!crudo) return dbVacia();
     const parsed: unknown = JSON.parse(crudo);
-    return esDb(parsed) ? parsed : dbVacia();
+    return esDb(parsed) ? conPrueba(parsed) : dbVacia();
   } catch {
     return dbVacia();
   }

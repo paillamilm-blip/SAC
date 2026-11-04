@@ -33,7 +33,7 @@ export default function UApp() {
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
-  const { db, persistente, agregar, marcar, dominar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
+  const { db, persistente, agregar, marcar, probar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
   const [chatAbierto, setChatAbierto] = useState(false);
   const [pedirAuth, setPedirAuth] = useState(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
@@ -101,13 +101,10 @@ export default function UApp() {
       } else if (accion.tipo === 'abrir_reporte') {
         setChatAbierto(false);
         ir(hrefReporte(accion.analisisId, accion.pestana, accion.brechaId));
-      } else if (accion.tipo === 'dominar') {
-        const exito = dominar(accion.analisisId, accion.brechaId);
-        return exito;
       }
       return true;
     },
-    [dominar, ir],
+    [ir],
   );
 
   const estiloColor = {
@@ -240,7 +237,9 @@ export default function UApp() {
               brechaId={ruta.brechaId}
               onIr={ir}
               onMarcar={marcar}
-              onDominar={dominar}
+              onProbar={probar}
+              sesionIniciada={authStatus === 'authenticated'}
+              onPedirSesion={() => setPedirAuth(true)}
             />
           )}
         </ErrorBoundary>

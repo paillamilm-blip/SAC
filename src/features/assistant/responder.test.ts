@@ -80,16 +80,22 @@ describe('responder', () => {
     expect(responder('cómo voy', estado(d))?.texto).toBe('1/8 reales · 0 dominadas · 100 % de precisión.');
   });
 
-  it('"ya lo aprendí" propone dominar pero ADVIERTE que es autodeclarado y no "Probado"', () => {
+  it('"ya lo aprendí" NO marca nada: manda a demostrarlo con el examen de esa brecha', () => {
     const { db, a } = conAnalisis();
     const d = marcarBrecha(db, a.id, a.brechas[0].id, 'confirmada', T0);
     const r = responder('ya lo aprendí', estado(d));
-    expect(r?.accion?.accion.tipo).toBe('dominar');
-    expect(r?.texto).toContain('no hay un examen');
+    expect(r?.accion?.accion).toEqual({
+      tipo: 'abrir_reporte',
+      analisisId: a.id,
+      pestana: 'brechas',
+      brechaId: a.brechas[0].id,
+    });
+    expect(r?.texto).toContain('examen');
+    expect(r?.texto).toContain('No se puede marcar a mano');
     expect(r?.origen).toBe('estimacion');
   });
 
-  it('"ya lo aprendí" sin ninguna brecha reconocida NO propone dominar', () => {
+  it('"ya lo aprendí" sin ninguna brecha reconocida solo lleva a la lista de brechas', () => {
     const { db } = conAnalisis();
     const r = responder('ya lo aprendí', estado(db));
     expect(r?.accion?.accion.tipo).toBe('abrir_reporte');
@@ -99,7 +105,7 @@ describe('responder', () => {
     expect(responder('cuál es la capital de Francia', estado(dbVacia()))).toBeNull();
   });
 
-  it('ninguna respuesta se rotula "Probado" (todavía no existe esa prueba)', () => {
+  it('ninguna respuesta se rotula "Probado" (el asistente todavía no lee la prueba del examen)', () => {
     const { db, a } = conAnalisis();
     const d = marcarBrecha(db, a.id, a.brechas[0].id, 'confirmada', T0);
     for (const txt of ['hola', 'qué hago ahora', 'qué me falta', 'cómo voy', 'abre el mapa', 'ya lo aprendí', 'ayuda']) {

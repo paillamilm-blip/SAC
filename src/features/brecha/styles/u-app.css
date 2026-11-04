@@ -556,3 +556,181 @@
 .u-app .u-banda-acciones .boton {
   min-height: 44px;
 }
+
+/* ── Examen de una brecha (ventana modal) ─────────────────────────────────────────────── */
+.u-app .u-examen-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(5, 7, 10, 0.72);
+}
+.u-app .u-examen {
+  width: min(680px, 100%);
+  max-height: min(92dvh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  outline: none;
+}
+.u-app .u-examen-cab {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.u-app .u-examen-cab h2 {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+.u-app .u-examen-sobre {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.u-app .u-examen-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px 20px;
+  overflow-y: auto;
+}
+.u-app .u-examen-estado,
+.u-app .u-examen-contexto {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.u-app .u-examen-nota {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--dim);
+}
+.u-app .u-examen-pregunta {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.u-app .u-examen-pregunta legend {
+  padding: 0 6px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.u-app .u-examen-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1.45;
+}
+.u-app .u-examen-opcion:hover {
+  background: var(--accent-soft);
+}
+.u-app .u-examen-opcion input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+}
+.u-app .u-examen-caso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  line-height: 1.5;
+}
+.u-app .u-examen-caso textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  line-height: 1.5;
+}
+.u-app .u-examen-caso textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.u-app .u-examen-caso details {
+  color: var(--muted);
+}
+.u-app .u-examen-botones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.u-app .u-examen-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.u-app .u-examen-resultado p {
+  margin: 0;
+  line-height: 1.55;
+}
+.u-app .u-examen-veredicto {
+  font-size: 1.25rem;
+  color: var(--bad);
+}
+.u-app .u-examen-resultado[data-aprobado='true'] .u-examen-veredicto {
+  color: var(--ok);
+}
+.u-app .u-examen-ejes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.u-app .u-examen-ejes > div {
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.u-app .u-examen-ejes dt {
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+.u-app .u-examen-ejes dd {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+@media (max-width: 520px) {
+  .u-app .u-examen-fondo {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .u-app .u-examen {
+    max-height: 94dvh;
+    border-radius: 18px 18px 0 0;
+  }
+  .u-app .u-examen-ejes {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .u-app .u-examen-opcion {
+    transition: none;
+  }
+}

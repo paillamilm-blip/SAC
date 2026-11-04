@@ -1,6 +1,8 @@
 import { useState } from "react";
+import Examen from "./Examen";
 import MapaCapacidades from "./MapaCapacidades";
-import type { Brecha, CategoriaBrecha, ComparacionAnalisis, Veredicto } from "../domain/types";
+import { esDeclaradaSinPrueba, estaDominada } from "../domain/dominio";
+import type { Brecha, CategoriaBrecha, ComparacionAnalisis, PruebaExamen, Veredicto } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
 const ORDEN: CategoriaBrecha[] = ["dura", "blanda", "conocimiento", "credencial"];
@@ -55,7 +57,9 @@ export default function PanelReporte({
   brechas,
   comparacion,
   onMarcar,
-  onDominar,
+  onProbar,
+  sesionIniciada,
+  onPedirSesion,
   pestanaInicial,
   brechaInicialId,
   onPestana,
@@ -71,7 +75,11 @@ export default function PanelReporte({
   brechas: Brecha[];
   comparacion: ComparacionAnalisis | null;
   onMarcar: (brechaId: string, veredicto: Veredicto) => void;
-  onDominar: (brechaId: string) => void;
+  /** Guarda el examen aprobado de una brecha. */
+  onProbar: (brechaId: string, prueba: PruebaExamen) => void;
+  /** El examen exige sesión: sin ella, «Demostrarlo» abre el acceso. */
+  sesionIniciada: boolean;
+  onPedirSesion: () => void;
   pestanaInicial?: Pestana;
   brechaInicialId?: string | null;
   onPestana?: (pestana: Pestana) => void;
@@ -81,10 +89,11 @@ export default function PanelReporte({
     () => brechaInicialId ?? brechas.find((b) => !b.veredicto)?.id ?? null,
   );
   const [tab, setTab] = useState<Pestana>(pestanaInicial ?? "mapa");
+  const [examenDe, setExamenDe] = useState<string | null>(null);
 
   const confirmadas = brechas.filter((b) => b.veredicto === "confirmada").length;
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
-  const dominadas = brechas.filter((b) => b.dominadaEn).length;
+  const dominadas = brechas.filter(estaDominada).length;
   const revisadas = confirmadas + rechazadas;
   const pendientes = brechas.length - revisadas;
   const precision = revisadas ? Math.round((confirmadas / revisadas) * 100) : null;
@@ -107,10 +116,15 @@ export default function PanelReporte({
     if (veredicto) avanzar(id);
   };
 
-  const dominar = (id: string) => {
-    onDominar(id);
-    brillar(id);
+  const demostrar = (id: string) => {
+    if (!sesionIniciada) {
+      onPedirSesion();
+      return;
+    }
+    setExamenDe(id);
   };
+
+  const brechaEnExamen = examenDe ? brechas.find((b) => b.id === examenDe) ?? null : null;
 
   const filas = ORDEN.flatMap((categoria) =>
     brechas
@@ -214,7 +228,7 @@ export default function PanelReporte({
 
           <div className="cola">
             {filas.map((b) => {
-              const estado = b.dominadaEn ? "dominada" : (b.veredicto ?? "pendiente");
+              const estado = estaDominada(b) ? "dominada" : (b.veredicto ?? "pendiente");
               const abierta = abiertaId === b.id;
               return (
                 <div className="cola-item" key={b.id} data-abierta={abierta} data-estado={estado}>
@@ -305,15 +319,19 @@ export default function PanelReporte({
                             No aplica
                           </button>
                           {b.veredicto === "confirmada" &&
-                            (b.dominadaEn ? (
-                              <span className="nota nota-logro">Dominada el {fechaCorta(b.dominadaEn)}</span>
+                            (estaDominada(b) && b.dominadaEn && b.prueba ? (
+                              <span className="nota nota-logro">
+                                Dominada con prueba · {b.prueba.puntaje}/100 · {fechaCorta(b.dominadaEn)}
+                              </span>
                             ) : (
-                              <button
-                                className="boton boton-logro"
-                                onClick={() => dominar(b.id)}
-                              >
-                                Ya lo aprendí
-                              </button>
+                              <>
+                                {esDeclaradaSinPrueba(b) && b.dominadaEn && (
+                                  <span className="nota">Marcada a mano el {fechaCorta(b.dominadaEn)} · sin prueba</span>
+                                )}
+                                <button className="boton boton-logro" onClick={() => demostrar(b.id)}>
+                                  Demostrarlo
+                                </button>
+                              </>
                             ))}
                         </div>
                       </article>
@@ -360,6 +378,17 @@ export default function PanelReporte({
             )}
           </div>
         </section>
+      )}
+
+      {brechaEnExamen && (
+        <Examen
+          tituloBrecha={brechaEnExamen.titulo}
+          onAprobado={(prueba) => {
+            onProbar(brechaEnExamen.id, prueba);
+            brillar(brechaEnExamen.id);
+          }}
+          onCerrar={() => setExamenDe(null)}
+        />
       )}
     </>
   );

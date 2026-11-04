@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { estaDominada } from "../domain/dominio";
 import type { Brecha, BrechaCerrada, CategoriaBrecha } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
@@ -105,7 +106,7 @@ export default function MapaCapacidades({
     });
 
     const logros = nodosBrecha
-      .filter((nb) => nb.b.dominadaEn)
+      .filter((nb) => estaDominada(nb.b))
       .map((nb) => ({ nb, p: polar(RADIO_LOGRO, nb.ang + 8), delay: siguiente() }));
 
     const nodosCerrada = cerradas.map((c, i) => {
@@ -126,7 +127,7 @@ export default function MapaCapacidades({
         const lista: Evento[] = [];
         if (b.veredicto === "confirmada" && b.veredictoEn)
           lista.push({ t: b.veredictoEn, tipo: "reconocida", id: b.id, titulo: b.titulo, p });
-        if (b.dominadaEn) lista.push({ t: b.dominadaEn, tipo: "dominada", id: b.id, titulo: b.titulo, p });
+        if (estaDominada(b) && b.dominadaEn) lista.push({ t: b.dominadaEn, tipo: "dominada", id: b.id, titulo: b.titulo, p });
         return lista;
       }),
       ...nodosCerrada.map(({ c, p }) => ({ t: c.fecha, tipo: "cerrada" as const, id: c.id, titulo: c.titulo, p })),
@@ -152,7 +153,7 @@ export default function MapaCapacidades({
   }, [brechas, cerradas]);
 
   const reconocidas = brechas.filter((b) => b.veredicto === "confirmada").length;
-  const dominadas = brechas.filter((b) => b.dominadaEn).length;
+  const dominadas = brechas.filter(estaDominada).length;
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
 
   const lineasOcupacion = useMemo(() => {
@@ -311,7 +312,7 @@ export default function MapaCapacidades({
           const { b, p } = nb;
           const color = COLOR_CAT[b.categoria];
           const r = b.severidad === "alta" ? 14 : b.severidad === "media" ? 11.5 : 9.5;
-          const dominada = Boolean(b.dominadaEn);
+          const dominada = estaDominada(b);
           const confirmada = b.veredicto === "confirmada";
           const rechazada = b.veredicto === "rechazada";
           const estado = rechazada ? "rechazada" : dominada ? "dominada" : confirmada ? "confirmada" : "pendiente";

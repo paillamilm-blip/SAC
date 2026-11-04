@@ -110,7 +110,7 @@ export default function Inicio({
                 </dd>
               </div>
               <div>
-                <dt>Dominadas (declaradas)</dt>
+                <dt>Dominadas con prueba</dt>
                 <dd>
                   {m.dominadas} <small>de {m.confirmadas}</small>
                 </dd>

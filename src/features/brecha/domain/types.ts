@@ -24,11 +24,25 @@ export type Brecha = {
   aprender: Aprender;
   veredicto: Veredicto;
   veredictoEn: string | null;
-  /** Autodeclarada hasta que exista la prueba por examen (ver docs/tasks.md, TAREA-37). */
+  /**
+   * Cuándo se dio por dominada. Solo cuenta como dominada si además hay `prueba` (ver `estaDominada`).
+   * Un valor sin prueba viene de cuando se podía autodeclarar: se conserva, pero no cuenta.
+   */
   dominadaEn: string | null;
+  /** Examen aprobado, calificado por el servidor. null = sin prueba. */
+  prueba: PruebaExamen | null;
 };
 
-export type BrechaNueva = Omit<Brecha, 'id' | 'veredicto' | 'veredictoEn' | 'dominadaEn'>;
+/** Lo que devuelve el servidor al aprobar un examen: el acta queda guardada allí. */
+export type PruebaExamen = {
+  actaId: string;
+  /** 0 a 100, calculado por el servidor. */
+  puntaje: number;
+  /** Cuándo se aprobó (ISO). */
+  en: string;
+};
+
+export type BrechaNueva = Omit<Brecha, 'id' | 'veredicto' | 'veredictoEn' | 'dominadaEn' | 'prueba'>;
 
 export type MotivoCerrada = 'dominada' | 'no_aparece';
 

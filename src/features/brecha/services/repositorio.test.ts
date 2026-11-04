@@ -11,11 +11,13 @@ import {
   guardar,
   listarAnalisis,
   marcarBrecha,
-  marcarDominada,
+  registrarPrueba,
   metricas,
   type Almacen,
 } from './repositorio';
-import type { ResultadoAnalisis } from '../domain/types';
+import type { PruebaExamen, ResultadoAnalisis } from '../domain/types';
+
+const prueba = (en: string, puntaje = 82): PruebaExamen => ({ actaId: 'acta-1', puntaje, en });
 
 const META = { nombreArchivo: 'cv.pdf', tamanio: 1000, proveedor: 'demostracion', simulado: true };
 
@@ -61,7 +63,7 @@ describe('agregarAnalisis', () => {
   });
 });
 
-describe('marcarBrecha / marcarDominada', () => {
+describe('marcarBrecha / registrarPrueba', () => {
   it('"Es real" registra el veredicto y la fecha', () => {
     const { db, analisis } = conUnAnalisis();
     const b = analisis.brechas[0];
@@ -74,24 +76,41 @@ describe('marcarBrecha / marcarDominada', () => {
   it('solo se puede dominar lo que antes se reconoció como real', () => {
     const { db, analisis } = conUnAnalisis();
     const b = analisis.brechas[0];
-    const intento = marcarDominada(db, analisis.id, b.id, '2026-11-02T12:00:00.000Z');
+    const intento = registrarPrueba(db, analisis.id, b.id, prueba('2026-11-02T12:00:00.000Z'));
     expect(intento).toBe(db); // sin cambios: misma referencia
     const real = marcarBrecha(db, analisis.id, b.id, 'confirmada', '2026-11-02T11:00:00.000Z');
-    const dominada = marcarDominada(real, analisis.id, b.id, '2026-11-02T12:00:00.000Z');
-    expect(dominada.analisis[0].brechas[0].dominadaEn).toBe('2026-11-02T12:00:00.000Z');
+    const dominada = registrarPrueba(real, analisis.id, b.id, prueba('2026-11-02T12:00:00.000Z', 91));
+    const r = dominada.analisis[0].brechas[0];
+    expect(r.dominadaEn).toBe('2026-11-02T12:00:00.000Z');
+    expect(r.prueba).toEqual({ actaId: 'acta-1', puntaje: 91, en: '2026-11-02T12:00:00.000Z' });
+  });
+
+  it('una brecha ya dominada no se vuelve a probar (la primera prueba manda)', () => {
+    const { db, analisis } = conUnAnalisis();
+    const b = analisis.brechas[0];
+    let d = marcarBrecha(db, analisis.id, b.id, 'confirmada', 't1');
+    d = registrarPrueba(d, analisis.id, b.id, prueba('t2', 75));
+    expect(registrarPrueba(d, analisis.id, b.id, prueba('t3', 99))).toBe(d);
+  });
+
+  it('no hay forma de dominar sin prueba: no existe ninguna función de autodeclaración', async () => {
+    const modulo = await import('./repositorio');
+    expect(Object.keys(modulo)).not.toContain('marcarDominada');
   });
 
   it('quitar "Es real" o pasar a "No aplica" borra el estado dominada', () => {
     const { db, analisis } = conUnAnalisis();
     const b = analisis.brechas[0];
     let d = marcarBrecha(db, analisis.id, b.id, 'confirmada', 't1');
-    d = marcarDominada(d, analisis.id, b.id, 't2');
+    d = registrarPrueba(d, analisis.id, b.id, prueba('t2'));
     expect(d.analisis[0].brechas[0].dominadaEn).toBe('t2');
     const rechazada = marcarBrecha(d, analisis.id, b.id, 'rechazada', 't3');
     expect(rechazada.analisis[0].brechas[0].dominadaEn).toBeNull();
+    expect(rechazada.analisis[0].brechas[0].prueba).toBeNull();
     const sinVeredicto = marcarBrecha(d, analisis.id, b.id, null, 't3');
     expect(sinVeredicto.analisis[0].brechas[0].veredictoEn).toBeNull();
     expect(sinVeredicto.analisis[0].brechas[0].dominadaEn).toBeNull();
+    expect(sinVeredicto.analisis[0].brechas[0].prueba).toBeNull();
   });
 
   it('un id inexistente no cambia nada', () => {
@@ -108,7 +127,7 @@ describe('metricas', () => {
     d = marcarBrecha(d, analisis.id, analisis.brechas[0].id, 'confirmada', 't');
     d = marcarBrecha(d, analisis.id, analisis.brechas[1].id, 'confirmada', 't');
     d = marcarBrecha(d, analisis.id, analisis.brechas[2].id, 'rechazada', 't');
-    d = marcarDominada(d, analisis.id, analisis.brechas[0].id, 't');
+    d = registrarPrueba(d, analisis.id, analisis.brechas[0].id, prueba('t'));
     expect(metricas(d)).toEqual({
       totalAnalisis: 1,
       brechas: 8,
@@ -222,5 +241,65 @@ describe('cargar / guardar', () => {
 
   it('las claves nuevas siguen el prefijo omicron:<modulo>:', () => {
     expect(claveDe('abc')).toBe('omicron:brecha:db:v1:abc');
+  });
+});
+
+describe('datos guardados antes del examen', () => {
+  /** Una base como la dejaba la versión anterior: sin el campo `prueba`, con una brecha «dominada» a mano. */
+  function baseAntigua() {
+    const { db, analisis } = conUnAnalisis();
+    const crudo = JSON.parse(JSON.stringify(db)) as {
+      analisis: { brechas: Record<string, unknown>[] }[];
+    };
+    crudo.analisis[0].brechas.forEach((b) => delete b.prueba);
+    crudo.analisis[0].brechas[0].veredicto = 'confirmada';
+    crudo.analisis[0].brechas[0].veredictoEn = 't1';
+    crudo.analisis[0].brechas[0].dominadaEn = 't2';
+    return { crudo, analisis };
+  }
+
+  it('se cargan completando prueba con null, sin perder nada', () => {
+    const { crudo } = baseAntigua();
+    const al = almacenEnMemoria({ [claveDe('u')]: JSON.stringify(crudo) });
+    const db = cargar(al, claveDe('u'));
+    expect(db.analisis).toHaveLength(1);
+    expect(db.analisis[0].brechas.every((b) => b.prueba === null)).toBe(true);
+    expect(db.analisis[0].brechas[0].dominadaEn).toBe('t2'); // se conserva
+  });
+
+  it('lo marcado a mano se conserva pero NO cuenta como dominada', () => {
+    const { crudo } = baseAntigua();
+    const db = cargar(almacenEnMemoria({ [claveDe('u')]: JSON.stringify(crudo) }), claveDe('u'));
+    expect(metricas(db).dominadas).toBe(0);
+    expect(metricas(db).confirmadas).toBe(1);
+  });
+
+  it('una prueba mal formada descarta la base entera (no se acepta a medias)', () => {
+    const { crudo } = baseAntigua();
+    const malas: unknown[] = [
+      { actaId: 5, puntaje: 80, en: 't' },
+      { actaId: 'a', puntaje: 180, en: 't' },
+      { actaId: 'a', puntaje: -1, en: 't' },
+      { actaId: 'a', puntaje: Number.NaN, en: 't' },
+      { actaId: 'a', puntaje: 80 },
+      'aprobado',
+    ];
+    for (const prueba of malas) {
+      const copia = JSON.parse(JSON.stringify(crudo));
+      copia.analisis[0].brechas[0].prueba = prueba;
+      const db = cargar(almacenEnMemoria({ [claveDe('u')]: JSON.stringify(copia) }), claveDe('u'));
+      expect(db).toEqual(dbVacia());
+    }
+  });
+
+  it('una prueba bien formada sobrevive a guardar y cargar', () => {
+    const { db, analisis } = conUnAnalisis();
+    let d = marcarBrecha(db, analisis.id, analisis.brechas[0].id, 'confirmada', 't1');
+    d = registrarPrueba(d, analisis.id, analisis.brechas[0].id, prueba('t2', 88));
+    const al = almacenEnMemoria();
+    guardar(al, claveDe('u'), d);
+    const vuelta = cargar(al, claveDe('u'));
+    expect(vuelta).toEqual(d);
+    expect(metricas(vuelta).dominadas).toBe(1);
   });
 });

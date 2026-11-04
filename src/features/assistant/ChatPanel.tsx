@@ -422,9 +422,6 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
             {m.accion && (
               <div className="u-accion" data-estado={m.accion.estado}>
                 <p className="u-accion-porque">{m.accion.porQue}</p>
-                {m.accion.accion.tipo === 'dominar' && m.accion.estado === 'propuesta' && (
-                  <p className="u-accion-aviso">Lo declaras tú: todavía no hay un examen que lo compruebe.</p>
-                )}
                 {m.accion.estado === 'propuesta' ? (
                   <div className="u-accion-botones">
                     <button type="button" className="boton boton-primario" onClick={() => resolverAccion(m.id, true)}>

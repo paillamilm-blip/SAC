@@ -61,7 +61,7 @@ Reglas que no se rompen (`PRODUCT.md`): la interfaz no afirma más que el dato, 
 | 2. Escanear CV | Funciona con IA real. **Calidad sin medir** | Verificado en vivo el 3-nov-2026. No hay medición de brechas reales |
 | 3. Mapa | Existe. Rediseño pendiente | Acordar el diseño antes de tocar `MapaCapacidades` |
 | 4. Brechas | Funciona, **solo en el navegador** | Se guarda en `localStorage` |
-| 5. Aprender y demostrar | **Falta** | «Dominada» es autodeclarada (la pantalla dice «Dominadas (declaradas)») |
+| 5. Aprender y demostrar | **Construido, sin probar en vivo** | «Demostrarlo» abre un examen dentro de `/u` (PR del examen). Dominada = aprobado (70 o más) calificado por el servidor. Ya no existe la autodeclaración. Requiere desplegar el PR #11 |
 | 6. Credencial | **Falta** | Nada en `/u` usa `credential` ni `?verificar=` |
 | 7. Re-escaneo | Existe | `comparar.ts` y capturas en `docs/fusion/visual-brecha/` |
 
@@ -109,8 +109,9 @@ Crear las tablas `brecha_*` con RLS (TAREA-31 de `docs/tasks.md`) y pasar de `lo
 Examen real para «Dominar» (TAREA-37) y credencial verificable (paso 6).
 
 - Ya existe en el repo: funciones `simulador-universal`, `examen-ia` y `credential`; `register_exam_success` y la migración `10002` (examinar cualquier habilidad); `redviva/services/examenSkill.ts` y `hooks/useProbarHabilidad.ts`.
-- Falta conectarlo a `/u`: abrir el examen desde una brecha, guardar el resultado en la brecha y mostrar lo probado en la credencial.
-- **Decisiones previas:** si el examen vive dentro de `/u` o reutiliza el simulador de la app anterior, y qué cuenta como «dominada» (aprobar, o aprobar con cierta nota).
+- **Hecho (pendiente de prueba en vivo):** el examen se abre desde cada brecha real con «Demostrarlo», dentro de `/u` (`components/Examen.tsx`, `services/examen.ts`). El servidor genera el reto, califica y da el veredicto; la brecha guarda `prueba { actaId, puntaje, en }` solo si el servidor aprobó y dejó un acta. `estaDominada` (`domain/dominio.ts`) es la única definición de «dominada»; lo que se marcó a mano antes se conserva como «Marcada a mano · sin prueba» y no cuenta. El asistente ya no puede marcar nada: «ya lo aprendí» lleva a la brecha para dar el examen. Los invitados deben iniciar sesión.
+- **Falta:** mostrar lo probado en la credencial (paso 6) y que el asistente lea las pruebas para rotular «Probado».
+- **Decisiones tomadas:** el examen vive dentro de `/u`; «dominada» = veredicto APROBADO del servidor (70 o más de 100); la autodeclaración se eliminó.
 
 ### Fase 4: endurecer
 
@@ -151,6 +152,6 @@ Es un solo producto y no había usuarios en la app vieja. Se hizo en pasos, cada
 
 1. ¿SAC queda público o privado? Hoy es público y contiene documentos de producto.
 2. ¿Hay usuarios reales desde ya, o es una salida de prueba? Si hay usuarios, la Fase 2 sube de prioridad.
-3. Examen: se construye dentro de `/u` (el simulador anterior se retiró). ¿Qué cuenta como «dominada»: aprobar, o aprobar con cierta nota?
+3. ~~Examen~~ Decidido: dentro de `/u`, aprobado = 70 o más, sin autodeclaración.
 4. Qué hacer con la revelación inicial, el pasaporte, la Academia y la reputación visible (`docs/fusion/producto-unico.md` §3.4).
 5. Rediseño del mapa: habilidades con porcentaje como nodos sólidos y brechas como nodos huecos.

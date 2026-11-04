@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Analisis, ResultadoAnalisis, Veredicto } from '../domain/types';
+import type { Analisis, PruebaExamen, ResultadoAnalisis, Veredicto } from '../domain/types';
 import {
   CLAVE_INVITADO,
   agregarAnalisis,
@@ -7,7 +7,7 @@ import {
   claveDe,
   guardar,
   marcarBrecha,
-  marcarDominada,
+  registrarPrueba,
   pendientesDelInvitado,
   traerDelInvitado,
   type Almacen,
@@ -29,7 +29,8 @@ export interface UsoBrecha {
   persistente: boolean;
   agregar(resultado: ResultadoAnalisis, meta: MetaAnalisis): Analisis;
   marcar(analisisId: string, brechaId: string, veredicto: Veredicto): void;
-  dominar(analisisId: string, brechaId: string): boolean;
+  /** Guarda el examen aprobado de una brecha. false si la brecha ya no estaba reconocida como real o ya estaba dominada. */
+  probar(analisisId: string, brechaId: string, prueba: PruebaExamen): boolean;
   /** Cuántos análisis hechos como invitado esperan que la persona decida qué hacer con ellos. */
   invitadoPendiente: number;
   traerInvitado(): void;
@@ -85,11 +86,11 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
     [aplicar],
   );
 
-  const dominar = useCallback(
-    (analisisId: string, brechaId: string): boolean => {
+  const probar = useCallback(
+    (analisisId: string, brechaId: string, prueba: PruebaExamen): boolean => {
       const previo = dbRef.current;
-      const siguiente = marcarDominada(previo, analisisId, brechaId, new Date().toISOString());
-      if (siguiente === previo) return false; // no se ejecutó porque la brecha no estaba confirmada
+      const siguiente = registrarPrueba(previo, analisisId, brechaId, prueba);
+      if (siguiente === previo) return false; // la brecha ya no estaba reconocida como real, o ya estaba dominada
       dbRef.current = siguiente;
       const a = almacenLocal();
       setPersistente(a ? guardar(a, claveRef.current, siguiente) : false);
@@ -113,5 +114,5 @@ export function useBrecha(usuarioId: string | null): UsoBrecha {
     setInvitadoPendiente(0);
   }, []);
 
-  return { db, persistente, agregar, marcar, dominar, invitadoPendiente, traerInvitado, descartarInvitado };
+  return { db, persistente, agregar, marcar, probar, invitadoPendiente, traerInvitado, descartarInvitado };
 }
