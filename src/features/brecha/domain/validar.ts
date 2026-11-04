@@ -8,7 +8,7 @@
 // Lo que el modelo "recuerda" pero no está en el texto se descarta.
 
 import { z } from 'zod';
-import type { BrechaNueva, ResultadoAnalisis } from './types';
+import type { BrechaNueva, CalidadAnalisis, ResultadoAnalisis } from './types';
 
 export const MIN_BRECHAS = 3;
 const MAX_BRECHAS = 10;
@@ -89,23 +89,39 @@ export function validarResultado(crudo: unknown, textoCv: string): ResultadoAnal
   const cabecera = CabeceraSchema.safeParse(o);
   if (!cabecera.success) throw new AnalisisInvalido('La IA devolvió un análisis incompleto.');
 
+  const candidatas = Array.isArray(o.brechas) ? o.brechas : [];
   const brechas: BrechaNueva[] = [];
-  for (const candidata of Array.isArray(o.brechas) ? o.brechas : []) {
+  let ausentes = 0;
+  for (const candidata of candidatas) {
     const r = BrechaSchema.safeParse(candidata);
-    if (r.success && evidenciaValida(r.data.evidencia, textoCv)) brechas.push(r.data);
+    if (r.success && evidenciaValida(r.data.evidencia, textoCv)) {
+      brechas.push(r.data);
+      if (PREFIJO_AUSENTE.test(r.data.evidencia.trim())) ausentes++;
+    }
     if (brechas.length === MAX_BRECHAS) break;
   }
   if (brechas.length < MIN_BRECHAS) {
     throw new AnalisisInvalido('No pude respaldar el análisis con lo que dice tu CV. Inténtalo de nuevo.');
   }
 
+  const fortalezasCrudas = Array.isArray(o.fortalezas) ? o.fortalezas : [];
   const fortalezas: string[] = [];
-  for (const f of Array.isArray(o.fortalezas) ? o.fortalezas : []) {
+  for (const f of fortalezasCrudas) {
     if (typeof f !== 'string') continue;
     const limpia = f.trim().slice(0, 300);
     if (limpia && citaVerificada(limpia, textoCv)) fortalezas.push(limpia);
     if (fortalezas.length === MAX_FORTALEZAS) break;
   }
 
-  return { ...cabecera.data, fortalezas, brechas };
+  const calidad: CalidadAnalisis = {
+    brechasPropuestas: candidatas.length,
+    brechasAceptadas: brechas.length,
+    conCita: brechas.length - ausentes,
+    ausentes,
+    fortalezasPropuestas: fortalezasCrudas.length,
+    fortalezasAceptadas: fortalezas.length,
+    intentos: 1,
+  };
+
+  return { ...cabecera.data, fortalezas, brechas, calidad };
 }

@@ -63,6 +63,25 @@ export type ComparacionAnalisis = {
   persistenIds: string[];
 };
 
+/**
+ * Qué tan respaldado quedó un análisis. Son conteos reales de la validación, no un puntaje inventado:
+ * cada cifra se muestra con su escala («7 de 9 brechas con cita verificada»).
+ */
+export type CalidadAnalisis = {
+  /** Brechas que entregó el modelo, antes de validar. */
+  brechasPropuestas: number;
+  /** Brechas que superaron la validación y se muestran. */
+  brechasAceptadas: number;
+  /** De las aceptadas: las que citan el CV y la cita se encontró en el texto. */
+  conCita: number;
+  /** De las aceptadas: las que dicen «Ausente en el CV:» (no hay texto que verificar). */
+  ausentes: number;
+  fortalezasPropuestas: number;
+  fortalezasAceptadas: number;
+  /** Llamadas a la IA que hicieron falta (1 = salió a la primera). */
+  intentos: number;
+};
+
 /** Lo que devuelve cualquier proveedor de análisis (demostración o IA real). */
 export type ResultadoAnalisis = {
   ocupacion: string;
@@ -70,6 +89,8 @@ export type ResultadoAnalisis = {
   resumen: string;
   fortalezas: string[];
   brechas: BrechaNueva[];
+  /** Solo el análisis con IA la trae; la muestra fija no se valida contra un CV. */
+  calidad?: CalidadAnalisis;
 };
 
 export type Analisis = {
@@ -86,6 +107,8 @@ export type Analisis = {
   resumen: string;
   fortalezas: string[];
   brechas: Brecha[];
+  /** Ausente en análisis guardados antes de que se midiera la calidad. */
+  calidad?: CalidadAnalisis;
 };
 
 export const CATEGORIAS: Record<CategoriaBrecha, string> = {
