@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { ResultadoAnalisis } from '../domain/types';
 import { ORDEN_EVENTOS, validarArchivo, type EventoAnalisis, type ProveedorAnalisis } from '../services/analizar';
 import EscaneoCv from './EscaneoCv';
@@ -24,6 +24,9 @@ export default function SubirCv({
   onListo: (r: ResultadoSubida) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const idBase = useId();
+  const idTitulo = `${idBase}-titulo`;
+  const idDetalle = `${idBase}-detalle`;
   const [archivo, setArchivo] = useState<File | null>(null);
   // Índice del PRÓXIMO evento esperado: -1 = no empezó; ORDEN_EVENTOS.length = terminó.
   const [etapa, setEtapa] = useState(-1);
@@ -80,7 +83,9 @@ export default function SubirCv({
         data-bloqueado={escaneando}
         role="button"
         tabIndex={0}
-        aria-label="Elegir tu CV en PDF"
+        // El nombre sale del texto visible (título y detalle), así lo que se lee coincide con lo que se ve.
+        aria-labelledby={idTitulo}
+        aria-describedby={idDetalle}
         onClick={() => !escaneando && inputRef.current?.click()}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !escaneando) {
@@ -99,22 +104,25 @@ export default function SubirCv({
           if (!escaneando) elegir(e.dataTransfer.files?.[0]);
         }}
       >
-        <strong>{archivo ? archivo.name : 'Arrastra tu CV aquí o haz clic para elegirlo'}</strong>
-        <span>
+        <strong id={idTitulo}>{archivo ? archivo.name : 'Arrastra tu CV aquí o haz clic para elegirlo'}</strong>
+        <span id={idDetalle}>
           {archivo
             ? `${peso(archivo.size)} · listo para analizar`
             : proveedor.simulado
               ? 'Solo PDF, hasta 15 MB. En esta demostración el archivo no sale de tu equipo.'
               : 'Solo PDF con texto, hasta 15 MB. Tu PDF se lee en tu equipo; a la IA solo viaja su texto.'}
         </span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          aria-label="Archivo PDF de tu CV"
-          onChange={(e) => elegir(e.target.files?.[0])}
-        />
       </div>
+      {/* Fuera del botón: un control interactivo dentro de otro no es accesible. Oculto del todo (no entra al orden
+          del teclado ni al lector de pantalla); el botón de arriba es quien lo abre. */}
+      <input
+        ref={inputRef}
+        hidden
+        type="file"
+        accept="application/pdf"
+        aria-label="Archivo PDF de tu CV"
+        onChange={(e) => elegir(e.target.files?.[0])}
+      />
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
         <button type="button" className="boton boton-primario" onClick={analizar} disabled={!archivo || escaneando}>

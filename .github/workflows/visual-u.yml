@@ -52,10 +52,11 @@ jobs:
       - name: Recorrido
         run: node scripts/visual-u.mjs
       - name: Accesibilidad (WCAG 2.2 AA con axe)
-        # De momento informa sin bloquear: es la primera medición. Se vuelve bloqueante con A11Y_ESTRICTO=1.
-        # Corre aunque el recorrido anterior falle: son mediciones independientes.
+        # Bloquea ante violaciones graves (serious/critical). Corre aunque el recorrido anterior falle:
+        # son mediciones independientes. Es un piso automático: axe detecta ~30-40 % de los problemas.
         if: ${{ !cancelled() }}
-        continue-on-error: true
+        env:
+          A11Y_ESTRICTO: '1'
         run: node scripts/a11y-u.mjs
       - name: Subir capturas
         if: always()

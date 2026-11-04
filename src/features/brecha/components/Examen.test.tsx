@@ -201,4 +201,56 @@ describe('Examen', () => {
     await screen.findByText(/Aprobaste/);
     expect(onAprobado).toHaveBeenCalledTimes(1);
   });
+
+  describe('foco (WCAG 2.4.3)', () => {
+    it('Tab desde el último control vuelve al primero, y Mayús+Tab desde el primero va al último', async () => {
+      montar();
+      await screen.findByText(/Tres preguntas y un caso práctico/);
+      const cerrar = screen.getByRole('button', { name: 'Cerrar el examen' });
+      const continuar = screen.getByRole('button', { name: 'Continuar' }) as HTMLButtonElement;
+      // «Continuar» está deshabilitado hasta contestar: el último control habilitado es el textarea o la pista.
+      const dialogo = screen.getByRole('dialog');
+      const lista = Array.from(dialogo.querySelectorAll<HTMLElement>('button, input, textarea, summary')).filter(
+        (el) => !el.hasAttribute('disabled'),
+      );
+      expect(lista[0]).toBe(cerrar);
+      expect(continuar.disabled).toBe(true);
+      const ultimo = lista[lista.length - 1];
+
+      ultimo.focus();
+      fireEvent.keyDown(window, { key: 'Tab' });
+      expect(document.activeElement).toBe(cerrar);
+
+      cerrar.focus();
+      fireEvent.keyDown(window, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(ultimo);
+    });
+
+    it('si el foco quedó fuera de la ventana, Tab lo trae de vuelta adentro', async () => {
+      const fuera = document.createElement('button');
+      document.body.appendChild(fuera);
+      montar();
+      await screen.findByText(/Tres preguntas y un caso práctico/);
+      fuera.focus();
+      fireEvent.keyDown(window, { key: 'Tab' });
+      expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+      fuera.remove();
+    });
+
+    it('al cerrar, el foco vuelve al botón que abrió el examen', async () => {
+      const disparador = document.createElement('button');
+      disparador.textContent = 'Demostrarlo';
+      document.body.appendChild(disparador);
+      disparador.focus();
+
+      const onCerrar = vi.fn();
+      const r = render(<Examen tituloBrecha="Gestión de presupuestos" onAprobado={vi.fn()} onCerrar={onCerrar} />);
+      await screen.findByText(/Tres preguntas y un caso práctico/);
+      expect(document.activeElement).not.toBe(disparador); // el foco entró a la ventana
+
+      r.unmount();
+      expect(document.activeElement).toBe(disparador);
+      disparador.remove();
+    });
+  });
 });
