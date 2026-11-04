@@ -274,19 +274,28 @@
   }
 }
 
-/* La barra de pestañas (Mapa / Brechas / Diagnóstico) queda libre: el panel guía se apoya encima de ella. */
-.u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  height: min(640px, calc(100dvh - 108px));
+/* Con el reporte abierto el asistente NO tapa nada que se pueda tocar (botones, pestañas, nodos).
+   · Pantallas anchas: se acopla a la derecha y el contenido le cede su lugar.
+   · Pantallas angostas: hoja baja, apoyada sobre la barra de pestañas, y el contenido deja espacio debajo. */
+@media (min-width: 1100px) {
+  .u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    height: min(640px, calc(100dvh - 108px));
+  }
+  .u-app[data-guia='true'] main {
+    padding-right: 450px;
+  }
 }
-@media (max-width: 560px) {
-  /* Guiando sobre el mapa: panel bajo para que los nodos sigan a la vista y se puedan tocar. */
+@media (max-width: 1099px) {
   .u-app .u-chat[data-compacto='true'] {
+    inset: auto 0 0 0;
+    width: 100%;
+    right: 0;
     height: min(40dvh, 340px);
-    border-radius: 18px;
+    border-radius: 18px 18px 0 0;
   }
   .u-app:has(.pestana-bar) .u-chat[data-compacto='true'] {
-    height: min(40dvh, 340px);
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
   .u-app[data-guia='true'] main {
     padding-bottom: calc(min(40dvh, 340px) + 72px);
