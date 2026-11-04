@@ -94,10 +94,12 @@ export default function Examen({
 
   // Foco (WCAG 2.4.3): al abrir se recuerda quién lo tenía —el botón «Demostrarlo»— y al cerrar se le devuelve;
   // mientras está abierto, Tab y Mayús+Tab dan la vuelta dentro de la ventana en vez de escapar a la página de atrás.
-  useEffect(() => {
-    const previo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    return () => previo?.focus?.();
-  }, []);
+  // Se captura al renderizar, ANTES de cualquier efecto: el efecto de abajo que enfoca la ventana correría primero
+  // y se guardaría a sí misma como «quien tenía el foco».
+  const [previo] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
+  useEffect(() => () => previo?.focus?.(), [previo]);
   useEffect(() => {
     const alTeclear = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;

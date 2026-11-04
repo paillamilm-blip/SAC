@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ResultadoAnalisis } from '../domain/types';
 import { ORDEN_EVENTOS, validarArchivo, type EventoAnalisis, type ProveedorAnalisis } from '../services/analizar';
 import EscaneoCv from './EscaneoCv';
@@ -24,9 +24,6 @@ export default function SubirCv({
   onListo: (r: ResultadoSubida) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const idBase = useId();
-  const idTitulo = `${idBase}-titulo`;
-  const idDetalle = `${idBase}-detalle`;
   const [archivo, setArchivo] = useState<File | null>(null);
   // Índice del PRÓXIMO evento esperado: -1 = no empezó; ORDEN_EVENTOS.length = terminó.
   const [etapa, setEtapa] = useState(-1);
@@ -83,9 +80,8 @@ export default function SubirCv({
         data-bloqueado={escaneando}
         role="button"
         tabIndex={0}
-        // El nombre sale del texto visible (título y detalle), así lo que se lee coincide con lo que se ve.
-        aria-labelledby={idTitulo}
-        aria-describedby={idDetalle}
+        // Sin aria-label: el nombre accesible sale del texto visible (título y detalle), tal como se ve
+        // (WCAG 2.5.3, la etiqueta debe estar en el nombre).
         onClick={() => !escaneando && inputRef.current?.click()}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !escaneando) {
@@ -104,8 +100,8 @@ export default function SubirCv({
           if (!escaneando) elegir(e.dataTransfer.files?.[0]);
         }}
       >
-        <strong id={idTitulo}>{archivo ? archivo.name : 'Arrastra tu CV aquí o haz clic para elegirlo'}</strong>
-        <span id={idDetalle}>
+        <strong>{archivo ? archivo.name : 'Arrastra tu CV aquí o haz clic para elegirlo'}</strong>
+        <span>
           {archivo
             ? `${peso(archivo.size)} · listo para analizar`
             : proveedor.simulado
