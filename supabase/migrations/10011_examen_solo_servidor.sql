@@ -32,9 +32,15 @@
 -- los nombres encima de la mesa.
 --
 -- ── APPLY ─────────────────────────────────────────────────────────────
---   supabase db push
+--   ⚠ NO usar `supabase db push` mientras 10003–10010 sigan sin aplicarse en
+--   producción: las aplicaría TODAS (10006/10007/10008 borran tablas).
+--   Es idempotente: pegar las dos sentencias `do $do$ … $do$;` y el `notify`
+--   en el SQL Editor de Supabase, y luego:
 --   supabase functions deploy simulador-universal
 --   (van JUNTAS: sin el deploy, un examen aprobado no deja prueba por nombre)
+--   NO marcarla con `migration repair`: 10006 (anterior) vuelve a conceder
+--   register_exam_success a authenticated; cuando se apliquen todas en orden,
+--   esta (la última) lo cierra de nuevo.
 --
 -- ── VERIFY ────────────────────────────────────────────────────────────
 --   -- Debe devolver false para authenticated y para anon:
