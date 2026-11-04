@@ -90,7 +90,7 @@ async function recorrido(browser, nombre, viewport) {
       const candidatos = [...document.querySelectorAll('.u-app main button, .u-app main [role=button], .u-app .pestana-bar [role=tab]')];
       for (const el of candidatos) {
         if (el.closest('[aria-hidden=true]') || el.hasAttribute('disabled')) continue;
-        el.scrollIntoView({ block: 'center' });
+        el.scrollIntoView({ block: 'center', behavior: 'instant' });
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
         const x = r.left + r.width / 2;
