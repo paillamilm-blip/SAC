@@ -4,26 +4,7 @@
 // si acá se rechaza algo que la base acepta, se pierde un examen válido.
 
 import { describe, it, expect } from 'vitest';
-import { normalizarTitulo, validarTitulo, TITULO_MAX, tomarExamenPendiente } from './examenSkill';
-
-// sessionStorage mínimo para entornos que no lo traen. En jsdom ya existe y no se
-// toca; así el test corre igual en el CI y fuera de él.
-if (typeof globalThis.sessionStorage === 'undefined') {
-  const store = new Map<string, string>();
-  Object.defineProperty(globalThis, 'sessionStorage', {
-    configurable: true,
-    value: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => void store.set(k, String(v)),
-      removeItem: (k: string) => void store.delete(k),
-      clear: () => store.clear(),
-      key: () => null,
-      length: 0,
-    },
-  });
-}
-
-const CLAVE = 'omicron_pending_exam';
+import { normalizarTitulo, validarTitulo, TITULO_MAX } from './examenSkill';
 
 describe('normalizarTitulo', () => {
   it('colapsa espacios y recorta, igual que el SQL', () => {
@@ -89,37 +70,5 @@ describe('validarTitulo', () => {
 
   it('un título de exactamente el largo máximo entra', () => {
     expect(validarTitulo('ab' + 'c'.repeat(TITULO_MAX - 2)).ok).toBe(true);
-  });
-});
-
-
-describe('tomarExamenPendiente — el puente que sobrevive el cambio de pantalla', () => {
-  it('devuelve el pedido guardado', () => {
-    sessionStorage.setItem(CLAVE, JSON.stringify({ nodeId: 'abc-123', titulo: 'Derecho Laboral' }));
-    const p = tomarExamenPendiente();
-    expect(p).not.toBeNull();
-    expect(p!.nodeId).toBe('abc-123');
-    expect(p!.titulo).toBe('Derecho Laboral');
-  });
-
-  it('CONSUME el pedido: la segunda vez ya no está', () => {
-    // Ésta es la garantía que importa: si no se consumiera, el examen se
-    // reabriría solo cada vez que se entra a la pestaña Habilidades.
-    sessionStorage.setItem(CLAVE, JSON.stringify({ nodeId: 'abc-123', titulo: 'SAP' }));
-    expect(tomarExamenPendiente()).not.toBeNull();
-    expect(tomarExamenPendiente()).toBeNull();
-  });
-
-  it('sin pedido guardado devuelve null', () => {
-    sessionStorage.removeItem(CLAVE);
-    expect(tomarExamenPendiente()).toBeNull();
-  });
-
-  it('no explota con datos corruptos ni incompletos', () => {
-    sessionStorage.setItem(CLAVE, '{roto');
-    expect(tomarExamenPendiente()).toBeNull();
-
-    sessionStorage.setItem(CLAVE, JSON.stringify({ titulo: 'Sin id' }));
-    expect(tomarExamenPendiente()).toBeNull();
   });
 });

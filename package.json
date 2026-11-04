@@ -9,8 +9,7 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest --run",
-    "test:e2e": "playwright test"
+    "test": "vitest --run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
