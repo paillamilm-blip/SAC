@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import { pasosDelCiclo, recomendar, type Accion } from '@/features/assistant/recomendar';
 import { ETIQUETA_ORIGEN } from '@/features/assistant/responder';
+import CompartirCredencial from '../components/CompartirCredencial';
 import SubirCv, { type ResultadoSubida } from '../components/SubirCv';
 import type { ProveedorAnalisis } from '../services/analizar';
 import { listarAnalisis, metricas, type Db } from '../services/repositorio';
@@ -21,6 +22,7 @@ export default function Inicio({
   onIr,
   onAccion,
   aperturaEscaneo,
+  sesionIniciada = false,
 }: {
   db: Db;
   nombre: string | null;
@@ -30,6 +32,8 @@ export default function Inicio({
   onAccion: (a: Accion) => void;
   /** Cada vez que sube, el asistente pidió abrir el escáner de CV. */
   aperturaEscaneo: number;
+  /** La credencial se crea en el servidor y exige sesión. */
+  sesionIniciada?: boolean;
 }) {
   const [escaneando, setEscaneando] = useState(false);
   const [aperturaVista, setAperturaVista] = useState(aperturaEscaneo);
@@ -121,6 +125,8 @@ export default function Inicio({
               </div>
             </dl>
           </section>
+
+          <CompartirCredencial sesionIniciada={sesionIniciada} dominadas={m.dominadas} />
 
           {escaneando && <SubirCv proveedor={proveedor} onListo={onListo} />}
 

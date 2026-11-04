@@ -228,6 +228,7 @@ export default function UApp() {
               onIr={ir}
               onAccion={ejecutar}
               aperturaEscaneo={aperturaEscaneo}
+              sesionIniciada={authStatus === 'authenticated'}
             />
           ) : (
             <ReportePage

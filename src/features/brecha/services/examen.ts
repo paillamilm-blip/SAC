@@ -7,6 +7,9 @@
 import { supabase } from '@/infrastructure/supabase/client';
 import { asegurarNodoDeExamen, TITULO_MAX, normalizarTitulo } from '@/features/redviva/services/examenSkill';
 import type { PruebaExamen } from '../domain/types';
+import { mensajeDe, type Salida } from './errores';
+
+export type { Salida } from './errores';
 
 export interface Reto {
   sessionId: string;
@@ -35,8 +38,6 @@ export interface Resultado {
   siguientePaso: string;
 }
 
-export type Salida<T> = { ok: true; datos: T } | { ok: false; error: string; necesitaSesion?: boolean };
-
 /**
  * Nombre de la habilidad que se examina, a partir del título de la brecha. La base acepta de 2 a 60 caracteres:
  * si el título es más largo se recorta en el último espacio, sin partir una palabra.
@@ -49,32 +50,11 @@ export function nombreDeHabilidad(tituloBrecha: string): string {
   return (espacio > 20 ? corte.slice(0, espacio) : corte).replace(/[\s.,;:–-]+$/u, '');
 }
 
-/** Saca el mensaje legible de un error de la función (el cuerpo viaja en `error.context`). */
-async function mensajeDe(error: unknown, datos: unknown): Promise<{ texto: string; sinSesion: boolean; status?: number }> {
-  const delCuerpo = (datos as { error?: string; detail?: string } | null | undefined) ?? null;
-  let texto = delCuerpo?.error ?? '';
-  let status: number | undefined;
-  const ctx = (error as { context?: Response } | null)?.context;
-  if (ctx && typeof ctx.json === 'function') {
-    status = ctx.status;
-    try {
-      const cuerpo = (await ctx.clone().json()) as { error?: string };
-      if (cuerpo?.error) texto = cuerpo.error;
-    } catch {
-      /* el cuerpo no era JSON */
-    }
-  }
-  const sinSesion = status === 401;
-  if (sinSesion) texto = 'Inicia sesión para dar el examen.';
-  if (!texto) texto = 'No pudimos comunicarnos con el examen. Revisa tu conexión e inténtalo de nuevo.';
-  return { texto, sinSesion, status };
-}
-
 async function invocar<T>(cuerpo: Record<string, unknown>, leer: (d: Record<string, unknown>) => T | null): Promise<Salida<T>> {
   try {
     const { data, error } = await supabase.functions.invoke('simulador-universal', { body: cuerpo });
     if (error || !data || (data as { error?: unknown }).error) {
-      const m = await mensajeDe(error, data);
+      const m = await mensajeDe(error, data, 'Inicia sesión para dar el examen.');
       return { ok: false, error: m.texto, necesitaSesion: m.sinSesion };
     }
     const leido = leer(data as Record<string, unknown>);
