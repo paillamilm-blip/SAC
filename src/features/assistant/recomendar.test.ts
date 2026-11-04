@@ -126,6 +126,15 @@ describe('pasosDelCiclo', () => {
     expect(revisar?.progreso).toBe('3 de 8');
   });
 
+  it('con un examen aprobado el paso 5 pasa a «ahora» y cuenta los sellos con el mismo número que el pasaporte', () => {
+    const { db, analisisId, brechas } = base();
+    let d = marcarBrecha(db, analisisId, brechas[0].id, 'confirmada', T0);
+    d = registrarPrueba(d, analisisId, brechas[0].id, { actaId: 'x', puntaje: 80, en: T0 });
+    const paso = pasosDelCiclo({ db: d, ahora: T0 }).find((x) => x.id === 'compartir');
+    expect(paso?.estado).toBe('ahora');
+    expect(paso?.detalle).toBe('1 sello listo');
+  });
+
   it('el pasaporte nunca figura como hecho (no hay pruebas todavía)', () => {
     const { db } = base();
     expect(pasosDelCiclo({ db, ahora: T0 }).find((x) => x.id === 'compartir')?.estado).toBe('pendiente');

@@ -933,3 +933,119 @@
   color: var(--dim);
   text-align: right;
 }
+
+/* ── Pasaporte con sellos ──────────────────────────────────────────────────────────────── */
+.u-app .u-pasaporte {
+  display: grid;
+  gap: var(--e4, 16px);
+  max-width: 900px;
+}
+.u-app .u-pas-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.u-app .u-pas-cab h1 {
+  margin: 4px 0 0;
+  font-size: clamp(26px, 6vw, 38px);
+  letter-spacing: -0.02em;
+}
+.u-app .u-pas-ocupacion {
+  margin: 4px 0 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+.u-app .u-pas-cuenta,
+.u-app .u-pas-nota,
+.u-app .u-pas-vacio,
+.u-app .u-pas-estado {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.u-app .u-pas-estado {
+  min-height: 1.5em;
+}
+.u-app .u-pas-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.u-app .u-pas-botones .boton,
+.u-app .u-pasaporte .boton {
+  min-height: 44px;
+}
+
+.u-app .u-sellos {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.u-app .u-sello {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  height: 100%;
+  min-height: 44px;
+  text-align: center;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
+}
+.u-app .u-sello:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .u-app .u-sello:hover {
+    border-color: var(--sello);
+    background: var(--surface);
+  }
+}
+.u-app .u-sello-aro {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1;
+  /* doble aro, como un sello de pasaporte */
+  border: 3px solid var(--sello);
+  box-shadow: 0 0 0 5px var(--surface-2), 0 0 0 6.5px color-mix(in srgb, var(--sello) 45%, transparent);
+}
+.u-app .u-sello-aro b {
+  font-size: 28px;
+}
+.u-app .u-sello-aro small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.u-app .u-sello[data-estado='por-ganar'] .u-sello-aro {
+  border-style: dashed;
+  color: var(--muted);
+  box-shadow: none;
+}
+.u-app .u-sello[data-estado='por-ganar'] {
+  border-style: dashed;
+}
+.u-app .u-sello-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.u-app .u-sello-fecha {
+  font-size: 12.5px;
+  color: var(--muted);
+}

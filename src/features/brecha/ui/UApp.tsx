@@ -21,8 +21,9 @@ import PerfilPanel from '../components/PerfilPanel';
 import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
+import PasaportePage from './PasaportePage';
 import ReportePage from './ReportePage';
-import { BASE, hrefReporte, useRuta } from './ruta';
+import { BASE, HREF_PASAPORTE, hrefReporte, useRuta } from './ruta';
 import '../styles/brecha.css';
 import '../styles/u-app.css';
 
@@ -113,6 +114,9 @@ export default function UApp() {
         ir(BASE);
         setAperturaEscaneo((n) => n + 1);
         window.setTimeout(() => document.querySelector<HTMLElement>('.u-app .dropzone')?.focus(), 80);
+      } else if (accion.tipo === 'abrir_pasaporte') {
+        setChatAbierto(false);
+        ir(HREF_PASAPORTE);
       } else if (accion.tipo === 'abrir_reporte') {
         setChatAbierto(false);
         ir(hrefReporte(accion.analisisId, accion.pestana, accion.brechaId));
@@ -285,6 +289,16 @@ export default function UApp() {
               aperturaEscaneo={aperturaEscaneo}
               sesionIniciada={authStatus === 'authenticated'}
             />
+          ) : ruta.nombre === 'pasaporte' ? (
+            <PasaportePage
+              db={db}
+              nombre={nombre}
+              sesionIniciada={authStatus === 'authenticated'}
+              colorUsuario={color}
+              onIr={ir}
+              onAccion={ejecutar}
+              onPedirSesion={() => setPedirAuth(true)}
+            />
           ) : (
             <ReportePage
               db={db}
@@ -334,6 +348,10 @@ export default function UApp() {
           esInvitado={esInvitado}
           metricas={calcularMetricas(db)}
           onCerrar={() => setPerfilAbierto(false)}
+          onVerPasaporte={() => {
+            setPerfilAbierto(false);
+            ir(HREF_PASAPORTE);
+          }}
           onIniciarSesion={() => {
             setPerfilAbierto(false);
             setPedirAuth(true);

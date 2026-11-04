@@ -22,6 +22,7 @@ function pintar(extra: Partial<Parameters<typeof PerfilPanel>[0]> = {}) {
     esInvitado: false,
     metricas: METRICAS,
     onCerrar: vi.fn(),
+    onVerPasaporte: vi.fn(),
     onIniciarSesion: vi.fn(),
     ...extra,
   };
@@ -36,6 +37,12 @@ describe('PerfilPanel', () => {
     expect(d.textContent).toContain('matias@example.com');
     expect(d.textContent).toContain('2 de 8'); // reconocidas
     expect(d.textContent).toContain('1 de 2'); // dominadas con prueba
+  });
+
+  it('«Ver mi pasaporte» abre el pasaporte', () => {
+    const p = pintar();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver mi pasaporte' }));
+    expect(p.onVerPasaporte).toHaveBeenCalledTimes(1);
   });
 
   it('carga el selector de color', async () => {

@@ -196,6 +196,24 @@ async function recorrido(browser, nombre, viewport) {
   const pasos = await page.locator('.u-ciclo .u-paso-boton').count();
   if (pasos === 5) ok(`${nombre}: los 5 pasos de «Tu ciclo» son botones`);
   else falla(`${nombre}: «Tu ciclo» tiene ${pasos} botones (se esperaban 5)`);
+  // El paso 5 abre el pasaporte: sin pruebas muestra los sellos por ganar (nunca un botón muerto).
+  await page.locator('.u-ciclo .u-paso-boton').nth(4).click();
+  await page.waitForURL(/\/u\/pasaporte/, { timeout: 5_000 }).catch(() => {});
+  if (/\/u\/pasaporte/.test(page.url())) {
+    await page.waitForSelector('.u-pasaporte', { timeout: 5_000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    await foto('10-pasaporte');
+    await desborde('pasaporte');
+    await tapados('pasaporte');
+    const sellos = await page.locator('.u-sello').count();
+    if (sellos > 0) ok(`${nombre}: el pasaporte muestra ${sellos} sello(s) por ganar y se pueden tocar`);
+    else falla(`${nombre}: el pasaporte no muestra ningún sello por ganar tras reconocer una brecha`);
+    await page.goBack();
+    await page.waitForSelector('.u-ciclo', { timeout: 5_000 });
+  } else {
+    falla(`${nombre}: «Compartir tu pasaporte» no abrió el pasaporte (quedó en ${page.url()})`);
+  }
+
   await page.locator('.u-ciclo .u-paso-boton').nth(1).click();
   await page.waitForURL(/\/u\/reporte\//, { timeout: 5_000 }).catch(() => {});
   if (/\/u\/reporte\//.test(page.url())) ok(`${nombre}: «Ver tu mapa» abre el mapa`);

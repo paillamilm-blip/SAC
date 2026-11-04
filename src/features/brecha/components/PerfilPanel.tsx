@@ -13,6 +13,7 @@ export default function PerfilPanel({
   esInvitado,
   metricas,
   onCerrar,
+  onVerPasaporte,
   onIniciarSesion,
 }: {
   nombre: string | null;
@@ -20,6 +21,7 @@ export default function PerfilPanel({
   esInvitado: boolean;
   metricas: Metricas;
   onCerrar: () => void;
+  onVerPasaporte: () => void;
   onIniciarSesion: () => void;
 }) {
   const cerrarRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +98,9 @@ export default function PerfilPanel({
         </div>
 
         <div className="u-perfil-acciones">
+          <button type="button" className="boton boton-primario" onClick={onVerPasaporte}>
+            Ver mi pasaporte
+          </button>
           {esInvitado ? (
             <button type="button" className="boton boton-primario" onClick={onIniciarSesion}>
               Iniciar sesión

@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { COLOR_CAT } from "../domain/colores";
 import { estaDominada } from "../domain/dominio";
 import { evidenciaAusente } from "../domain/validar";
 import type { Brecha, BrechaCerrada, CalidadAnalisis, CategoriaBrecha } from "../domain/types";
 import { CATEGORIAS } from "../domain/types";
 
 const ORDEN: CategoriaBrecha[] = ["dura", "blanda", "conocimiento", "credencial"];
-
-const COLOR_CAT: Record<CategoriaBrecha, string> = {
-  dura: "#6aa9ff",
-  blanda: "#f2b134",
-  conocimiento: "#3ddc97",
-  credencial: "#c084fc",
-};
 
 const COLOR_CERRADA = "#3ddc97";
 
