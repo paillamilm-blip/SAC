@@ -195,7 +195,7 @@ async function main() {
   if (!cabeceraCsp) {
     console.log('⚠ producción no sirve ninguna política de seguridad (CSP): ¿se desplegó vercel.json?');
   } else if (violacionesCsp.size === 0) {
-    ok('la política de seguridad (CSP) no tuvo ninguna violación en el recorrido completo (con PDF.js, voz y datos)');
+    ok('la política de seguridad (CSP) no tuvo ninguna violación en este recorrido (PDF.js desde cdnjs, estilos, fuentes y datos). No se ejerce: voz, sesión iniciada ni examen');
   } else {
     console.log(`⚠ CSP: ${violacionesCsp.size} violación(es) (aún no bloquean, pero bloquearían al activar la política):`);
     for (const v of violacionesCsp) console.log(`   - ${v}`);
