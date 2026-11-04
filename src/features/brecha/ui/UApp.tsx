@@ -33,7 +33,7 @@ export default function UApp() {
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
-  const { db, persistente, agregar, marcar, probar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
+  const { db, persistente, estadoNube, agregar, marcar, probar, invitadoPendiente, traerInvitado, descartarInvitado } = useBrecha(usuarioId);
   const [chatAbierto, setChatAbierto] = useState(false);
   const [pedirAuth, setPedirAuth] = useState(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
@@ -216,6 +216,23 @@ export default function UApp() {
           <div className="u-banda aviso aviso-error" role="alert">
             Tu navegador no deja guardar datos: lo que hagas se perderá al cerrar esta pestaña.
           </div>
+        )}
+        {usuarioId && estadoNube === 'sin_conexion' && (
+          <div className="u-banda aviso aviso-error" role="alert">
+            No pude guardar tus análisis en tu cuenta. Siguen en este dispositivo y lo intentaré de nuevo en tu próximo
+            cambio.
+          </div>
+        )}
+        {usuarioId && estadoNube === 'no_disponible' && (
+          <div className="u-banda aviso" role="note">
+            Por ahora tus análisis se guardan solo en este dispositivo: si cambias de navegador o borras sus datos, se
+            pierden.
+          </div>
+        )}
+        {usuarioId && (estadoNube === 'sincronizando' || estadoNube === 'guardado') && (
+          <p className="u-nube" role="status">
+            {estadoNube === 'guardado' ? 'Guardado en tu cuenta' : 'Guardando en tu cuenta…'}
+          </p>
         )}
 
         <ErrorBoundary section="Área de contenido">

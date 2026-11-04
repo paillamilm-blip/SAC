@@ -774,3 +774,13 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* ── Estado de la copia en la cuenta ───────────────────────────────────────────────────── */
+.u-app .u-nube {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 8px 24px 0;
+  font-size: 0.8rem;
+  color: var(--dim);
+  text-align: right;
+}
