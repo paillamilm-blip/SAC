@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import vercelCrudo from '../../../vercel.json?raw';
 import cvExtractCrudo from '../../features/gemelo/services/cvExtract.ts?raw';
 import clienteCrudo from '../supabase/client.ts?raw';
-import cssCrudo from '../../index.css?raw';
+// Vitest entrega los .css vacíos (aunque sea con ?raw), así que se lee el index.html, que declara las mismas fuentes.
+import htmlCrudo from '../../../index.html?raw';
 
 function politica(): Map<string, string[]> {
   const config = JSON.parse(vercelCrudo) as { headers: { source: string; headers: { key: string; value: string }[] }[] };
@@ -64,8 +65,13 @@ describe('política de seguridad de contenido (vercel.json)', () => {
     expect(csp.get('connect-src')).toContain(`wss://${host}`);
   });
 
-  it('permite las fuentes de Google que importa index.css y nada más en estilos', () => {
-    expect(cssCrudo).toContain('https://fonts.googleapis.com');
+  it('cubre cada origen externo que declara index.html (Google Fonts) y no abre más estilos de los necesarios', () => {
+    const origenes = [...htmlCrudo.matchAll(/<link[^>]+href="(https:\/\/[^"]+)"/g)].map((m) => origen(m[1]));
+    expect(origenes.length).toBeGreaterThan(0);
+    for (const o of new Set(origenes)) {
+      const cubierto = (csp.get('style-src') ?? []).includes(o) || (csp.get('font-src') ?? []).includes(o);
+      expect(cubierto, `${o} no está cubierto por style-src ni font-src`).toBe(true);
+    }
     expect(csp.get('style-src')).toEqual(["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
     expect(csp.get('font-src')).toContain('https://fonts.gstatic.com');
   });
