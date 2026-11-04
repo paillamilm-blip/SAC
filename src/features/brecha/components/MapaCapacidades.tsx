@@ -70,6 +70,7 @@ export default function MapaCapacidades({
   recienId,
   cerradas,
   calidad,
+  onNodo,
 }: {
   ocupacion: string;
   brechas: Brecha[];
@@ -77,6 +78,8 @@ export default function MapaCapacidades({
   cerradas: BrechaCerrada[];
   /** Conteos de la validación del análisis; los análisis antiguos no la traen. */
   calidad?: CalidadAnalisis;
+  /** Si se da, el detalle de cada nodo lo cuenta el asistente; si no, se muestra bajo el mapa. */
+  onNodo?: (brechaId: string) => void;
 }) {
   const [semilla, setSemilla] = useState(0);
   const [seleccionId, setSeleccionId] = useState<string | null>(null);
@@ -169,7 +172,15 @@ export default function MapaCapacidades({
   const rechazadas = brechas.filter((b) => b.veredicto === "rechazada").length;
   const ausentes = brechas.filter((b) => evidenciaAusente(b.evidencia)).length;
 
-  const seleccionada = brechas.find((b) => b.id === seleccionId) ?? null;
+  const elegir = (id: string) => {
+    if (onNodo) {
+      setSeleccionId(id);
+      onNodo(id);
+    } else {
+      setSeleccionId((actual) => (actual === id ? null : id));
+    }
+  };
+  const seleccionada = onNodo ? null : (brechas.find((b) => b.id === seleccionId) ?? null);
   const estadoDe = (b: Brecha) =>
     b.veredicto === "rechazada" ? "rechazada" : estaDominada(b) ? "dominada" : b.veredicto === "confirmada" ? "confirmada" : "pendiente";
 
@@ -360,11 +371,11 @@ export default function MapaCapacidades({
               tabIndex={0}
               aria-pressed={seleccionId === b.id}
               aria-label={`${b.titulo}. ${CATEGORIAS[b.categoria]}, impacto ${b.severidad}, ${ETIQUETA_ESTADO[estado].toLowerCase()}. Ver detalle`}
-              onClick={() => setSeleccionId((actual) => (actual === b.id ? null : b.id))}
+              onClick={() => elegir(b.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  setSeleccionId((actual) => (actual === b.id ? null : b.id));
+                  elegir(b.id);
                 }
               }}
             >
@@ -493,7 +504,11 @@ export default function MapaCapacidades({
           </p>
         </div>
       ) : (
-        <p className="mapa-ayuda">Toca una brecha del mapa para ver su evidencia y por qué importa.</p>
+        <p className="mapa-ayuda">
+          {onNodo
+            ? "Toca un nodo (cada círculo del mapa) y el asistente te cuenta qué dice tu CV y por qué importa."
+            : "Toca un nodo (cada círculo del mapa) para ver su evidencia y por qué importa."}
+        </p>
       )}
 
       {brechas.length > 0 && (

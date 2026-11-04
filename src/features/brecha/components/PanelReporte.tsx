@@ -64,6 +64,7 @@ export default function PanelReporte({
   brechaInicialId,
   onPestana,
   calidad,
+  onNodo,
 }: {
   ocupacion: string;
   nivel: string;
@@ -85,6 +86,8 @@ export default function PanelReporte({
   brechaInicialId?: string | null;
   onPestana?: (pestana: Pestana) => void;
   calidad?: CalidadAnalisis;
+  /** El mapa avisa qué nodo tocó la persona (lo comenta el asistente). */
+  onNodo?: (brechaId: string) => void;
 }) {
   const [recienId, setRecienId] = useState<string | null>(null);
   const [abiertaId, setAbiertaId] = useState<string | null>(
@@ -354,6 +357,7 @@ export default function PanelReporte({
             recienId={recienId}
             cerradas={comparacion?.cerradas ?? SIN_CERRADAS}
             calidad={calidad}
+            onNodo={onNodo}
           />
         </section>
       )}

@@ -251,6 +251,16 @@
   }
 }
 
+@media (max-width: 560px) {
+  /* Guiando sobre el mapa: panel bajo para que los nodos sigan a la vista y se puedan tocar. */
+  .u-app .u-chat[data-compacto='true'] {
+    height: min(44dvh, 360px);
+  }
+  .u-app[data-guia='true'] main {
+    padding-bottom: min(46dvh, 380px);
+  }
+}
+
 .u-app .u-chat-cab {
   display: flex;
   align-items: center;

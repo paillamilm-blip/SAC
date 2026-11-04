@@ -8,7 +8,8 @@
 import { estaDominada } from '../brecha/domain/dominio';
 import type { Analisis, Brecha } from '../brecha/domain/types';
 import { CATEGORIAS } from '../brecha/domain/types';
-import { listarAnalisis, metricas } from '../brecha/services/repositorio';
+import { evidenciaAusente } from '../brecha/domain/validar';
+import { listarAnalisis, metricas, obtenerAnalisis } from '../brecha/services/repositorio';
 import { recomendar, resumenProgreso, type Accion, type Estado, type Origen } from './recomendar';
 
 export interface Fuente {
@@ -91,6 +92,56 @@ export function saludoInicial(estado: Estado, nombre: string | null): Respuesta 
     texto: `${hola} Soy tu asistente. Te acompaño a avanzar paso a paso. ${resumenProgreso(estado.db)}`,
     origen: 'estimacion',
     accion: { accion: primera.accion, etiqueta: primera.etiquetaAccion, porQue: primera.titulo },
+  };
+}
+
+/** Lo que el asistente dice al llegar al mapa: enseña qué es un nodo y qué hacer con él. */
+export function guiaMapa(estado: Estado, analisisId: string): Respuesta | null {
+  const a = obtenerAnalisis(estado.db, analisisId);
+  if (!a) return null;
+  const n = a.brechas.length;
+  return {
+    texto: `Este es tu mapa. Cada círculo es un nodo: ${n === 1 ? 'una brecha' : `una de tus ${n} brechas`} de tu CV. Toca uno y te cuento qué dice tu CV y por qué importa.`,
+    origen: origenDelAnalisis(a),
+  };
+}
+
+/** Lo que el asistente cuenta cuando la persona toca un nodo del mapa. Solo usa datos de esa brecha. */
+export function describirNodo(estado: Estado, analisisId: string, brechaId: string): Respuesta | null {
+  const a = obtenerAnalisis(estado.db, analisisId);
+  const b = a?.brechas.find((x) => x.id === brechaId);
+  if (!a || !b) return null;
+
+  const dominada = estaDominada(b);
+  const origen: Origen = dominada ? 'probado' : origenDelAnalisis(a);
+  const ausente = evidenciaAusente(b.evidencia);
+  const evidencia = b.evidencia.replace(/^ausente en el cv:\s*/i, '');
+  const tuEstado = dominada
+    ? `La demostraste con un examen${b.prueba ? ` (${b.prueba.puntaje}/100)` : ''}.`
+    : b.veredicto === 'confirmada'
+      ? 'La reconociste como real.'
+      : b.veredicto === 'rechazada'
+        ? 'La marcaste como «no aplica».'
+        : 'Aún no me dices si es real.';
+
+  let etiqueta = 'Ver esta brecha';
+  let porQue = `Abrir «${b.titulo}»`;
+  if (!b.veredicto) {
+    etiqueta = 'Decir si es real';
+    porQue = `Decidir si «${b.titulo}» es real`;
+  } else if (b.veredicto === 'confirmada' && !dominada) {
+    etiqueta = 'Demostrarlo';
+    porQue = `Abrir «${b.titulo}» para dar el examen`;
+  }
+
+  return {
+    texto:
+      `«${b.titulo}» · ${CATEGORIAS[b.categoria].toLowerCase()}, impacto ${b.severidad}.\n` +
+      `${ausente ? 'Lo que falta en tu CV' : 'Lo que dice tu CV'}: ${evidencia}\n` +
+      `Por qué importa: ${b.porQueImporta}\n${tuEstado}`,
+    origen,
+    fuentes: ausente ? undefined : [{ cita: b.evidencia, origen, etiqueta: ETIQUETA_ORIGEN[origen] }],
+    accion: { accion: { tipo: 'abrir_reporte', analisisId: a.id, pestana: 'brechas', brechaId: b.id }, etiqueta, porQue },
   };
 }
 

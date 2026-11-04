@@ -9,7 +9,7 @@ import { isSpeechAvailable, startSpeechRecognition, type SpeechHandle } from '@/
 import type { Db } from '../brecha/services/repositorio';
 import { listarAnalisis } from '../brecha/services/repositorio';
 import type { Accion } from './recomendar';
-import { ETIQUETA_ORIGEN, responder, respuestaNoEntendida, saludoInicial, sugerencias, type Respuesta } from './responder';
+import { describirNodo, ETIQUETA_ORIGEN, guiaMapa, responder, respuestaNoEntendida, saludoInicial, sugerencias, type Respuesta } from './responder';
 import {
   AJUSTES_POR_DEFECTO,
   borrarHistorial,
@@ -30,6 +30,11 @@ function almacen(): Storage | null {
   }
 }
 
+/** Algo que la persona hizo en la app y que el asistente debe comentar. `n` crece con cada evento. */
+export type EventoApp =
+  | { n: number; tipo: 'mapa'; analisisId: string }
+  | { n: number; tipo: 'nodo'; analisisId: string; brechaId: string };
+
 export interface ChatPanelProps {
   db: Db;
   /** Id de la persona con sesión; null = invitado. */
@@ -41,9 +46,13 @@ export interface ChatPanelProps {
   onCerrar: () => void;
   /** La pantalla ejecuta la acción ya confirmada por la persona. Devuelve false si no pudo hacerla. */
   onEjecutar: (accion: Accion) => boolean | void;
+  /** Lo último que hizo la persona en la app (p. ej. tocar un nodo del mapa). */
+  evento?: EventoApp | null;
+  /** Panel bajo, para no tapar lo que la persona está tocando (el mapa). */
+  compacto?: boolean;
 }
 
-export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto, onCerrar, onEjecutar }: ChatPanelProps) {
+export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto, onCerrar, onEjecutar, evento, compacto }: ChatPanelProps) {
   const [ajustes, setAjustes] = useState<Ajustes>(() => {
     const a = almacen();
     return a ? cargarAjustes(a) : AJUSTES_POR_DEFECTO;
@@ -123,6 +132,19 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abierto, usuarioId, ajustes.guardarHistorial]);
+
+  // El asistente comenta lo que la persona hace en la app. Cada evento se atiende una sola vez.
+  const ultimoEvento = useRef(0);
+  useEffect(() => {
+    if (!abierto || !evento || evento.n === ultimoEvento.current) return;
+    ultimoEvento.current = evento.n;
+    const estadoAhora = { db: dbRef.current, ahora: new Date().toISOString() };
+    const r =
+      evento.tipo === 'mapa'
+        ? guiaMapa(estadoAhora, evento.analisisId)
+        : describirNodo(estadoAhora, evento.analisisId, evento.brechaId);
+    if (r) decir(r);
+  }, [abierto, evento, decir]);
 
   // Guardar el historial solo si la persona lo activó.
   useEffect(() => {
@@ -327,7 +349,7 @@ export default function ChatPanel({ db, usuarioId, nombre, iaDisponible, abierto
   );
 
   return (
-    <section className="u-chat" role="dialog" aria-label="Asistente de Ómicrom" aria-modal="false">
+    <section className="u-chat" data-compacto={compacto ? 'true' : undefined} role="dialog" aria-label="Asistente de Ómicrom" aria-modal="false">
       <header className="u-chat-cab">
         <div className="u-chat-id">
           <span className="u-chat-orbe" data-hablando={hablando || escuchando} aria-hidden="true" />

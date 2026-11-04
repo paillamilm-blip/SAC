@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Brecha } from '../domain/types';
 import MapaCapacidades from './MapaCapacidades';
 
@@ -82,5 +82,16 @@ describe('MapaCapacidades', () => {
   it('solo las brechas reconocidas llevan impulso de luz', () => {
     const { container } = pintar();
     expect(container.querySelectorAll('.mapa-impulso')).toHaveLength(1);
+  });
+
+  it('con asistente conectado, tocar un nodo se lo avisa y no abre el detalle bajo el mapa', () => {
+    const onNodo = vi.fn();
+    const { container } = render(
+      <MapaCapacidades ocupacion="Técnico" brechas={BRECHAS} recienId={null} cerradas={[]} onNodo={onNodo} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Brecha b\./ }));
+    expect(onNodo).toHaveBeenCalledWith('b');
+    expect(screen.queryByRole('region', { name: /Detalle de/ })).toBeNull();
+    expect(container.querySelector('.mapa-ayuda')?.textContent).toContain('asistente');
   });
 });

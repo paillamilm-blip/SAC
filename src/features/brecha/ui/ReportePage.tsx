@@ -13,6 +13,7 @@ export default function ReportePage({
   onProbar,
   sesionIniciada,
   onPedirSesion,
+  onNodo,
 }: {
   db: Db;
   analisisId: string;
@@ -23,6 +24,7 @@ export default function ReportePage({
   onProbar: (analisisId: string, brechaId: string, prueba: PruebaExamen) => void;
   sesionIniciada: boolean;
   onPedirSesion: () => void;
+  onNodo?: (analisisId: string, brechaId: string) => void;
 }) {
   const analisis = obtenerAnalisis(db, analisisId);
 
@@ -60,6 +62,7 @@ export default function ReportePage({
           fortalezas={analisis.fortalezas}
           brechas={analisis.brechas}
           calidad={analisis.calidad}
+          onNodo={onNodo ? (bid) => onNodo(analisis.id, bid) : undefined}
           comparacion={compararConAnterior(db, analisis)}
           onMarcar={(bid, v) => onMarcar(analisis.id, bid, v)}
           onProbar={(bid, prueba) => onProbar(analisis.id, bid, prueba)}
