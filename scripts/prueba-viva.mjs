@@ -153,8 +153,10 @@ async function main() {
     }
 
     // 6. Asistente disponible en el reporte
+    // Desde que el asistente se despliega solo en el mapa, puede estar ya abierto (o no, en producción vieja).
     const abrirAsistente = page.getByRole('button', { name: 'Abrir el asistente' });
-    if (await abrirAsistente.count()) {
+    if ((await page.locator('[role=dialog][aria-label^="Asistente"]').count()) > 0 || (await abrirAsistente.count())) {
+      if (await abrirAsistente.count()) await abrirAsistente.click();
       await abrirAsistente.click();
       await page.waitForSelector('[role=dialog][aria-label^="Asistente"]', { timeout: 8_000 });
       await page.waitForTimeout(400);

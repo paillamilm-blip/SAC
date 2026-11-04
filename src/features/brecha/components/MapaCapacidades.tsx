@@ -226,7 +226,7 @@ export default function MapaCapacidades({
         key={semilla}
         className="mapa-svg"
         viewBox={movil ? "105 -10 770 780" : `0 0 ${W} ${H}`}
-        role="img"
+        role="group"
         aria-label={`Mapa de capacidades de ${ocupacion}: ${brechas.length} brechas detectadas, ${reconocidas} reconocidas, ${dominadas} dominadas y ${rechazadas} descartadas. ${brechas.length - ausentes} con cita del CV y ${ausentes} que faltan en el CV.${
           cerradas.length > 0 ? ` ${cerradas.length} brechas cerradas desde el análisis anterior.` : ""
         }`}

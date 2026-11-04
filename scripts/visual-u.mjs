@@ -119,7 +119,10 @@ async function recorrido(browser, nombre, viewport) {
   }
 
   // 4. Asistente
-  await page.getByRole('button', { name: 'Abrir el asistente' }).click();
+  // El asistente se despliega solo al llegar al mapa: si ya está abierto, no hay botón que pulsar.
+  if ((await page.locator('[role=dialog][aria-label^="Asistente"]').count()) === 0) {
+    await page.getByRole('button', { name: 'Abrir el asistente' }).click();
+  }
   await page.waitForSelector('[role=dialog][aria-label^="Asistente"]', { timeout: 5_000 });
   await page.waitForTimeout(400);
   await foto('06-asistente');
