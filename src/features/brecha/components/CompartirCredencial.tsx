@@ -50,7 +50,7 @@ export default function CompartirCredencial({
   }
 
   return (
-    <section className="card u-compartir" aria-labelledby="u-comp-t">
+    <section className="card u-compartir" id="u-compartir" tabIndex={-1} aria-labelledby="u-comp-t">
       <h2 className="card-titulo" id="u-comp-t">
         Comparte lo que demostraste
       </h2>

@@ -154,6 +154,16 @@ async function recorrido(browser, nombre, viewport) {
   if (await page.locator('.u-siguiente').count()) ok(`${nombre}: tras recargar se conserva el avance y aparece «Siguiente paso»`);
   else falla(`${nombre}: tras recargar no aparece «Siguiente paso»`);
   await desborde('inicio-con-avance');
+  await tapados('inicio-con-avance');
+
+  // Cada paso de «Tu ciclo» es un botón que lleva a algún lado.
+  const pasos = await page.locator('.u-ciclo .u-paso-boton').count();
+  if (pasos === 5) ok(`${nombre}: los 5 pasos de «Tu ciclo» son botones`);
+  else falla(`${nombre}: «Tu ciclo» tiene ${pasos} botones (se esperaban 5)`);
+  await page.locator('.u-ciclo .u-paso-boton').nth(1).click();
+  await page.waitForURL(/\/u\/reporte\//, { timeout: 5_000 }).catch(() => {});
+  if (/\/u\/reporte\//.test(page.url())) ok(`${nombre}: «Ver tu mapa» abre el mapa`);
+  else falla(`${nombre}: «Ver tu mapa» no abrió el mapa (quedó en ${page.url()})`);
 
   if (errores.length) falla(`${nombre}: errores de JavaScript: ${errores.slice(0, 3).join(' | ')}`);
   else ok(`${nombre}: sin errores de JavaScript`);
