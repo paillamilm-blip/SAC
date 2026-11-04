@@ -7,9 +7,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'src/features/brecha/**'
-      - 'src/features/assistant/**'
-      - 'src/App.tsx'
+      # Todo `src/` afecta a /u desde que es el único producto (un borrado fuera de brecha/ y assistant/
+      # llegó a no disparar este recorrido y hubo que lanzarlo a mano).
+      - 'src/**'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'package.json'
       - 'scripts/visual-u.mjs'
       - '.github/workflows/visual-u.yml'
   workflow_dispatch:
