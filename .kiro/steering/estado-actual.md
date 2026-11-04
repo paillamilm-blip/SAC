@@ -5,7 +5,7 @@ inclusion: always
 
 # Estado actual del proyecto (traspaso entre chats)
 
-Última actualización: 3 de noviembre de 2026. Si algo de aquí contradice al código o a CI, manda el código.
+Última actualización: 3 de noviembre de 2026 (fin de sesión). Si algo de aquí contradice al código o a CI, manda el código.
 
 ## Qué es esto
 Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades**, descubre sus **brechas** y un **asistente de voz y texto** la guía. Vive en `src/features/brecha` (pantallas, dominio) y `src/features/assistant` (chat). Reglas de producto en `PRODUCT.md` (la interfaz no afirma más que el dato; nunca datos falsos; cero jerga; cada número con su escala).
@@ -29,22 +29,28 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 - Al iniciar sesión, los análisis del invitado **se preguntan** (traer o descartar); nunca se mueven solos.
 - CI de SAC (`typecheck`, `lint`, `vitest`, `build`) y el recorrido visual de `/u` en navegador real pasan en `main`.
 
+## Examen para «Dominar» (3-nov-2026): construido, NO desplegado ni probado
+- **Código en `main`** (PR #11 y #12): `simulador-universal` con CORS por petición, intento único por sesión (`OPEN → EVALUATING → EVALUATED`), evaluador blindado contra instrucciones dentro de la respuesta, y registro de la prueba por nombre **solo desde el servidor**; `credential` con CORS por petición (sin eso `?verificar=` estaba bloqueado desde `sac-omi`); `_shared/llm.ts` con escalera de Gemini. Migración `10011_examen_solo_servidor.sql`: revoca `register_exam_success` a los usuarios (con `p_score: 100` desde la consola cualquiera quedaba «probado»).
+- **Falta desplegarlo (lo hace la persona, juntos):** `supabase db push`, `supabase functions deploy simulador-universal`, `supabase functions deploy credential`.
+- **Pantalla del examen: PR #13** (abierto, CI verde). Fusionarlo **después** de desplegar. «Demostrarlo» abre el examen dentro de `/u`; aprobado = 70 o más calificado por el servidor; no existe la autodeclaración. Detalle en `docs/plan-de-accion.md` fase 3.
+- **Hay otras 13 funciones con el mismo defecto de CORS** (`corsHeaders()` sin `req`); el código vivo solo llama `proxy-ai`, `proxy-tts`, `credential` y `simulador-universal`, así que no se tocaron.
+
 ## Pendiente de la persona (o por dashboard)
 1. ~~**Vercel.**~~ **Hecho (3-nov-2026).** Proyecto `sac-omi` (equipo `tuprofendustrial-s-projects`), conectado a SAC. Dominio: **`https://sac-omi.vercel.app`** (producto en `/u`). Sitio probado en vivo el 3-nov-2026.
 2. ~~**Supabase → Edge Functions → Secrets `ALLOWED_ORIGINS`.**~~ **Hecho y probado (3-nov-2026):** la llamada cruzada desde `sac-omi.vercel.app` entra a `proxy-ai` sin bloqueo CORS.
 3. ~~**Redesplegar las funciones.**~~ **Hecho (3-nov-2026):** `proxy-ai` (build `6g`) y `proxy-tts` redesplegadas con `supabase functions deploy`.
-4. **Supabase → Authentication → URL Configuration:** agregar el dominio nuevo. Pendiente (dashboard).
+4. **Supabase → Authentication → URL Configuration:** agregar `https://sac-omi.vercel.app` y `https://sac-omi.vercel.app/**`. **Pendiente (dashboard)** y ahora importa más: sin eso los correos de confirmación y de «olvidé mi contraseña» llevan al dominio anterior, y la recuperación de clave ya vive dentro de `/u`.
 5. Pasos detallados en `docs/despliegue-vercel.md`. El estado de Vercel ya aparece en los commits de SAC (`gh api repos/paillamilm-blip/SAC/commits/<sha>/status`, contexto `Vercel`).
 
 ## Siguiente trabajo, por prioridad
 > El plan por fases, el flujo de la app y los bugs están en **`docs/plan-de-accion.md`** (3-nov-2026). Ahí manda el orden; la lista de abajo es el resumen anterior.
 
-1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El 3-nov-2026 se probó en vivo con un CV de prueba (2 corridas completas); falta la matriz de rubros y los CVs reales de la persona. `analisisIA.ts` ya tiene tests; faltan los de `validar.ts`. Ajustar el prompt en `services/analisisIA.ts` si un rubro falla.
+1. **Validar el análisis con CVs reales** (8 a 10 de rubros distintos; meta del plan: al menos 6 de 10 brechas reales). El 3-nov-2026 se probó en vivo con un CV sintético: en la última corrida respondió `gemini-3.5-flash-lite`, el **tercero** de la escalera, o sea que 3.6 y 3.8 fallaron en ese momento; conviene vigilar la calidad con ese modelo. `analisisIA.ts` y `validar.ts` ya tienen tests. Ajustar el prompt en `services/analisisIA.ts` si un rubro falla.
 2. Guardar en Supabase (tablas `brecha_*` con RLS) en vez de `localStorage`.
 3. Mapa: habilidades de Ómicrom con porcentaje como nodos sólidos y brechas como nodos huecos. **Acordar el diseño antes de tocar `MapaCapacidades`.**
-4. «Dominar» con examen real (`simulador-universal`, `register_exam_success`) y credencial verificable. Hoy «dominada» es autodeclarada.
+4. Mostrar lo probado en la **credencial verificable** (paso 6; hoy no hay forma de emitir un token porque se borró la pantalla del Pasaporte) y que el asistente lea las pruebas para rotular «Probado». El examen en sí está arriba.
 5. ~~Retirar la interfaz vieja~~ (hecho). Quedan huérfanos fuera de las 4 features (ver `docs/plan-de-accion.md` §3.5). Cabeceras CSP (probarlas con la app viva: PDF.js viene de cdnjs, además voz y Supabase), accesibilidad AA, actualización del service worker dentro de `/u`.
-6. Actualizar `POLITICA_PRIVACIDAD.md`: el texto del CV pasa por Gemini u OpenRouter.
+6. ~~Actualizar `POLITICA_PRIVACIDAD.md`~~ (hecho). Revisar la sección de exámenes cuando el examen esté en vivo: las respuestas del examen también pasan por IA.
 
 ## Decisiones abiertas (preguntar, no suponer)
 - SAC público o privado (hoy público; contiene documentos de producto).
@@ -53,7 +59,7 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 
 ## Cómo trabajar en este entorno
 - **Rama y PR, nunca `main` directo.** PR con `gh api repos/paillamilm-blip/SAC/pulls -f ...` (los subcomandos `gh pr` fallan). Fusionar con `gh api -X PUT .../pulls/N/merge -f merge_method=squash` solo si la persona lo pide.
-- **No se puede** instalar paquetes (npm da 403), crear repos (403), ni alcanzar Vercel ni los sitios publicados. **CI de GitHub es el validador real**: esperar `CI` y `Recorrido visual de /u` sobre el `head_sha` del push y leer los logs con `gh api .../actions/runs/<id>/logs`.
+- **No se puede** instalar paquetes (npm da 403), crear repos (403), ni alcanzar Vercel ni los sitios publicados **desde el sandbox**. **CI de GitHub es el validador real**, y el workflow manual `prueba-viva.yml` (`gh api -X POST repos/paillamilm-blip/SAC/actions/workflows/prueba-viva.yml/dispatches -f ref=main`) sí llega a `sac-omi.vercel.app` y guarda capturas y la respuesta de `proxy-ai`: esperar `CI` y `Recorrido visual de /u` sobre el `head_sha` del push y leer los logs con `gh api .../actions/runs/<id>/logs`.
 - Chequeo de tipos rápido sin dependencias: crear `tsconfig.check.json` con `{"extends":"./tsconfig.json","compilerOptions":{"types":[]},"include":["src"]}`, correr `tsc --noEmit -p` con el `tsc` global y filtrar el ruido de módulos faltantes (TS2307, TS7006, TS7026, TS7053, `import.meta.env`). **Borrar ese archivo antes de hacer commit.**
 - Nunca decir «listo» sin que CI lo confirme. Se dijo antes que T1–T11 estaban completas sin verificarlo y CI mostró errores de tipos y un crash.
 - Marca: el nombre visible es **Ómicrom** (con M). Los identificadores técnicos (`omicron_*`, claves de `localStorage`, eventos) llevan N y no se cambian.
@@ -61,4 +67,4 @@ Producto único de Ómicrom: la persona sube su CV, ve su **mapa de capacidades*
 - Si una herramienta es bloqueada por un hook `PreToolUse`, estaba en `/projects/sandbox/.kiro/hooks/` (fuera del repo) y ya se borró una vez a pedido de la persona.
 
 ## Qué no se pudo verificar nunca
-IA en vivo con un CV real, voz y micrófono en un dispositivo real, recorrido con sesión iniciada, y cualquier cosa que dependa de Vercel o Supabase.
+El **examen** de punta a punta (exige sesión y la prueba en vivo usa invitado; probarlo en vivo requeriría una cuenta de prueba como secreto de GitHub), IA con un CV real de la persona, voz y micrófono en un dispositivo real, recuperar contraseña desde el correo, y emitir/verificar una credencial.
