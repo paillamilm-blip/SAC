@@ -3,15 +3,21 @@
 
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { supabase } from '@/infrastructure/supabase/client';
+import type { Estandar, ResumenCv } from '../services/estandar';
 import type { Metricas } from '../services/repositorio';
 
 const SelectorColor = lazy(() => import('./SelectorColor'));
+
+const fecha = (iso: string) =>
+  new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 
 export default function PerfilPanel({
   nombre,
   correo,
   esInvitado,
   metricas,
+  estandar,
+  cv,
   onCerrar,
   onVerPasaporte,
   onIniciarSesion,
@@ -20,6 +26,10 @@ export default function PerfilPanel({
   correo: string | null;
   esInvitado: boolean;
   metricas: Metricas;
+  /** Cuánto falta para cubrir las brechas detectadas; null si aún no hay análisis. */
+  estandar: Estandar | null;
+  /** Lo que se leyó del CV; null si aún no hay análisis. */
+  cv: ResumenCv | null;
   onCerrar: () => void;
   onVerPasaporte: () => void;
   onIniciarSesion: () => void;
@@ -70,6 +80,80 @@ export default function PerfilPanel({
             Tus análisis están solo en este dispositivo. Con una cuenta se guardan también en ella y puedes dar el
             examen y compartir tu credencial.
           </p>
+        )}
+
+        {estandar && cv ? (
+          <>
+            <section className="u-perfil-estandar" aria-labelledby="u-perfil-est-t">
+              <h3 id="u-perfil-est-t">Cuánto te falta</h3>
+              {estandar.esMuestra && (
+                <p className="u-perfil-nota">Es una muestra de ejemplo: no sale de tu CV. Escanea tu CV para medir el tuyo.</p>
+              )}
+              {estandar.total === 0 ? (
+                <p className="u-perfil-nota">Descartaste todas las brechas de este análisis: no queda nada por cubrir.</p>
+              ) : (
+                <>
+                  <p className="u-perfil-pct">
+                    <b>{estandar.faltaPct} %</b>
+                    <span>
+                      por cubrir de lo que detecté frente al estándar de tu ocupación ({estandar.conPrueba} de {estandar.total}{' '}
+                      {estandar.total === 1 ? 'brecha cubierta' : 'brechas cubiertas'} con examen)
+                    </span>
+                  </p>
+                  <div
+                    className="u-perfil-barra"
+                    role="img"
+                    aria-label={`De ${estandar.total} brechas: ${estandar.conPrueba} con examen aprobado, ${estandar.reconocidasSinPrueba} reconocidas sin examen, ${estandar.sinRevisar} por revisar`}
+                  >
+                    <span data-parte="prueba" style={{ flexGrow: estandar.conPrueba }} />
+                    <span data-parte="reconocida" style={{ flexGrow: estandar.reconocidasSinPrueba }} />
+                    <span data-parte="sin-revisar" style={{ flexGrow: estandar.sinRevisar }} />
+                  </div>
+                  <ul className="u-perfil-leyenda">
+                    <li data-parte="prueba">Con examen aprobado: {estandar.conPrueba}</li>
+                    <li data-parte="reconocida">Reconocidas, sin examen: {estandar.reconocidasSinPrueba}</li>
+                    <li data-parte="sin-revisar">Por revisar: {estandar.sinRevisar}</li>
+                  </ul>
+                </>
+              )}
+              <p className="u-perfil-nota">
+                El estándar es la comparación que hizo la IA entre tu CV y lo que suele mostrar alguien de tu ocupación y
+                nivel. No es una certificación
+                {estandar.descartadas > 0
+                  ? `; ${estandar.descartadas} ${estandar.descartadas === 1 ? 'brecha descartada' : 'brechas descartadas'} como «no aplica» no ${estandar.descartadas === 1 ? 'cuenta' : 'cuentan'}`
+                  : ''}
+                .
+              </p>
+            </section>
+
+            <details className="u-perfil-cv">
+              <summary>Tu CV en Ómicrom</summary>
+              <div className="u-perfil-cv-cuerpo">
+                <p className="u-perfil-nota">
+                  Esto es lo que leí de tu CV{cv.archivo ? ` («${cv.archivo}»)` : ''} el {fecha(cv.analizadoEn)}. No guardo el PDF,
+                  solo este resultado.
+                </p>
+                <p>
+                  <strong>{cv.ocupacion}</strong>
+                  <br />
+                  <span className="u-perfil-nota">{cv.nivel}</span>
+                </p>
+                <p>{cv.resumen}</p>
+                {cv.fortalezas.length > 0 && (
+                  <>
+                    <h4>Lo que ya muestras</h4>
+                    <ul className="u-perfil-fortalezas">
+                      {cv.fortalezas.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            </details>
+          </>
+        ) : (
+          <p className="u-perfil-nota">Cuando escanees tu CV, aquí verás lo que leí de él y cuánto te falta para cubrir el estándar de tu ocupación.</p>
         )}
 
         <dl className="u-perfil-metricas">

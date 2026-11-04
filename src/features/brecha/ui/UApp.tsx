@@ -18,6 +18,7 @@ import { useOmicronStats } from '../hooks/useOmicronStats';
 import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { obtenerAnalisis } from '../services/repositorio';
 import PerfilPanel from '../components/PerfilPanel';
+import { medirEstandar, resumenCv } from '../services/estandar';
 import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
@@ -347,6 +348,8 @@ export default function UApp() {
           correo={profile?.email ?? null}
           esInvitado={esInvitado}
           metricas={calcularMetricas(db)}
+          estandar={medirEstandar(db)}
+          cv={resumenCv(db)}
           onCerrar={() => setPerfilAbierto(false)}
           onVerPasaporte={() => {
             setPerfilAbierto(false);
