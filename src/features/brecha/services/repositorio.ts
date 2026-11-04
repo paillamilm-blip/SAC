@@ -19,6 +19,12 @@ import type {
 export interface Db {
   version: 1;
   analisis: Analisis[];
+  /**
+   * Cuándo se modificó por última vez (ISO). Sirve para fusionar con la copia de la cuenta cuando se usa más de un
+   * dispositivo: en un análisis presente en ambas copias manda la modificada más recientemente. Opcional: los datos
+   * guardados antes de existir la nube no lo traen.
+   */
+  actualizadoEn?: string;
 }
 
 export const CLAVE_PREFIJO = 'omicron:brecha:db:v1:';
@@ -212,6 +218,7 @@ function esDb(x: unknown): x is Db {
   const o = x as { version?: unknown; analisis?: unknown };
   if (o.version !== 1) return false;
   if (!Array.isArray(o.analisis)) return false;
+  if ((o as { actualizadoEn?: unknown }).actualizadoEn !== undefined && typeof (o as { actualizadoEn?: unknown }).actualizadoEn !== 'string') return false;
   // Validar cada análisis
   for (const a of o.analisis) {
     if (!esAnalisis(a)) return false;
@@ -264,6 +271,58 @@ function conPrueba(db: Db): Db {
   return {
     ...db,
     analisis: db.analisis.map((a) => ({ ...a, brechas: a.brechas.map((b) => ({ ...b, prueba: b.prueba ?? null })) })),
+  };
+}
+
+/**
+ * Valida y normaliza una base que viene de fuera (la copia de la cuenta). Devuelve null si no tiene la forma
+ * esperada: nunca se mezcla ni se muestra algo que no se pudo validar.
+ */
+export function leerDb(x: unknown): Db | null {
+  return esDb(x) ? conPrueba(x) : null;
+}
+
+function igual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((x, i) => igual(x, b[i]));
+  const ka = Object.keys(a as object);
+  const kb = Object.keys(b as object);
+  return ka.length === kb.length && ka.every((k) => k in (b as object) && igual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+
+/**
+ * ¿Son la misma base? Compara el CONTENIDO, no el orden de las claves: Postgres guarda `jsonb` reordenando las
+ * claves, así que `JSON.stringify` diría que la copia de la cuenta cambió aunque sea idéntica y se reescribiría
+ * en cada inicio de sesión.
+ */
+export function mismaBase(a: Db, b: Db): boolean {
+  return igual(a, b);
+}
+
+/** La más reciente de las dos fechas de modificación (ISO se ordena como texto); undefined si ninguna base la trae. */
+function fechaMasReciente(a: Db, b: Db): Db['actualizadoEn'] {
+  const f = [a.actualizadoEn, b.actualizadoEn].filter((x): x is string => typeof x === 'string');
+  return f.length ? [...f].sort()[f.length - 1] : undefined;
+}
+
+/**
+ * Une la copia de este dispositivo con la de la cuenta. Nunca se pierde un análisis: la unión conserva los de ambas.
+ * Si un mismo análisis está en las dos, se queda la copia de la base modificada más recientemente (en empate, la de
+ * la cuenta). Es una regla simple y predecible, no una fusión campo a campo: dos dispositivos editando el mismo
+ * análisis a la vez es raro, y así ninguna decisión de la persona (p. ej. quitar «Es real») se «resucita» sola.
+ */
+export function fusionarDb(local: Db, nube: Db): Db {
+  const ganaLocal = (local.actualizadoEn ?? '') > (nube.actualizadoEn ?? '');
+  const [primero, segundo] = ganaLocal ? [local, nube] : [nube, local];
+  const ids = new Set(primero.analisis.map((a) => a.id));
+  const soloEnElOtro = segundo.analisis.filter((a) => !ids.has(a.id));
+  const actualizadoEn = fechaMasReciente(local, nube);
+  return {
+    version: 1,
+    ...(actualizadoEn ? { actualizadoEn } : {}),
+    analisis: [...primero.analisis, ...soloEnElOtro],
   };
 }
 

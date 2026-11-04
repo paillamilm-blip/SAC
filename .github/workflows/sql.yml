@@ -1,0 +1,46 @@
+name: SQL de la cuenta (Postgres real)
+
+# Aplica la migración de brecha_db DOS veces sobre un Postgres de verdad y comprueba la seguridad con personas
+# simuladas: cada quien ve y toca solo lo suyo, anon no tiene acceso, el documento se valida y la migración es
+# idempotente. Existe porque ese SQL se pega a mano en producción y protege los datos de cada persona: no puede
+# entregarse solo «revisado a ojo».
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/10012_brecha_db.sql'
+      - 'supabase/tests/**'
+      - '.github/workflows/sql.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sql:
+    name: Migración brecha_db en Postgres
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        # Supabase corre Postgres 15.
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: ci
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v5
+      - name: Instalar el cliente psql
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
+      - name: Aplicar la migración (dos veces) y probar la seguridad
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/brecha_db.test.sql

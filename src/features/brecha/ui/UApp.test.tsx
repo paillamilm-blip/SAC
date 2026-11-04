@@ -35,6 +35,11 @@ vi.mock('../services/proveedor', async () => {
   const { crearProveedorDemostracion } = await import('../services/analizar');
   return { proveedorActivo: crearProveedorDemostracion({ pausaMs: 0 }) };
 });
+// La copia en la cuenta habla con Supabase: en pruebas no hay red ni tabla.
+vi.mock('../services/nube', () => ({
+  leerNube: vi.fn(() => Promise.resolve({ ok: false, estado: 'no_disponible' })),
+  guardarNube: vi.fn(() => Promise.resolve({ ok: false, estado: 'no_disponible' })),
+}));
 // La racha diaria llama a Supabase: en pruebas no hay red.
 vi.mock('../hooks/useOmicronStats', () => ({ useOmicronStats: () => {} }));
 vi.mock('@/infrastructure/voice/recognition', () => ({

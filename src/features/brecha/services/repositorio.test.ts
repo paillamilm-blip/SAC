@@ -6,6 +6,9 @@ import {
   claveDe,
   compararConAnterior,
   dbVacia,
+  fusionarDb,
+  leerDb,
+  mismaBase,
   pendientesDelInvitado,
   traerDelInvitado,
   guardar,
@@ -14,6 +17,7 @@ import {
   registrarPrueba,
   metricas,
   type Almacen,
+  type Db,
 } from './repositorio';
 import type { PruebaExamen, ResultadoAnalisis } from '../domain/types';
 
@@ -301,5 +305,131 @@ describe('datos guardados antes del examen', () => {
     const vuelta = cargar(al, claveDe('u'));
     expect(vuelta).toEqual(d);
     expect(metricas(vuelta).dominadas).toBe(1);
+  });
+});
+
+describe('leerDb', () => {
+  it('acepta una base válida y completa la prueba con null', () => {
+    const { crudo } = (() => {
+      const { db } = conUnAnalisis();
+      const copia = JSON.parse(JSON.stringify(db)) as { analisis: { brechas: Record<string, unknown>[] }[] };
+      copia.analisis[0].brechas.forEach((b) => delete b.prueba);
+      return { crudo: copia };
+    })();
+    const leida = leerDb(crudo);
+    expect(leida?.analisis).toHaveLength(1);
+    expect(leida?.analisis[0].brechas.every((b) => b.prueba === null)).toBe(true);
+  });
+
+  it('rechaza lo que no tiene la forma (nunca se muestra ni se mezcla algo sin validar)', () => {
+    for (const malo of [null, undefined, 'x', 5, [], {}, { version: 2, analisis: [] }, { version: 1 }, { version: 1, analisis: [{}] }, { version: 1, analisis: [], actualizadoEn: 5 }]) {
+      expect(leerDb(malo)).toBeNull();
+    }
+  });
+
+  it('conserva actualizadoEn', () => {
+    expect(leerDb({ version: 1, analisis: [], actualizadoEn: '2026-11-03T10:00:00.000Z' })?.actualizadoEn).toBe('2026-11-03T10:00:00.000Z');
+  });
+});
+
+describe('fusionarDb: dos dispositivos, una cuenta', () => {
+  /** Una base con un análisis de id fijo, ya con «Es real» marcado en su primera brecha o no. */
+  function base(idAnalisis: string, actualizadoEn: string | undefined, realEnPrimera: boolean): Db {
+    const n = { v: 0 };
+    const { db, analisis } = agregarAnalisis(dbVacia(), MUESTRA, META, '2026-11-03T08:00:00.000Z', () => `${idAnalisis}-${++n.v}`);
+    const conId: Db = { ...db, analisis: db.analisis.map((a) => ({ ...a, id: idAnalisis })) };
+    const final = realEnPrimera ? marcarBrecha(conId, idAnalisis, analisis.brechas[0].id, 'confirmada', '2026-11-03T09:00:00.000Z') : conId;
+    return actualizadoEn ? { ...final, actualizadoEn } : final;
+  }
+
+  it('suma los análisis de ambos lados: nunca se pierde uno', () => {
+    const local = base('a', '2026-11-03T10:00:00.000Z', false);
+    const nube = base('b', '2026-11-03T09:00:00.000Z', false);
+    const f = fusionarDb(local, nube);
+    expect(f.analisis.map((a) => a.id).sort()).toEqual(['a', 'b']);
+    expect(f.actualizadoEn).toBe('2026-11-03T10:00:00.000Z');
+  });
+
+  it('en un análisis que está en los dos, manda la copia modificada más recientemente (la local)', () => {
+    const local = base('a', '2026-11-03T12:00:00.000Z', true);
+    const nube = base('a', '2026-11-03T10:00:00.000Z', false);
+    const f = fusionarDb(local, nube);
+    expect(f.analisis).toHaveLength(1);
+    expect(f.analisis[0].brechas[0].veredicto).toBe('confirmada');
+  });
+
+  it('…y si la más reciente es la de la cuenta, manda esa', () => {
+    const local = base('a', '2026-11-03T10:00:00.000Z', true);
+    const nube = base('a', '2026-11-03T12:00:00.000Z', false);
+    expect(fusionarDb(local, nube).analisis[0].brechas[0].veredicto).toBeNull();
+  });
+
+  it('quitar «Es real» en un dispositivo no se «resucita» desde la copia vieja del otro', () => {
+    const viejaConReal = base('a', '2026-11-03T09:00:00.000Z', true);
+    const nuevaSinReal = base('a', '2026-11-03T11:00:00.000Z', false);
+    expect(fusionarDb(nuevaSinReal, viejaConReal).analisis[0].brechas[0].veredicto).toBeNull();
+    expect(fusionarDb(viejaConReal, nuevaSinReal).analisis[0].brechas[0].veredicto).toBeNull();
+  });
+
+  it('en empate gana la cuenta', () => {
+    const local = base('a', '2026-11-03T10:00:00.000Z', true);
+    const nube = base('a', '2026-11-03T10:00:00.000Z', false);
+    expect(fusionarDb(local, nube).analisis[0].brechas[0].veredicto).toBeNull();
+  });
+
+  it('datos de antes de existir la nube (sin fecha) pierden contra uno con fecha, y no rompen', () => {
+    const sinFecha = base('a', undefined, true);
+    const conFecha = base('a', '2026-11-03T10:00:00.000Z', false);
+    expect(fusionarDb(sinFecha, conFecha).analisis[0].brechas[0].veredicto).toBeNull();
+    const f = fusionarDb(sinFecha, base('b', undefined, false));
+    expect(f.analisis).toHaveLength(2);
+    expect(f.actualizadoEn).toBeUndefined();
+  });
+
+  it('no repite un análisis y es idempotente', () => {
+    const a = base('a', '2026-11-03T10:00:00.000Z', true);
+    expect(fusionarDb(a, a).analisis).toHaveLength(1);
+    expect(fusionarDb(fusionarDb(a, a), a)).toEqual(fusionarDb(a, a));
+  });
+
+  it('no muta ninguna de las dos bases', () => {
+    const local = base('a', '2026-11-03T12:00:00.000Z', true);
+    const nube = base('b', '2026-11-03T10:00:00.000Z', false);
+    const antes = JSON.stringify([local, nube]);
+    fusionarDb(local, nube);
+    expect(JSON.stringify([local, nube])).toBe(antes);
+  });
+});
+
+describe('mismaBase: igualdad por contenido, no por orden de claves', () => {
+  /** Lo que devuelve Postgres tras guardar un jsonb: mismas claves, otro orden. */
+  const reordenar = (x: unknown): unknown =>
+    Array.isArray(x)
+      ? x.map(reordenar)
+      : x && typeof x === 'object'
+        ? Object.fromEntries(Object.entries(x as object).reverse().map(([k, v]) => [k, reordenar(v)]))
+        : x;
+
+  it('una copia que volvió de Postgres con las claves en otro orden es la misma', () => {
+    const { db } = conUnAnalisis();
+    const conFecha = { ...db, actualizadoEn: '2026-11-03T10:00:00.000Z' };
+    const devuelta = reordenar(conFecha) as Db;
+    expect(JSON.stringify(devuelta)).not.toBe(JSON.stringify(conFecha)); // el orden sí cambió
+    expect(mismaBase(conFecha, devuelta)).toBe(true);
+  });
+
+  it('detecta cualquier diferencia real, también dentro de una brecha', () => {
+    const { db, analisis } = conUnAnalisis();
+    expect(mismaBase(db, db)).toBe(true);
+    const otra = marcarBrecha(db, analisis.id, analisis.brechas[0].id, 'confirmada', 't');
+    expect(mismaBase(db, otra)).toBe(false);
+    expect(mismaBase(db, dbVacia())).toBe(false);
+    expect(mismaBase({ ...db, actualizadoEn: 'a' }, { ...db, actualizadoEn: 'b' })).toBe(false);
+  });
+
+  it('el orden de los análisis SÍ importa (es una lista) y una clave de más o de menos cuenta', () => {
+    const { db } = conUnAnalisis();
+    expect(mismaBase(db, { ...db, actualizadoEn: 'x' })).toBe(false);
+    expect(mismaBase({ ...db, actualizadoEn: 'x' }, db)).toBe(false);
   });
 });
