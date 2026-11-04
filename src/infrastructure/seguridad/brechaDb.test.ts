@@ -46,7 +46,8 @@ describe('migración 10012_brecha_db.sql', () => {
 
   it('valida la forma y acota el tamaño del documento', () => {
     expect(codigo).toMatch(/jsonb_typeof\(data\)\s*=\s*'object'/i);
-    expect(codigo).toMatch(/jsonb_typeof\(data\s*->\s*'analisis'\)\s*=\s*'array'/i);
+    // Debe tratar la clave ausente como inválida: un CHECK que evalúa a NULL pasa, y jsonb_typeof(NULL) es NULL.
+    expect(codigo).toMatch(/coalesce\(\s*jsonb_typeof\(data\s*->\s*'analisis'\)\s*=\s*'array'\s*,\s*false\s*\)/i);
     expect(codigo).toMatch(/pg_column_size\(data\)\s*<=\s*\d+/i);
   });
 

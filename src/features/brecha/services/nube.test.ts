@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const maybeSingle = vi.fn();
-const eq = vi.fn(() => ({ maybeSingle }));
-const select = vi.fn(() => ({ eq }));
+const eq = vi.fn((_columna: string, _valor: string) => ({ maybeSingle }));
+const select = vi.fn((_columnas: string) => ({ eq }));
 const upsert = vi.fn();
-const from = vi.fn(() => ({ select, upsert }));
-vi.mock('@/infrastructure/supabase/client', () => ({ supabase: { from: (...a: unknown[]) => from(...(a as [string])) } }));
+const from = vi.fn((_tabla: string) => ({ select, upsert }));
+vi.mock('@/infrastructure/supabase/client', () => ({ supabase: { from: (tabla: string) => from(tabla) } }));
 
 import { guardarNube, leerNube } from './nube';
 

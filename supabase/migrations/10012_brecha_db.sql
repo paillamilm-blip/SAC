@@ -37,9 +37,11 @@ create table if not exists public.brecha_db (
   user_id    uuid primary key references public.profiles(id) on delete cascade,
   data       jsonb not null,
   updated_at timestamptz not null default now(),
+  -- Ojo: un CHECK que da NULL PASA. Si falta la clave `analisis`, jsonb_typeof(NULL) es NULL y la condición dejaría
+  -- entrar el documento; por eso el coalesce(…, false): lo que no es claramente un arreglo se rechaza.
   constraint brecha_db_forma check (
     jsonb_typeof(data) = 'object'
-    and jsonb_typeof(data -> 'analisis') = 'array'
+    and coalesce(jsonb_typeof(data -> 'analisis') = 'array', false)
   ),
   constraint brecha_db_tamano check (pg_column_size(data) <= 2000000)
 );
