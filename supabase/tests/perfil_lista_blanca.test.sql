@@ -38,12 +38,19 @@ end $$;
 
 -- ── Como CLIENTE (authenticated): intenta escalar privilegios en su propia fila ─────────────────────────
 set role authenticated;
+do $$ begin raise notice 'DIAG current_user=% session_user=%', current_user, session_user; end $$;
 update public.profiles
   set is_premium = true, competencias_validadas = 99,
       skills_detail = '[{"name":"React","pct":100}]'::jsonb,
       bio = 'nuevo', location = 'Santiago'
   where id = '00000000-0000-0000-0000-0000000000aa';
 reset role;
+do $$
+declare r public.profiles;
+begin
+  select * into r from public.profiles where id = '00000000-0000-0000-0000-0000000000aa';
+  raise notice 'DIAG tras update: bio=% location=% is_premium=% comp=%', r.bio, r.location, r.is_premium, r.competencias_validadas;
+end $$;
 
 do $$
 declare r public.profiles;
