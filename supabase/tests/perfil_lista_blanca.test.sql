@@ -38,7 +38,16 @@ end $$;
 
 -- ── Como CLIENTE (authenticated): intenta escalar privilegios en su propia fila ─────────────────────────
 set role authenticated;
-do $$ begin raise notice 'DIAG current_user=% session_user=%', current_user, session_user; end $$;
+do $$
+declare t record;
+begin
+  raise notice 'DIAG current_user=% session_user=%', current_user, session_user;
+  for t in select tgname, tgenabled from pg_trigger where tgrelid='public.profiles'::regclass and not tgisinternal loop
+    raise notice 'DIAG trigger en profiles: % (enabled=%)', t.tgname, t.tgenabled;
+  end loop;
+  raise notice 'DIAG k_editables contiene bio? -> definición:';
+  raise notice '%', (select pg_get_functiondef('public.protect_profile_columns()'::regprocedure));
+end $$;
 update public.profiles
   set is_premium = true, competencias_validadas = 99,
       skills_detail = '[{"name":"React","pct":100}]'::jsonb,
