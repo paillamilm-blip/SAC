@@ -10,6 +10,7 @@ on:
     paths:
       - 'supabase/migrations/10012_brecha_db.sql'
       - 'supabase/migrations/10013_perfiles_sin_lectura_anonima.sql'
+      - 'supabase/migrations/10014_tablas_sociales_sin_lectura_anonima.sql'
       - 'supabase/tests/**'
       - '.github/workflows/sql.yml'
   workflow_dispatch:
@@ -47,3 +48,5 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/brecha_db.test.sql
       - name: profiles — la lectura anónima queda cerrada (auditoría H-A)
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/profiles_lectura_anonima.test.sql
+      - name: tablas sociales — la lectura anónima queda cerrada (auditoría R4)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/tablas_sociales_lectura_anonima.test.sql
