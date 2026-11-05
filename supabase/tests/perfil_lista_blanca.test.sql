@@ -10,14 +10,17 @@ do $$ begin
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
 end $$;
 
--- profiles con columnas editables y protegidas (como las de 0062/0082), más updated_at.
-create table if not exists public.profiles (id uuid primary key);
-alter table public.profiles add column if not exists bio text;
-alter table public.profiles add column if not exists location text;
-alter table public.profiles add column if not exists is_premium boolean default false;
-alter table public.profiles add column if not exists competencias_validadas integer default 0;
-alter table public.profiles add column if not exists skills_detail jsonb default '[]'::jsonb;
-alter table public.profiles add column if not exists updated_at timestamptz default now();
+-- profiles desde cero: otras pruebas del mismo job la dejaron con otro esquema. Se recrea completa.
+drop table if exists public.profiles cascade;
+create table public.profiles (
+  id uuid primary key,
+  bio text,
+  location text,
+  is_premium boolean default false,
+  competencias_validadas integer default 0,
+  skills_detail jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
 
 -- updated_at debe avanzar aunque esté fuera de la lista blanca: el trigger de la migración lo pone en now().
 grant select, update on public.profiles to authenticated;
@@ -38,28 +41,12 @@ end $$;
 
 -- ── Como CLIENTE (authenticated): intenta escalar privilegios en su propia fila ─────────────────────────
 set role authenticated;
-do $$
-declare t record;
-begin
-  raise notice 'DIAG current_user=% session_user=%', current_user, session_user;
-  for t in select tgname, tgenabled from pg_trigger where tgrelid='public.profiles'::regclass and not tgisinternal loop
-    raise notice 'DIAG trigger en profiles: % (enabled=%)', t.tgname, t.tgenabled;
-  end loop;
-  raise notice 'DIAG k_editables contiene bio? -> definición:';
-  raise notice '%', (select pg_get_functiondef('public.protect_profile_columns()'::regprocedure));
-end $$;
 update public.profiles
   set is_premium = true, competencias_validadas = 99,
       skills_detail = '[{"name":"React","pct":100}]'::jsonb,
       bio = 'nuevo', location = 'Santiago'
   where id = '00000000-0000-0000-0000-0000000000aa';
 reset role;
-do $$
-declare r public.profiles;
-begin
-  select * into r from public.profiles where id = '00000000-0000-0000-0000-0000000000aa';
-  raise notice 'DIAG tras update: bio=% location=% is_premium=% comp=%', r.bio, r.location, r.is_premium, r.competencias_validadas;
-end $$;
 
 do $$
 declare r public.profiles;
