@@ -61,8 +61,8 @@ declare n int;
 begin
   select count(*) into n from pg_policies
    where schemaname='public' and tablename in ('job_postings','job_matches','follows','freelance_needs')
-     and cmd='SELECT' and qual='true';
-  if n <> 0 then raise exception 'FALLO: quedan % política(s) de SELECT abiertas', n; end if;
+     and cmd='SELECT' and qual='true' and (roles && array['anon','public']::name[]);
+  if n <> 0 then raise exception 'FALLO: quedan % política(s) legibles por anon', n; end if;
 end $$;
 
 -- ── 2. anon no ve nada en ninguna de las cuatro ─────────────────────────────────────────────────────────

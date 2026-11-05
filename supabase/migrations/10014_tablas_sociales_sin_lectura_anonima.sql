@@ -84,14 +84,17 @@ $do$;
 do $do$
 declare abiertas int;
 begin
+  -- "abierta" = legible por anon/public: qual=true Y el rol incluye anon o public.
+  -- Una política using(true) pero `to authenticated` NO es lectura anónima.
   select count(*) into abiertas
   from pg_policies
   where schemaname = 'public'
     and tablename in ('job_postings','job_matches','follows','freelance_needs')
     and cmd = 'SELECT'
-    and qual = 'true';
+    and qual = 'true'
+    and (roles && array['anon','public']::name[]);
   if abiertas > 0 then
-    raise exception 'quedan % política(s) de SELECT abiertas en tablas sociales', abiertas;
+    raise exception 'quedan % política(s) de SELECT legibles por anon en tablas sociales', abiertas;
   end if;
   raise notice 'OK: tablas sociales sin lectura anónima.';
 end;
