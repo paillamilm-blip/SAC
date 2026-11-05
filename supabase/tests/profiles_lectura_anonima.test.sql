@@ -19,15 +19,17 @@ grant usage on schema public, auth to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
 
 -- `profiles` como la crea 0001_core.sql, con la política ABIERTA que la auditoría reporta (el punto de partida).
-create table if not exists public.profiles (id uuid primary key, display_name text);
+-- (Otra prueba del mismo job puede haber creado ya la tabla con solo `id`: se añade la columna si falta.)
+create table if not exists public.profiles (id uuid primary key);
+alter table public.profiles add column if not exists display_name text;
 alter table public.profiles enable row level security;
 grant select on public.profiles to anon, authenticated;
 drop policy if exists "profiles_select_all" on public.profiles;
 create policy "profiles_select_all" on public.profiles for select using (true);
-insert into public.profiles values
+insert into public.profiles (id, display_name) values
   ('00000000-0000-0000-0000-00000000000a', 'Ana'),
   ('00000000-0000-0000-0000-00000000000b', 'Beto')
-  on conflict do nothing;
+  on conflict (id) do nothing;
 
 -- ── 0. Antes de la migración: la lectura abierta existe (confirma que la prueba mide algo real) ─────────
 do $$
