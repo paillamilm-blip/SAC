@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/10012_brecha_db.sql'
+      - 'supabase/migrations/10013_perfiles_sin_lectura_anonima.sql'
       - 'supabase/tests/**'
       - '.github/workflows/sql.yml'
   workflow_dispatch:
@@ -42,5 +43,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Instalar el cliente psql
         run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
-      - name: Aplicar la migración (dos veces) y probar la seguridad
+      - name: brecha_db — aplicar (dos veces) y probar la seguridad
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/brecha_db.test.sql
+      - name: profiles — la lectura anónima queda cerrada (auditoría H-A)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/profiles_lectura_anonima.test.sql
