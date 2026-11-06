@@ -559,8 +559,19 @@ async function tusDatosInvitado(browser, nombre, viewport) {
   const confirmar = page.getByRole('button', { name: 'Borrar los datos' });
   if (await confirmar.isDisabled()) ok(`${nombre}/tus-datos: borrar está bloqueado hasta escribir la palabra`);
   else falla(`${nombre}/tus-datos: se podía borrar sin escribir la confirmación`);
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(600); // el desplazamiento suave termina
   await page.screenshot({ path: `${SALIDA}/${nombre}-13-borrar-confirmacion.png` });
+  const tapados = await page.evaluate(() =>
+    ['#u-perfil-confirmar', '.u-perfil-borrar .boton-peligro'].filter((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return true;
+      const r = el.getBoundingClientRect();
+      const arriba = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !arriba || !(el === arriba || el.contains(arriba));
+    }),
+  );
+  if (tapados.length) falla(`${nombre}/tus-datos: al abrir la confirmación quedan tapados o fuera de vista: ${tapados.join(', ')}`);
+  else ok(`${nombre}/tus-datos: al abrir la confirmación, el campo y el botón de borrar se ven`);
   const sobra = await page.evaluate(() => {
     const d = document.querySelector('.u-perfil');
     return d ? d.scrollWidth - d.clientWidth : -1;

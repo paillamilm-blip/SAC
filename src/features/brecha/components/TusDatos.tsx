@@ -19,14 +19,19 @@ export default function TusDatos({ usuarioId, esInvitado }: { usuarioId: string 
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const campo = useRef<HTMLInputElement>(null);
+  const caja = useRef<HTMLDivElement>(null);
   const botonBorrar = useRef<HTMLButtonElement>(null);
   const conCuenta = !esInvitado && !!usuarioId;
   const confirmado = texto.trim().toUpperCase() === CONFIRMACION_BORRAR;
 
-  // Al abrir la confirmación el foco va al campo; al cancelar, vuelve al botón que la abrió.
+  // Al abrir la confirmación se lleva a la vista ENTERA (no solo el campo: la barra fija de abajo la tapaba) y el foco va
+  // al campo; al cancelar, el foco vuelve al botón que la abrió.
+  const abierta = fase === 'confirmar' || fase === 'borrando';
   useEffect(() => {
-    if (fase === 'confirmar') campo.current?.focus();
-  }, [fase]);
+    if (fase !== 'confirmar') return;
+    campo.current?.focus({ preventScroll: true });
+    caja.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [abierta]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function descargar() {
     if (fase === 'exportando') return;
@@ -97,7 +102,7 @@ export default function TusDatos({ usuarioId, esInvitado }: { usuarioId: string 
           {conCuenta ? 'Borrar mi cuenta' : 'Borrar los datos de este dispositivo'}
         </button>
       ) : (
-        <div className="u-perfil-borrar" role="group" aria-labelledby="u-perfil-borrar-t">
+        <div ref={caja} className="u-perfil-borrar" role="group" aria-labelledby="u-perfil-borrar-t">
           <h4 id="u-perfil-borrar-t">{conCuenta ? 'Borrar tu cuenta' : 'Borrar los datos de este dispositivo'}</h4>
 
           {conCuenta ? (

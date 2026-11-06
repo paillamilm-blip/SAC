@@ -1334,7 +1334,12 @@
   background: #fb8f8f;
   border-color: #fb8f8f;
 }
+.u-app .u-perfil {
+  /* Lo enfocado nunca queda escondido detrás de la barra fija de acciones (Ver mi pasaporte / Iniciar sesión). */
+  scroll-padding-bottom: 150px;
+}
 .u-app .u-perfil-borrar {
+  scroll-margin-top: 12px;
   display: grid;
   gap: 8px;
   padding: 14px;
