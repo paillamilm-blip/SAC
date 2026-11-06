@@ -303,17 +303,17 @@ falsa confianza una vez**: los dos peores bugs del repo (3.1 y 3.2) viven en arc
 - [ ] 7.7 Borrar configuración muerta: el trozo de `three` en `vite.config.ts:36` (ya no es
       dependencia y `OrbNeuronal` no existe) y el comentario de `ci.yml` sobre
       `src/lib/supabase.ts` (no existe).
-- [ ] 7.8 `.env.example`: quitar o implementar `VITE_OPENROUTER_KEY`, `VITE_SENTRY_DSN`,
+- [x] 7.8 `.env.example` — quitadas las 4 variables sin uso, con aviso de que toda `VITE_` leída se publica (2026-11-06). Texto original: `.env.example`: quitar o implementar `VITE_OPENROUTER_KEY`, `VITE_SENTRY_DSN`,
       `VITE_ANALYTICS_DOMAIN`, `VITE_STRIPE_ENABLED`. Ninguna se lee en `src/`. **Prioridad a
       `VITE_OPENROUTER_KEY`: si alguien la llega a llenar y se conecta, acaba publicada en el
       navegador.**
 - [ ] 7.9 Decidir si se instala monitoreo de errores (hoy no hay ninguno en producción) o se deja
       de prometerlo.
-- [ ] 7.10 Reescribir `README.md`: el ciclo de cinco pasos en `/u`, qué es real y qué no. Reducir
+- [x] 7.10 Reescribir `README.md` — hecho; la raíz baja de 12 a 6 `.md` (2026-11-06). Texto original: Reescribir `README.md`: el ciclo de cinco pasos en `/u`, qué es real y qué no. Reducir
       los 12 `.md` de la raíz y deshacer el solape de los dos `DEFINICION_OMICROM`.
 - [ ] 7.11 Arreglar `scripts/prueba-viva.mjs:159-160` (doble clic en el botón del asistente; está en
       CI y da resultados frágiles).
-- [ ] 7.12 Actualizar `.kiro/steering/project-context.md`: sigue describiendo el Orbe 3D y el
+- [x] 7.12 Actualizar `.kiro/steering/project-context.md` — reescrito contra `main` (2026-11-06). Texto original: Actualizar `.kiro/steering/project-context.md`: sigue describiendo el Orbe 3D y el
       "Oráculo" de un producto que ya no existe.
 - [ ] 7.13 `npm audit fix` → resuelve las 8 de cadena de build no mayores. Verificar 368 pruebas.
 - [ ] 7.14 Subir `zod` a `>=4.6.6` (la única que corre en el navegador) en su propio PR, con las
@@ -404,19 +404,19 @@ paso = un commit, y el ciclo de cinco pasos se corre después de cada uno.
 
 ### 7.21 Documentación que engaña (R22)
 
-- [ ] 7.21.1 `PRODUCT.md:11` y `:17` regenerados desde el grafo real de importaciones: no hay Three.js,
+- [x] 7.21.1 `PRODUCT.md:11` y `:17` regenerados (2026-11-06; TanStack Query y `decimal.js` figuran como «no se usan» hasta retirarlos) desde el grafo real de importaciones: no hay Three.js,
       no hay TanStack Query (tras 7.20.2), no hay `decimal.js`, y los dominios son
       `assistant`, `auth`, `brecha`, `gemelo`, `omicron`, `redviva` — no `academia`, `contratos`,
       `empleos`, `gobernanza`, `market`, `wallet`. Fechar cada afirmación de stack contra `package.json`,
       porque `:3` se declara "escrito leyendo el código" y aun así falla.
-- [ ] 7.21.2 `DESIGN.md:151,:326,:331`: quitar `OrbOnboarding`, `GemeloReveal`, `TabLoader` (inexistentes)
+- [x] 7.21.2 `DESIGN.md:151,:326,:331` (2026-11-06; el selector de color ya se monta en «Mi perfil»): quitar `OrbOnboarding`, `GemeloReveal`, `TabLoader` (inexistentes)
       o marcar la sección como "histórico Fase 4"; reescribirla sobre `brecha.css`/`u-app.css`, que son la
       realidad visual de hoy. `:204` manda al picker que la usuaria no puede usar (7.17.8).
-- [ ] 7.21.3 `CHANGELOG.md`: commit de cierre de Fase 5 (hoy nada después del 06-ago, y `:11` anuncia
+- [x] 7.21.3 `CHANGELOG.md` (2026-11-06: entrada de noviembre con los PRs): commit de cierre de Fase 5 (hoy nada después del 06-ago, y `:11` anuncia
       `PerfilSkillVisual.tsx`, que no existe) y `README.md` reescrito según 7.10.
-- [ ] 7.21.4 Cabecera "estado pre-Fase 5" en `DEFINICION_OMICROM.md` (cita una Edge Function `coach` que no
-      existe y `activeTab` de un store que ya no navega), `PLAN_PRODUCCION.md` (06-ago, 9 hubs, 63
-      migraciones) y `DEFINICION_OMICROM_v8_BACKEND.md`. Mover `DEFINICION_OMICROM.md:82-85,:200,:229` a
+- [x] 7.21.4 Movidos a `docs/legado/` con aviso, en vez de cabecera (2026-11-06). Texto original: Cabecera "estado pre-Fase 5" en `docs/legado/DEFINICION_OMICROM.md` (cita una Edge Function `coach` que no
+      existe y `activeTab` de un store que ya no navega), `docs/legado/PLAN_PRODUCCION.md` (06-ago, 9 hubs, 63
+      migraciones) y `docs/legado/DEFINICION_OMICROM_v8_BACKEND.md`. Mover `docs/legado/DEFINICION_OMICROM.md:82-85,:200,:229` a
       `docs/LEGADO/`.
 - [ ] 7.21.5 `eslint.config.js`: quitar los ignores de `e2e/**` y `playwright.config.ts`, que **no existen**
       (falso positivo de "hay tests E2E"), y `vite.config.ts` `test.exclude: '**/e2e/**'`.

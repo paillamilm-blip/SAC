@@ -295,7 +295,7 @@ FASE 5  35,36 → 40 (a11y) · 35 → 41 (movimiento) · 35,36 → 42 (rendimien
 - **Registro temporal:**
   - Fecha y hora de inicio: —
   - Fecha y hora de finalización: —
-- **Incidencias o notas:** Se mueven con `git mv` (historial preservado), no se borran. `legacy/README.md` explica: "copias manuales de migraciones; no ejecutar; la fuente de verdad es `supabase/migrations/`". Buscar referencias en `GUIA_ACTIVACION_PRODUCCION.md` y `PLAN_PRODUCCION.md` y actualizarlas. Mantener `seed.sql`, `seed_demo.sql` y `auditoria_check.sql` donde están. Depende de TAREA-06: no mover antes de saber si alguno aporta algo que `9999` no cubre.
+- **Incidencias o notas:** Se mueven con `git mv` (historial preservado), no se borran. `legacy/README.md` explica: "copias manuales de migraciones; no ejecutar; la fuente de verdad es `supabase/migrations/`". Buscar referencias en `docs/legado/GUIA_ACTIVACION_PRODUCCION.md` y `docs/legado/PLAN_PRODUCCION.md` y actualizarlas. Mantener `seed.sql`, `seed_demo.sql` y `auditoria_check.sql` donde están. Depende de TAREA-06: no mover antes de saber si alguno aporta algo que `9999` no cubre.
 
 ### TAREA-23: Endurecer el pipeline de CI
 - **Archivos afectados:** `.github/workflows/ci.yml` (modificar), `package.json` (modificar si falta algún script `check:*`)

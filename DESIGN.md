@@ -148,7 +148,7 @@ La decisión estructural que define todo lo demás: **el color protagonista no e
 
 **Modo:** casi todo el producto es **Operate** — el visitante completa una tarea (subir CV, mirar su credencial, buscar empleo, tomar un curso). Escanabilidad, consistencia y expectativas nativas le ganan a la expresión. La marca vive en el detalle preciso, no en el gesto grande.
 
-Las excepciones **Persuade** son las superficies de entrada: `AuthOverlay`, `NoAccess`, `ResetPasswordOverlay`, `OrbOnboarding` y los 5 actos de `GemeloReveal`. Ahí sí se juega a convencer, y ahí sí hay coreografía.
+Las excepciones **Persuade** son las superficies de entrada: `AuthOverlay`, `NoAccess` y `ResetPasswordOverlay`. Ahí sí se juega a convencer, y ahí sí hay coreografía. (El onboarding con orbe y la revelación del Gemelo eran del producto anterior y se retiraron en noviembre de 2026.)
 
 **Dark-mode only.** No hay tema claro y no se está construyendo uno. Cualquier propuesta con fondo claro está fuera de mundo.
 
@@ -313,28 +313,24 @@ Texto en `FONT_STYLE.input` (sans, 15px). Fondo de vidrio, borde `BORDER.default
 
 ### Navigation
 
-Header fijo (`BASE.header`): `padding: '13px 16px'`, fondo `rgba(9,12,22,0.55)`, blur 20px, borde inferior `rgba(150,180,255,0.12)`, `zIndex: 2`. Avatar arriba a la derecha; al tocarlo abre `CredencialModal`.
+En `/u` (clases `.topbar`, `.pestana-bar`, `.u-fab` en `src/features/brecha/styles/`):
+
+- **Barra superior** con la marca a la izquierda y, a la derecha, «Iniciar sesión» (invitado) y el **avatar**, que abre «Mi perfil».
+- **En el reporte**, barra de pestañas fija abajo: Mapa · Brechas · Diagnóstico.
+- **Botón flotante «Asistente»** abajo a la derecha. Abierto en el reporte, el asistente se acopla sin tapar botones ni pestañas.
+- **Pie** con los enlaces a Términos y Política de Privacidad.
 
 ### GeodesicOrb (componente firma)
 
-El orbe **es** el producto. Es lo primero que se ve y lo único que se comparte. Tiene que verse **idéntico en toda la app**.
+En el producto anterior el orbe era el protagonista. **Hoy solo aparece en las pantallas de acceso** (`AuthOverlay`, `NoAccess`, `ResetPasswordOverlay`), siempre con `size={80}`. Donde aparezca, tiene que verse **idéntico**.
 
-Escala canónica, y no hay tamaños intermedios:
-
-| Uso | `size` |
-|---|---|
-| `TabLoader` | 64 |
-| Auth, fallbacks de Suspense | 80 |
-| Carga de app, análisis de CV, Academia | 110 |
-| `CredencialModal` (retrato, `spinning={0}`) | 130 |
-
-Dos cinemáticos están fuera de escala **a propósito** y no se tocan: `GemeloReveal` (140/100) y `OrbOnboarding` (240) tienen su propia coreografía.
+Si vuelve a usarse en otra pantalla, la escala canónica era: 64 (cargas chicas), 80 (acceso), 110 (cargas de pantalla completa), 130 (retrato). No hay tamaños intermedios.
 
 Reglas duras:
 
 1. **Sin anillo.** Ni el "Outer ring" interno del componente ni un `border` en el wrapper. Solo el `boxShadow` glow.
 2. **Siempre el color del usuario.** `color={uc}` o `color={getUserColor()}`.
-3. **`breathing` sí, `spinning` según contexto.** En retrato (`CredencialModal`) `spinning={0}`.
+3. **`breathing` sí, `spinning` según contexto.** En un retrato quieto, `spinning={0}`.
 
 ## Do's and Don'ts
 
@@ -342,7 +338,7 @@ Reglas duras:
 
 - Leé `src/theme/` antes de escribir un valor visual. Si el token existe, usalo.
 - Usá `useUserColor()` / `getUserColor()` para cualquier cosa que represente a la persona.
-- Escribí estilos con los tokens `C` / `FONT` / `SIZE` / `RADIUS` en las pantallas premium (auth, credencial, reveal). Esas pantallas son **cero clases Tailwind** — objetos de estilo inline con tokens.
+- Escribí estilos con los tokens `C` / `FONT` / `SIZE` / `RADIUS` en las pantallas de acceso (`AuthOverlay`, `NoAccess`, `ResetPasswordOverlay`): objetos de estilo inline con tokens, **cero clases Tailwind**. En `/u`, CSS propio en `src/features/brecha/styles/` con variables (`--accent`, `--surface`, `--line`…).
 - Emparejá siempre `backdropFilter` con `WebkitBackdropFilter`.
 - Mostrá la escala completa en cada número: `65/100`, `87/100`. Con su unidad y su contexto.
 - Respetá `prefers-reduced-motion` en el mismo commit que la animación.
