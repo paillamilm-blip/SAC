@@ -128,7 +128,7 @@ describe('PerfilPanel', () => {
     expect(cv.textContent).toContain('Semi-senior · 5 a 8 años');
     expect(cv.textContent).toContain('Perfil operativo sólido.');
     expect(cv.textContent).toContain('Domina «soldadura al arco»');
-    expect(cv.textContent).toContain('No guardo el PDF');
+    expect(cv.textContent).toContain('No guardo el archivo');
   });
 
   it('una muestra de ejemplo se declara como tal en vez de pasar por tu CV', () => {

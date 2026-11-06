@@ -183,7 +183,7 @@ export default function PerfilPanel({
               </summary>
               <div className="u-perfil-cv-cuerpo">
                 <p className="u-perfil-nota">
-                  Esto es lo que leí de tu CV{cv.archivo ? ` («${cv.archivo}»)` : ''} el {fecha(cv.analizadoEn)}. No guardo el PDF,
+                  Esto es lo que leí de tu CV{cv.archivo ? ` («${cv.archivo}»)` : ''} el {fecha(cv.analizadoEn)}. No guardo el archivo,
                   solo este resultado.
                 </p>
                 <p>

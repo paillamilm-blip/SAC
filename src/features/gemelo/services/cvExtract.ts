@@ -7,23 +7,45 @@ const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
 const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const MAMMOTH = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
 
+// Una sola carga en curso por librería: dos clics seguidos esperan la misma descarga en vez de pedirla dos veces.
+const cargas = new Map<string, Promise<void>>();
+
+/**
+ * Carga una librería desde el CDN. Si falla (red, CDN caído, o tarda más de 8 s), SE OLVIDA el intento: se quita la
+ * etiqueta <script> y la promesa guardada, para que el siguiente «Analizar» descargue de nuevo.
+ *
+ * Antes, una etiqueta fallida quedaba en la página y cada reintento la encontraba, creía que la librería ya había cargado
+ * y fallaba en el acto: reintentar no servía de nada hasta recargar la página.
+ */
 function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[data-cv="${src}"]`)) { resolve(); return; }
+  const enCurso = cargas.get(src);
+  if (enCurso) return enCurso;
+
+  const promesa = new Promise<void>((resolve, reject) => {
+    document.querySelector(`script[data-cv="${src}"]`)?.remove(); // restos de un intento anterior
     const s = document.createElement('script');
     s.src = src;
     s.async = true;
     s.setAttribute('data-cv', src);
-    // Timeout: if CDN doesn't respond in 8s, fail gracefully
-    const timeout = setTimeout(() => {
+    const fallar = (motivo: string) => {
+      clearTimeout(timeout);
       s.onload = null;
       s.onerror = null;
-      reject(new Error(`CDN timeout loading ${src.split('/').pop()}`));
-    }, 8000);
-    s.onload = () => { clearTimeout(timeout); resolve(); };
-    s.onerror = () => { clearTimeout(timeout); reject(new Error('CDN unavailable: ' + src.split('/').pop())); };
+      s.remove();
+      cargas.delete(src);
+      reject(new Error(motivo));
+    };
+    // Si el CDN no responde en 8 s, se abandona este intento (y queda libre para el siguiente).
+    const timeout = setTimeout(() => fallar(`CDN timeout loading ${src.split('/').pop()}`), 8000);
+    s.onload = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    s.onerror = () => fallar('CDN unavailable: ' + src.split('/').pop());
     document.head.appendChild(s);
   });
+  cargas.set(src, promesa);
+  return promesa;
 }
 
 interface PdfItem { str?: string }
@@ -62,23 +84,54 @@ async function docxText(buffer: ArrayBuffer): Promise<string> {
   return (res.value || '').replace(/\s+/g, ' ').trim();
 }
 
+const TIPO_PDF = 'application/pdf';
+const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+/** Mensaje cuando leer el archivo tarda demasiado: el lector no lo pudo procesar (dañado, raro o enorme). */
+export const ERROR_LECTURA_LENTA =
+  'Leer tu archivo está tardando demasiado. Prueba exportándolo de nuevo, o súbelo en el otro formato (PDF o Word).';
+
+/** Tope para leer UN archivo, aparte de descargar el lector. Un CV normal se lee en menos de 1 s. */
+const LIMITE_LECTURA_MS = 30_000;
+
+/** Corta una lectura que nunca termina: «Analizando…» no puede quedarse girando para siempre. */
+function conLimite<T>(promesa: Promise<T>): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const limite = new Promise<never>((_, reject) => {
+    t = setTimeout(() => reject(new Error('omicron:lectura-lenta')), LIMITE_LECTURA_MS);
+  });
+  return Promise.race([promesa, limite]).finally(() => clearTimeout(t));
+}
+
+/** Mensaje cuando no se pudo CARGAR el lector (red o servidor del lector caído): no es culpa del archivo. */
+export const ERROR_LECTOR_NO_DISPONIBLE =
+  'No pudimos cargar el lector de documentos. Revisa tu conexión e inténtalo de nuevo.';
+
 /** Extrae el texto de un CV (PDF / Word / TXT). Robusto y con fallback. */
 export async function extractCVText(file: File): Promise<string> {
   const name = file.name.toLowerCase();
+  // Extensión o tipo MIME: según el sistema, uno de los dos puede venir vacío.
+  const esPdf = name.endsWith('.pdf') || file.type === TIPO_PDF;
+  const esDocx = name.endsWith('.docx') || file.type === TIPO_DOCX;
   const buffer = await file.arrayBuffer();
 
   // Attempt specialized extraction (PDF.js for PDF, Mammoth for DOCX)
   try {
-    if (name.endsWith('.pdf')) {
-      const t = await pdfText(buffer.slice(0));
+    if (esPdf) {
+      const t = await conLimite(pdfText(buffer.slice(0)));
       if (t.length > 15) return t.slice(0, 15000);
-    } else if (name.endsWith('.docx')) {
-      const t = await docxText(buffer.slice(0));
+    } else if (esDocx) {
+      const t = await conLimite(docxText(buffer.slice(0)));
       if (t.length > 15) return t.slice(0, 15000);
     }
   } catch (err) {
-    // CDN failed or library error — log and fall through to text fallback
-    console.warn('[cvExtract] Specialized extraction failed (CDN may be down):', (err as Error).message);
+    const msg = (err as Error).message;
+    if (msg === 'omicron:lectura-lenta') throw new Error(ERROR_LECTURA_LENTA);
+    // Si el lector ni siquiera se pudo CARGAR, decirlo: seguir al texto plano devolvía '' y la persona leía «no pude leer
+    // texto en tu archivo», culpando a un CV que quizá está perfecto.
+    if (/^CDN |no disponible/.test(msg)) throw new Error(ERROR_LECTOR_NO_DISPONIBLE);
+    // Error al interpretar este archivo (dañado, protegido): se intenta el texto plano.
+    console.warn('[cvExtract] Specialized extraction failed:', msg);
   }
 
   // Fallback 1: Try reading as plain text (works for .txt, .doc with text, and some PDFs)

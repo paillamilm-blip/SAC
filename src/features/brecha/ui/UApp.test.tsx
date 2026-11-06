@@ -61,7 +61,7 @@ describe('UApp', () => {
   it('invitado sin análisis: ve la subida del CV y el aviso de modo demostración', () => {
     render(<UApp />);
     expect(screen.getByRole('heading', { name: 'Tu camino profesional' })).toBeTruthy();
-    expect(screen.getByLabelText('Archivo PDF de tu CV')).toBeTruthy();
+    expect(screen.getByLabelText('Archivo de tu CV (PDF o Word)')).toBeTruthy();
     expect(screen.getByRole('note').textContent).toContain('Modo demostración');
     expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeTruthy();
   });
