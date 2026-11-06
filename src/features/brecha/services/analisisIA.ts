@@ -10,7 +10,7 @@ import { extractCVText } from '@/features/gemelo/services/cvExtract';
 import { callAI, type AIMessage, type AIOptions } from '@/infrastructure/ai/client';
 import { AnalisisInvalido, validarResultado } from '../domain/validar';
 import type { ResultadoAnalisis } from '../domain/types';
-import { INSTRUCCIONES } from './promptAnalisis';
+import { INSTRUCCIONES, OPCIONES_ANALISIS } from './promptAnalisis';
 import { validarArchivo, type EventoAnalisis, type ProveedorAnalisis } from './analizar';
 
 /** Texto mínimo para que un análisis tenga sentido. Un PDF escaneado (imagen) no llega. */
@@ -43,7 +43,7 @@ export interface DependenciasIA {
   llamar: (mensajes: AIMessage[], opciones: AIOptions) => Promise<string | null>;
 }
 
-const OPCIONES_IA: AIOptions = { maxTokens: 3000, temperature: 0.3, jsonMode: true, timeout: 75_000 };
+const OPCIONES_IA: AIOptions = { ...OPCIONES_ANALISIS };
 
 // El proxy corre una carrera de modelos gratis: a veces gana uno débil cuya
 // evidencia no supera la validación (medido 2026-11-03). Reintentar una vez

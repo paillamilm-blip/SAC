@@ -112,3 +112,11 @@ describe('crearProveedorIA — reintento ante resultado inválido', () => {
     expect(segunda[0]).toEqual(primera[0]);
   });
 });
+
+describe('crearProveedorIA — opciones de la llamada', () => {
+  it('pide el máximo de salida que acepta el servidor (4096): con menos, algunos modelos entregan el análisis cortado', async () => {
+    const { deps, llamar } = crearDeps([RESPUESTA_VALIDA]);
+    await crearProveedorIA(deps).analizar(archivoFake, () => {});
+    expect(llamar.mock.calls[0][1]).toMatchObject({ maxTokens: 4096, jsonMode: true });
+  });
+});

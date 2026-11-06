@@ -16,7 +16,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { INSTRUCCIONES } from '../src/features/brecha/services/promptAnalisis.ts';
+import { INSTRUCCIONES, OPCIONES_ANALISIS } from '../src/features/brecha/services/promptAnalisis.ts';
 import { validarResultado, AnalisisInvalido } from '../src/features/brecha/domain/validar.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
@@ -24,7 +24,8 @@ const BASE = (process.env.BASE_URL ?? 'https://sac-omi.vercel.app').replace(/\/$
 const SALIDA = process.env.SALIDA ?? 'eval-analisis';
 const INTENTOS = Number(process.env.INTENTOS ?? 2);
 const SOLO = process.env.SOLO ?? '';
-const OPCIONES = { maxTokens: 3000, temperature: 0.3, jsonMode: true };
+// Mismas opciones que la app (promptAnalisis.ts). `timeout` es del cliente; el servidor no lo recibe.
+const { timeout: _t, ...OPCIONES } = OPCIONES_ANALISIS;
 
 /** La URL y la clave anon de Supabase son públicas (van en el JS del sitio); se leen de ahí si no se dieron. */
 async function credenciales() {
@@ -74,11 +75,14 @@ async function llamar(cred, textoCv) {
 async function evaluar(cred, nombre, textoCv) {
   const inicio = Date.now();
   let ultimo = '';
+  let crudo = null;
   const modelos = [];
   for (let intento = 1; intento <= INTENTOS; intento++) {
     try {
       const r = await llamar(cred, textoCv);
       modelos.push(r.model ?? '?');
+      // Se guarda un extracto de lo que respondió el modelo: sin él, un «sin JSON» no se puede diagnosticar.
+      crudo = { largo: r.text.length, inicio: r.text.slice(0, 220), final: r.text.slice(-220), llaves: (r.text.match(/\}/g) ?? []).length };
       const res = validarResultado(extraerJson(r.text), textoCv);
       return { cv: nombre, ok: true, intentos: intento, modelos, segundos: Math.round((Date.now() - inicio) / 1000), calidad: { ...res.calidad, intentos: intento } };
     } catch (e) {
@@ -86,7 +90,7 @@ async function evaluar(cred, nombre, textoCv) {
       if (!(e instanceof AnalisisInvalido)) break; // error de red/servidor: no es culpa del modelo, no se reintenta
     }
   }
-  return { cv: nombre, ok: false, intentos: INTENTOS, modelos, segundos: Math.round((Date.now() - inicio) / 1000), error: ultimo };
+  return { cv: nombre, ok: false, intentos: INTENTOS, modelos, segundos: Math.round((Date.now() - inicio) / 1000), error: ultimo, crudo };
 }
 
 const suma = (xs) => xs.reduce((a, b) => a + b, 0);
@@ -132,6 +136,15 @@ async function main() {
         ? `| ${f.cv} | ✓ | ${f.calidad.brechasAceptadas}/${f.calidad.brechasPropuestas} | ${f.calidad.conCita} | ${f.calidad.ausentes} | ${f.calidad.fortalezasAceptadas}/${f.calidad.fortalezasPropuestas} | ${f.intentos} | ${f.modelos.at(-1)} | ${f.segundos} |`
         : `| ${f.cv} | ✗ ${f.error} | | | | | ${f.intentos} | ${f.modelos.join(', ')} | ${f.segundos} |`,
     ),
+    ...filas.filter((f) => !f.ok && f.crudo).flatMap((f) => [
+      '',
+      `### Respuesta cruda del último intento — ${f.cv}`,
+      `Largo: ${f.crudo.largo} caracteres · llaves de cierre \`}\`: ${f.crudo.llaves}`,
+      '```',
+      `INICIO: ${f.crudo.inicio}`,
+      `FINAL:  ${f.crudo.final}`,
+      '```',
+    ]),
     '',
     'No mide si una brecha es correcta para la persona: eso lo dice ella con «Es real» / «No aplica».',
   ].join('\n');
