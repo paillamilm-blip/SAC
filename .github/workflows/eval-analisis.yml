@@ -9,6 +9,14 @@ on:
         description: 'Sitio del que se leen la URL y la clave pública de Supabase'
         required: false
         default: 'https://sac-omi.vercel.app'
+      solo:
+        description: 'Evaluar solo los CV cuyo nombre contenga este texto (p. ej. docencia). Vacío = todos'
+        required: false
+        default: ''
+      intentos:
+        description: 'Intentos por CV (la app usa 2)'
+        required: false
+        default: '2'
 
 permissions:
   contents: read
@@ -27,6 +35,8 @@ jobs:
       - name: Evaluar
         env:
           BASE_URL: ${{ github.event.inputs.base_url || 'https://sac-omi.vercel.app' }}
+          SOLO: ${{ github.event.inputs.solo }}
+          INTENTOS: ${{ github.event.inputs.intentos || '2' }}
         run: node --experimental-strip-types scripts/eval-analisis.mjs
       - name: Subir resultados
         if: always()
