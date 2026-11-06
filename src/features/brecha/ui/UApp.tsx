@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
+import ErrorPerfil from '@/features/auth/components/ErrorPerfil';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
 import { InstallPWA } from '@/shared/components/InstallPWA';
 import ChatPanel, { type EventoApp } from '@/features/assistant/ChatPanel';
@@ -35,7 +36,7 @@ function primerNombre(perfil: { display_name?: string; full_name?: string; usern
 }
 
 export default function UApp() {
-  const { authStatus, profile } = useApp();
+  const { authStatus, profile, isLoadingProfile, reintentarPerfil } = useApp();
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
@@ -156,6 +157,28 @@ export default function UApp() {
     return (
       <div className="u-app" style={estiloColor}>
         <NoAccess />
+      </div>
+    );
+  }
+
+  // Sesión válida pero el perfil no se pudo leer (red o servidor): aviso recuperable, no «sin acceso» ni «invitado».
+  if (authStatus === 'error_transitorio') {
+    return (
+      <div className="u-app" style={estiloColor}>
+        <a className="u-saltar" href="#u-contenido">
+          Saltar al contenido
+        </a>
+        <header className="topbar">
+          <div className="topbar-in">
+            <a className="brand" href={BASE}>
+              <span className="brand-dot" aria-hidden="true" />
+              Ómicrom
+            </a>
+          </div>
+        </header>
+        <main id="u-contenido" tabIndex={-1}>
+          <ErrorPerfil reintentando={isLoadingProfile} onReintentar={reintentarPerfil} />
+        </main>
       </div>
     );
   }

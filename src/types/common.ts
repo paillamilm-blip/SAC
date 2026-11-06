@@ -4,7 +4,10 @@
 import type { Profile } from './profile';
 
 // ===== AUTHENTICATION =====
-export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_access';
+// 'error_transitorio' = la sesión es válida pero NO se pudo leer el perfil (red caída o servidor con problemas).
+// No es lo mismo que 'no_access' (el servidor respondió y la persona no tiene perfil o acceso): aquel es un veto,
+// éste es recuperable con «Reintentar».
+export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'no_access' | 'error_transitorio';
 
 // ===== TAB NAVIGATION =====
 // El recorte (Fase 5) deja UN solo camino: Gemelo → Academia → Habilidades.
@@ -27,6 +30,8 @@ export interface AppState {
 
   // === ACTIONS ===
   refreshProfile: () => Promise<void>;
+  /** Vuelve a leer el perfil tras un 'error_transitorio'. */
+  reintentarPerfil: () => Promise<void>;
 }
 
 // ===== UTILIDADES =====

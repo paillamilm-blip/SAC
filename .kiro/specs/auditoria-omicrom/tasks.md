@@ -153,12 +153,12 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 
 ### 3.1 Red que se siente como veto (R12)
 
-- [ ] 3.1.1 Leer `src/store/ProfileContext.tsx:180-186` y confirmar que hoy un `catch` por red cae en
+- [x] 3.1.1 Leer `src/store/ProfileContext.tsx:180-186` y confirmar que hoy un `catch` por red cae en
       `setAuthStatus('no_access')` igual que un 403 real.
-- [ ] 3.1.2 Añadir un estado distinguible (`error_transitorio`) con acción "Reintentar" que vuelva a
+- [x] 3.1.2 Añadir un estado distinguible (`error_transitorio`) con acción "Reintentar" que vuelva a
       llamar `loadProfile(session)`. **No** agregar el botón a `NoAccess.tsx`: esa pantalla es correcta
       para acceso denegado; lo que está mal es llegar a ella por red (Decisión 11).
-- [ ] 3.1.3 Reintento manual con contador visible, no automático infinito (una base caída no se golpea).
+- [x] 3.1.3 Reintento manual con contador visible, no automático infinito (una base caída no se golpea).
 - [ ] 3.1.4 Prueba: `ProfileContext.test.tsx` con `fetch` rechazando → la usuaria sigue en su sesión con
       aviso recuperable, y **no** aparece el botón de cerrar sesión.
 - [ ] 3.1.5 Prueba manual: levantar el dev server con la base inalcanzable (cortar red o bloquear el
@@ -166,10 +166,12 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 
 ### 3.2 Login que miente y progreso de invitado que se pierde (R15)
 
-- [ ] 3.2.1 Leer `src/features/auth/components/AuthOverlay.tsx:240-246` y separar el fallo de la RPC
+- [x] 3.2.1 Leer `src/features/auth/components/AuthOverlay.tsx:240-246` y separar el fallo de la RPC
       `get_email_for_login` de las credenciales inválidas, con mensaje propio
       ("no podemos verificar tu usuario en este momento").
-- [ ] 3.2.2 `AuthOverlay.tsx:114-123`: `migrateGuestProfile()` hoy cierra con
+- [x] 3.2.2 **No aplica a `/u`** (verificado 2026-11-05): `migrateGuestProfile` migra el onboarding de la app anterior y nada lo escribe ya;
+      el traspaso real es `traerInvitado` (`useBrecha.ts`), explícito y elegido por la persona. Riesgo residual bajo anotado en
+      `docs/auditoria-completa-2026-11-05.md` §1.5. Texto original: `AuthOverlay.tsx:114-123`: `migrateGuestProfile()` hoy cierra con
       `catch { /* silencioso */ }`. Reportar el fallo **antes** de cerrar la sesión del invitado: si la
       migración no ocurrió, el progreso de esa persona se pierde en el momento de registrarse.
 - [ ] 3.2.3 Prueba: `AuthOverlay.test.tsx` con la RPC ausente → el mensaje no dice "contraseña

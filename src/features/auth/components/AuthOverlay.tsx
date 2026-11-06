@@ -90,7 +90,9 @@ function translateAuthError(message?: string): string {
     [/password should be at least/, `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres.`],
     [/unable to validate email address|invalid email/, 'El formato del correo no es válido.'],
     [/rate limit/, 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'],
-    [/network/, 'Error de conexión. Revisa tu internet e inténtalo de nuevo.'],
+    [/omicron:usuario-no-verificable/, 'No pudimos verificar tu usuario en este momento. Inténtalo de nuevo, o ingresa con tu correo.'],
+    // «Failed to fetch» (Chrome/Firefox), «Load failed» (Safari) y los reintentos de red de Supabase Auth.
+    [/network|failed to fetch|fetch failed|load failed|authretryablefetcherror/, 'Error de conexión. Revisa tu internet e inténtalo de nuevo.'],
     [/user not found/, 'Usuario o contraseña incorrectos.'],
     [/signup requires a valid password/, 'Debes ingresar una contraseña válida.'],
     [/token has expired|invalid token/, 'El enlace expiró o no es válido. Solicita uno nuevo.'],
@@ -240,7 +242,13 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
           const { data: resolvedEmail, error: rpcErr } = await supabase.rpc('get_email_for_login', {
             p_identifier: trimmedEmail,
           });
-          if (rpcErr || !resolvedEmail) {
+          // Falló la consulta (red, servidor, función ausente): NO sabemos si el usuario existe, así que no se puede
+          // decir «contraseña incorrecta». Si el usuario simplemente no existe, sí se usa el mensaje genérico de
+          // credenciales (el mismo que una contraseña errónea, para no revelar qué usuarios existen).
+          if (rpcErr) {
+            throw new Error('omicron:usuario-no-verificable');
+          }
+          if (!resolvedEmail) {
             throw new Error('Invalid login credentials');
           }
           loginEmail = resolvedEmail as string;
