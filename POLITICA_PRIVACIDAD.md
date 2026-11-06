@@ -1,215 +1,164 @@
-# Política de Privacidad — Ómicron
+# Política de Privacidad — Ómicrom
 
-**Última actualización:** 3 de noviembre de 2026
+**Última actualización:** 6 de noviembre de 2026
 
----
-
-## 1. INTRODUCCIÓN
-
-Ómicron SpA (en adelante, "Ómicron", "nosotros" o "la Empresa") se compromete a proteger la privacidad de los usuarios de su plataforma. Esta Política de Privacidad describe qué datos personales recopilamos, cómo los utilizamos, con quién los compartimos y cuáles son sus derechos.
-
-Al utilizar la plataforma Ómicron, usted acepta las prácticas descritas en esta Política.
+> Esta versión describe la aplicación tal como funciona hoy. Está pendiente de revisión por un abogado.
 
 ---
 
-## 2. DATOS QUE RECOPILAMOS
+## 1. QUIÉNES SOMOS
 
-### 2.1 Datos Proporcionados por Usted
+Ómicrom (en adelante, «Ómicrom», «nosotros») es operada por **[completar: nombre o razón social del responsable]**, con domicilio en Santiago, Chile, y es responsable de tus datos personales.
 
-Cuando se registra y utiliza la Plataforma, recopilamos:
-
-- **Información de cuenta:** nombre, apellido, username, email, contraseña (encriptada).
-- **Perfil profesional:** biografía, foto de perfil, credenciales (CV, títulos, certificados).
-- **Texto de tu CV:** al pedir un análisis, el archivo (PDF o Word) no sale de tu dispositivo; en el navegador se extrae su texto y solo ese texto se envía al servicio de análisis con IA (ver sección 4.2).
-- **Datos de verificación:** documentos de identidad (para KYC cuando active retiros reales).
-- **Información financiera:** historial de transacciones de tokens, contratos, pagos.
-- **Contenido generado:** publicaciones en la Bóveda, mensajes en chat, calificaciones.
-
-### 2.2 Datos Recopilados Automáticamente
-
-- **Datos técnicos:** dirección IP, tipo de navegador, sistema operativo, dispositivo.
-- **Datos de uso:** páginas visitadas, clics, tiempo en la Plataforma, acciones realizadas.
-- **Cookies:** utilizamos cookies para recordar su sesión y preferencias (ver sección 7).
-
-### 2.3 Datos de Terceros
-
-- **Proveedores de autenticación:** si usa login con Google u otros, recibimos su nombre y email de esos servicios.
-- **Procesadores de pago:** cuando active retiros reales (Stripe), compartiremos datos necesarios para cumplir con regulaciones financieras.
+Esta Política explica qué datos recopilamos, para qué, dónde se guardan, con quién se comparten y qué puedes hacer con ellos.
 
 ---
 
-## 3. CÓMO UTILIZAMOS SUS DATOS
+## 2. QUÉ DATOS RECOPILAMOS
 
-Utilizamos sus datos personales para:
+### 2.1 Si usas Ómicrom sin cuenta (modo invitado)
 
-### 3.1 Provisión del Servicio
+- **Tus análisis** se guardan **solo en tu navegador**. Nosotros no los recibimos ni los guardamos.
+- El **texto de tu CV** viaja al servicio de inteligencia artificial cuando pides un análisis real (sección 4).
+- **Registros técnicos y de uso** (secciones 2.3 y 2.4).
 
-- Crear y gestionar su cuenta.
-- Facilitar contratos entre usuarios (escrow, pagos, arbitraje).
-- Mostrar su perfil profesional a otros usuarios.
-- Calcular y actualizar su reputación en tiempo real.
-- Procesar pagos y retiros (cuando esté disponible).
+### 2.2 Si creas una cuenta
 
-### 3.2 Comunicación
+- **Cuenta:** tu correo, tu nombre de usuario y tu contraseña (guardada cifrada; nadie puede leerla).
+- **Perfil:** tu nombre y el color que elijas.
+- **Tus análisis:** además de en tu navegador, una copia en nuestra base de datos, para que los veas desde otro equipo (sección 3).
+- **Tus exámenes:** tus respuestas, el puntaje y el resultado, como constancia de cada examen.
+- **Tus habilidades aprobadas:** cuáles, con qué puntaje y cuándo.
+- **Tu racha:** los días en que usaste la aplicación.
 
-- Enviar notificaciones sobre contratos, disputas, pagos.
-- Responder a sus consultas y solicitudes de soporte.
-- Enviar actualizaciones importantes sobre la Plataforma (cambios en Términos, nuevas funciones).
+### 2.3 Registros técnicos
 
-### 3.3 Mejora de la Plataforma
+Para que el servicio funcione y para limitar abusos, nuestros proveedores registran tu **dirección IP** y datos de tu navegador al conectarte. Para aplicar los límites de uso guardamos por un tiempo corto tu IP o el identificador de tu cuenta.
 
-- Analizar cómo se usa la Plataforma para mejorar la experiencia.
-- Detectar y prevenir fraudes, abusos o actividades ilícitas.
-- Realizar investigaciones internas y desarrollo de nuevas funciones.
+### 2.4 Registros de uso
 
-### 3.4 Marketing (con su consentimiento)
+Registramos algunos eventos de uso (por ejemplo, abrir la aplicación o crear una cuenta) con un **identificador de sesión aleatorio**, el tipo de navegador y el tamaño de la pantalla. Estos registros **no se asocian a tu cuenta**. Los usamos para saber cómo se usa la aplicación y mejorarla.
 
-- Enviar boletines informativos o promociones (puede optar por no recibirlos).
-- Utilizar testimonios o casos de éxito en materiales de marketing (previa autorización explícita).
+### 2.5 Lo que NO recopilamos
 
----
-
-## 4. CON QUIÉN COMPARTIMOS SUS DATOS
-
-### 4.1 Otros Usuarios
-
-Su perfil público (nombre, foto, reputación, credenciales) es visible para otros usuarios de la Plataforma. Usted controla qué información hace pública en su configuración de privacidad.
-
-### 4.2 Proveedores de Servicios
-
-Compartimos datos con terceros que nos ayudan a operar la Plataforma:
-
-- **Supabase (PostgreSQL + Auth):** almacenamiento de datos y autenticación.
-- **Vercel:** alojamiento del frontend.
-- **Google (Gemini) y OpenRouter:** el texto de tu CV y tus mensajes al asistente los procesan modelos de lenguaje (Google Gemini primero; si no está disponible, modelos del catálogo de OpenRouter). Reciben solo el texto necesario para responder, nunca el archivo (PDF o Word).
-- **Stripe (futuro):** procesamiento de pagos cuando active retiros reales.
-- **Google Cloud (futuro):** análisis de datos y machine learning.
-
-Todos estos proveedores están obligados por acuerdos de confidencialidad y solo procesan datos según nuestras instrucciones.
-
-**Dónde se guardan tus análisis del mapa de capacidades (`/u`):**
-
-- **En tu dispositivo, siempre:** cada análisis se guarda en el almacenamiento local de tu navegador (localStorage). Si no has iniciado sesión (modo invitado), vive **solo ahí**: si borras los datos del navegador o cambias de equipo, pierdes ese historial.
-- **En tu cuenta, si inicias sesión:** además se guarda una copia en nuestra base de datos (Supabase), para que la encuentres desde otro navegador o equipo. Las reglas de seguridad de la base de datos (seguridad por fila) hacen que, a través de la aplicación, **solo tú puedas leer, modificar o borrar tu copia**. Quienes administran la base de datos tienen acceso técnico a ella.
-- **Qué contiene un análisis:** tu ocupación y nivel, un resumen, tus fortalezas y brechas (que incluyen **frases citadas de tu CV** como evidencia), el nombre y el tamaño del archivo, lo que decidiste sobre cada brecha y los exámenes que aprobaste. **No** contiene el texto completo de tu CV.
-- **Qué NO se guarda:** el archivo (PDF o Word) de tu CV. Se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba; ese texto no se almacena en nuestros servidores.
-- Si inicias sesión después de haber usado el modo invitado, **te preguntamos** si quieres traer esos análisis a tu cuenta o descartarlos; nunca los movemos sin preguntarte.
-- Si usas la aplicación desde dos dispositivos a la vez y modificas el mismo análisis en ambos, se conserva la versión guardada más recientemente.
-
-**Exámenes:** para evaluar un examen, el servidor envía tus respuestas (a las preguntas, al caso práctico y a la repregunta) al servicio de IA descrito arriba, y **guarda esas respuestas y el resultado** como constancia del examen, asociadas a tu cuenta. El puntaje de las habilidades que apruebas queda registrado en tu perfil.
-
-**Credencial compartible:** si creas un enlace para compartir lo que demostraste, el enlace **contiene** (firmados) tu nombre, tu nombre de usuario, las habilidades que aprobaste, tu mejor puntaje en cada una y su fecha. **Cualquiera que tenga el enlace puede verlos, sin tener cuenta.** El enlace vence a los 12 meses; **antes de eso no se puede revocar** ni deja de funcionar si borras tu cuenta, porque la verificación se hace con la firma y no consulta tus datos. Compártelo solo con quien quieras que lo vea.
-
-### 4.3 Autoridades Legales
-
-Podemos divulgar sus datos si lo exige la ley chilena o para:
-
-- Cumplir con una orden judicial o citación.
-- Proteger nuestros derechos legales o los de otros usuarios.
-- Prevenir fraude, lavado de dinero o actividades ilícitas.
-
-### 4.4 Transferencias Empresariales
-
-Si Ómicron es adquirida o fusionada con otra empresa, sus datos pueden transferirse al nuevo propietario (le notificaremos si esto ocurre).
+- **El archivo de tu CV.** Se lee dentro de tu navegador; solo viaja su texto.
+- **Datos de pago.** La Plataforma es gratuita.
+- **Tu ubicación, tus contactos ni documentos de identidad.**
 
 ---
 
-## 5. SEGURIDAD DE LOS DATOS
+## 3. DÓNDE SE GUARDAN TUS ANÁLISIS
 
-Implementamos medidas técnicas y organizativas para proteger sus datos:
-
-- **Encriptación:** contraseñas hasheadas con bcrypt, datos sensibles encriptados en tránsito (HTTPS).
-- **Control de acceso:** políticas de Row-Level Security (RLS) en la base de datos.
-- **Monitoreo:** detección de accesos no autorizados y actividades sospechosas.
-- **Backups:** copias de seguridad regulares para prevenir pérdida de datos.
-
-Sin embargo, ningún sistema es 100% seguro. Usted es responsable de mantener su contraseña confidencial.
+- **En tu dispositivo, siempre:** cada análisis se guarda en el almacenamiento local de tu navegador. Sin cuenta vive **solo ahí**: si borras los datos del navegador o cambias de equipo, pierdes ese historial.
+- **En tu cuenta, si inicias sesión:** además se guarda una copia en nuestra base de datos. Sus reglas de seguridad hacen que, a través de la aplicación, **solo tú puedas leer, modificar o borrar tu copia**. Quienes administran la base de datos tienen acceso técnico a ella.
+- **Qué contiene un análisis:** tu ocupación y nivel, un resumen, tus fortalezas y brechas (con **frases citadas de tu CV** como evidencia), el nombre y el tamaño del archivo, lo que decidiste sobre cada brecha y los exámenes que aprobaste. **No** contiene el texto completo de tu CV.
+- Si inicias sesión después de usar el modo invitado, **te preguntamos** si quieres traer esos análisis a tu cuenta o descartarlos. Nunca los movemos sin preguntarte.
+- Si cambias el mismo análisis en dos dispositivos a la vez, se conserva la versión guardada más recientemente.
 
 ---
 
-## 6. RETENCIÓN DE DATOS
+## 4. CON QUIÉN SE COMPARTEN TUS DATOS
 
-Conservamos sus datos personales mientras su cuenta esté activa. Si elimina su cuenta (desde «Mi perfil» → «Borrar mi cuenta»):
+No vendemos tus datos. Los compartimos solo con los servicios que hacen funcionar la aplicación, y solo lo necesario:
 
-- Su perfil y los datos asociados a su cuenta se borran de inmediato, salvo lo indicado en la sección 8.3.
-- Datos de transacciones se conservarán 7 años (obligación legal tributaria en Chile).
-- Datos de arbitraje y disputas se conservarán 5 años (obligación legal).
+| Servicio | Para qué | Qué recibe |
+|---|---|---|
+| **Supabase** | Base de datos, cuentas y funciones del servidor | Los datos de la sección 2.2 |
+| **Vercel** | Alojamiento de la aplicación | Registros técnicos al visitarla |
+| **Cloudflare (cdnjs)** | Entrega los programas que leen tu PDF o Word en tu navegador | Registros técnicos de esa descarga; **no** recibe tu archivo |
+| **Google (Gemini) y OpenRouter** | Inteligencia artificial: analizar tu CV, calificar tus exámenes y responder en el asistente | El **texto de tu CV**, tus **respuestas a los exámenes** y tus **mensajes al asistente** (junto con tu nombre, el resumen y las fortalezas de tu último análisis). Si Gemini no está disponible, la consulta va a otro modelo del catálogo de OpenRouter |
+| **OpenRouter y Fish Audio** | Leer en voz alta las respuestas del asistente, si lo activas | El texto de la respuesta |
+
+**Dictado por voz:** si hablas con el asistente, el reconocimiento de voz lo hace **tu navegador**. Algunos navegadores (por ejemplo, Chrome) envían ese audio a sus propios servidores para transcribirlo.
+
+### 4.1 Credencial que compartes
+
+Si creas un enlace para compartir lo que demostraste, el enlace **contiene** (firmados) tu nombre, tu nombre de usuario, las habilidades que aprobaste, tu mejor puntaje en cada una y su fecha. **Cualquiera que tenga el enlace puede verlos, sin tener cuenta.** El enlace vence a los 12 meses. **Antes de eso no se puede revocar**, y sigue funcionando aunque borres tu cuenta, porque se verifica con la firma y no consulta tus datos. Compártelo solo con quien quieras que lo vea.
+
+### 4.2 Autoridades
+
+Podemos entregar datos si lo exige la ley chilena o una orden judicial.
 
 ---
 
-## 7. COOKIES Y TECNOLOGÍAS SIMILARES
+## 5. SEGURIDAD
 
-Utilizamos cookies para:
+- La conexión con la aplicación va cifrada (HTTPS).
+- Tu contraseña se guarda cifrada; nadie puede leerla.
+- La base de datos aplica reglas de seguridad por fila: a través de la aplicación, cada persona accede solo a lo suyo.
+- Las claves de los servicios de inteligencia artificial y de la base de datos viven solo en el servidor; nunca se envían a tu navegador.
+- Nadie puede aprobar un examen desde el navegador: el resultado lo calcula y lo guarda el servidor.
 
-- **Cookies esenciales:** mantener su sesión activa (no se pueden desactivar).
-- **Cookies analíticas:** medir el tráfico y uso de la Plataforma (PostHog, Google Analytics).
-- **Cookies de preferencias:** recordar su idioma y configuraciones.
-
-Puede gestionar las cookies desde su navegador, pero algunas funciones de la Plataforma pueden no funcionar correctamente si las desactiva.
+Ningún sistema es completamente seguro. Mantén tu contraseña en reserva.
 
 ---
 
-## 8. SUS DERECHOS
+## 6. CUÁNTO TIEMPO GUARDAMOS TUS DATOS
 
-Bajo la Ley 19.628 de Protección de Datos Personales de Chile, usted tiene derecho a:
+Mientras tu cuenta exista. Si la borras (desde «Mi perfil» → «Borrar mi cuenta»), **se borran de inmediato**: tu cuenta, tu perfil, tu copia de los análisis en la nube, las constancias de tus exámenes, tus habilidades aprobadas y tu racha.
 
-### 8.1 Acceso
+Lo que no se borra:
 
-Solicitar una copia de todos los datos personales que tenemos sobre usted. Puede descargarla usted mismo, en cualquier momento, desde «Mi perfil» → «Descargar mis datos».
+- **Los enlaces de credencial que ya compartiste** se siguen verificando hasta que vencen (sección 4.1).
+- **Los registros de uso** (sección 2.4), que nunca estuvieron asociados a tu cuenta.
+- **Lo guardado en el navegador de tus otros dispositivos.** Lo controlas tú: en cada uno, «Mi perfil» → «Borrar los datos de este dispositivo», o desde la configuración del navegador.
+- Las **copias de seguridad** de nuestros proveedores pueden conservar datos por un tiempo limitado, según sus propias políticas.
+
+---
+
+## 7. ALMACENAMIENTO EN TU NAVEGADOR
+
+No usamos cookies de publicidad ni de seguimiento, ni servicios de analítica de terceros. Usamos el **almacenamiento local de tu navegador** para:
+
+- mantener tu sesión abierta;
+- guardar tus análisis y, si lo activas, tu conversación con el asistente;
+- recordar tus preferencias (color, voz).
+
+Si borras los datos del sitio en tu navegador, se cierra tu sesión y se pierde lo que estaba guardado solo ahí.
+
+---
+
+## 8. TUS DERECHOS
+
+Según la ley chilena de protección de datos personales tienes derecho a:
+
+### 8.1 Acceso y portabilidad
+
+Recibir una copia de tus datos en un formato legible por personas y programas. **Puedes descargarla tú mismo**, en cualquier momento, desde «Mi perfil» → «Descargar mis datos» (archivo JSON).
 
 ### 8.2 Rectificación
 
-Corregir datos inexactos o incompletos.
+Corregir datos inexactos. Puedes cambiar tu color desde «Mi perfil». Para corregir otros datos, escríbenos (sección 12).
 
 ### 8.3 Eliminación
 
-Solicitar la eliminación de sus datos (sujeto a obligaciones legales de retención). Puede hacerlo usted mismo desde «Mi perfil» → «Borrar mi cuenta»; el borrado es inmediato y no se puede deshacer. Al eliminar tu cuenta se borran también, en cascada, tu copia de los análisis en la nube, las constancias de tus exámenes y el registro de tus habilidades aprobadas. Los datos guardados en el navegador de tus dispositivos los controlas tú (puedes borrarlos desde la configuración del navegador). Los enlaces de credencial que ya compartiste siguen siendo válidos hasta su vencimiento (ver sección 4.2). Los registros de uso de la Plataforma se conservan sin tu identificación.
+**Puedes borrar tu cuenta tú mismo** desde «Mi perfil» → «Borrar mi cuenta». El borrado es inmediato y no se puede deshacer. Qué se borra y qué no: sección 6.
 
 ### 8.4 Oposición
 
-Oponerse al procesamiento de sus datos para fines de marketing.
-
-### 8.5 Portabilidad
-
-Recibir sus datos en formato estructurado y legible por máquina. «Descargar mis datos» los entrega en JSON.
-
-Para ejercer estos derechos, contáctenos en **privacy@omicron.cl** (pendiente).
+Oponerte a que usemos tus datos para algo distinto de darte el servicio. Hoy no los usamos para publicidad ni enviamos correos promocionales.
 
 ---
 
 ## 9. TRANSFERENCIAS INTERNACIONALES
 
-Sus datos se almacenan en servidores de Supabase ubicados en **Estados Unidos**. Supabase cumple con estándares internacionales de protección de datos (SOC 2 Type II, ISO 27001). Al usar la Plataforma, usted consiente estas transferencias.
+Los servicios de la sección 4 operan fuera de Chile (principalmente en Estados Unidos). Al usar la Plataforma, tus datos pueden procesarse en esos países.
 
 ---
 
-## 10. PRIVACIDAD DE MENORES
+## 10. MENORES DE EDAD
 
-La Plataforma NO está dirigida a menores de 18 años. Si descubrimos que un menor nos proporcionó datos sin autorización de un tutor, eliminaremos esos datos inmediatamente.
+La Plataforma no está dirigida a menores de 18 años. Si descubrimos que un menor nos entregó datos sin autorización de su tutor, los eliminaremos.
 
 ---
 
-## 11. MODIFICACIONES A ESTA POLÍTICA
+## 11. CAMBIOS A ESTA POLÍTICA
 
-Podemos actualizar esta Política de Privacidad ocasionalmente. Los cambios significativos se notificarán por email con 30 días de anticipación. La fecha de "Última actualización" al inicio del documento indica cuándo se realizó la revisión más reciente.
+Podemos actualizar esta Política. La fecha de «Última actualización» indica la revisión más reciente. Si un cambio es importante, te avisaremos con 30 días de anticipación.
 
 ---
 
 ## 12. CONTACTO
 
-Para preguntas sobre esta Política de Privacidad o para ejercer sus derechos, contáctenos en:
-
-- **Email:** privacy@omicron.cl (pendiente)
+- **Correo:** privacy@omicron.cl (pendiente: aún no habilitado)
 - **Dirección:** Santiago, Chile
-
----
-
-## 13. CONSENTIMIENTO
-
-Al registrarse en Ómicron, usted:
-
-✅ **Acepta** esta Política de Privacidad.  
-✅ **Consiente** el procesamiento de sus datos según lo descrito.  
-✅ **Comprende** que puede retirar su consentimiento en cualquier momento eliminando su cuenta.
-
-**Fecha de vigencia:** 9 de julio de 2026

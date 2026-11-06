@@ -602,12 +602,83 @@ async function tusDatosInvitado(browser, nombre, viewport) {
   await ctx.close();
 }
 
+
+/**
+ * Términos y Privacidad: los enlaces del pie se ven y se pueden tocar, cada página carga su documento sin desbordar, y el
+ * texto no vuelve a describir el producto anterior (tokens, escrow, comisiones, arbitraje).
+ */
+async function documentosLegales(browser, nombre, viewport) {
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'es-CL' });
+  await aplicarCsp(ctx);
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on('pageerror', (e) => errores.push(String(e)));
+  await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.u-app .dropzone', { timeout: 20_000 });
+
+  const enlaces = page.locator('.u-pie a');
+  if ((await enlaces.count()) === 2) ok(`${nombre}/legal: el pie tiene los dos enlaces`);
+  else falla(`${nombre}/legal: el pie tiene ${await enlaces.count()} enlaces (se esperaban 2)`);
+  await enlaces.first().scrollIntoViewIfNeeded();
+  const tapadosPie = await page.evaluate(() =>
+    [...document.querySelectorAll('.u-pie a')]
+      .filter((a) => {
+        const r = a.getBoundingClientRect();
+        const arriba = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !arriba || !(a === arriba || a.contains(arriba));
+      })
+      .map((a) => a.textContent),
+  );
+  if (tapadosPie.length) falla(`${nombre}/legal: enlaces del pie tapados: ${tapadosPie.join(', ')}`);
+  else ok(`${nombre}/legal: los enlaces del pie se pueden tocar`);
+
+  const VIEJO = /\b(tokens?|escrow|comisi[oó]n del|arbitraje|b[oó]veda|PostHog|Google Analytics)\b/i;
+  for (const [etiqueta, ruta, titulo] of [
+    ['Términos', '/u/terminos', /Términos y Condiciones de Uso/],
+    ['Privacidad', '/u/privacidad', /Política de Privacidad/],
+  ]) {
+    await page.goto(`${BASE}${ruta}`, { waitUntil: 'networkidle' });
+    const h1 = page.locator('.u-legal-doc h1');
+    try {
+      await h1.waitFor({ timeout: 10_000 });
+    } catch {
+      falla(`${nombre}/legal: ${ruta} no mostró el documento`);
+      continue;
+    }
+    if (titulo.test((await h1.textContent()) ?? '')) ok(`${nombre}/legal: ${etiqueta} carga su documento`);
+    else falla(`${nombre}/legal: ${ruta} muestra otro título: «${await h1.textContent()}»`);
+    const texto = (await page.locator('.u-legal-doc').textContent()) ?? '';
+    const viejo = VIEJO.exec(texto);
+    if (viejo) falla(`${nombre}/legal: ${etiqueta} todavía menciona el producto anterior («${viejo[0]}»)`);
+    else ok(`${nombre}/legal: ${etiqueta} no menciona tokens, escrow, comisiones ni arbitraje`);
+    const sobra = await page.evaluate(() => {
+      const el = document.querySelector('.u-app');
+      return el ? el.scrollWidth - el.clientWidth : -1;
+    });
+    if (sobra > 0) falla(`${nombre}/legal: ${ruta} desborda ${sobra}px`);
+    else ok(`${nombre}/legal: ${ruta} sin desborde horizontal`);
+    await page.screenshot({ path: `${SALIDA}/${nombre}-15-legal-${etiqueta.toLowerCase()}.png` });
+  }
+  if (await page.locator('.u-legal-tabla table tbody tr').count()) ok(`${nombre}/legal: la tabla de servicios de la Privacidad se dibuja`);
+  else falla(`${nombre}/legal: la tabla de servicios de la Privacidad no aparece`);
+
+  await page.locator('.u-legal-otro a').click();
+  await page.waitForURL(/\/u\/terminos$/, { timeout: 5_000 }).catch(() => {});
+  if (/\/u\/terminos$/.test(page.url())) ok(`${nombre}/legal: «Ver también» lleva del uno al otro`);
+  else falla(`${nombre}/legal: «Ver también» no llevó a los Términos (quedó en ${page.url()})`);
+
+  if (errores.length) falla(`${nombre}/legal: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
+  await ctx.close();
+}
+
 const browser = await chromium.launch();
 try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
   await todoAbreElProducto(browser);
   await formatosDeCv(browser);
+  await documentosLegales(browser, 'movil', { width: 390, height: 844 });
+  await documentosLegales(browser, 'escritorio', { width: 1280, height: 800 });
   await tusDatosInvitado(browser, 'movil', { width: 390, height: 844 });
   await errorDePerfil(browser, 'movil', { width: 390, height: 844 });
   await errorDePerfil(browser, 'escritorio', { width: 1280, height: 800 });

@@ -1,184 +1,124 @@
-# Términos y Condiciones de Uso — Ómicron
+# Términos y Condiciones de Uso — Ómicrom
 
-**Última actualización:** 9 de julio de 2026
+**Última actualización:** 6 de noviembre de 2026
 
----
-
-## 1. ACEPTACIÓN DE LOS TÉRMINOS
-
-Al acceder y utilizar la plataforma Ómicron (en adelante, "la Plataforma"), usted acepta estar obligado por estos Términos y Condiciones de Uso (en adelante, "los Términos"). Si no está de acuerdo con estos Términos, no utilice la Plataforma.
-
-La Plataforma es operada por Ómicron SpA (en adelante, "Ómicron", "nosotros" o "la Empresa"), con domicilio en Santiago, Chile, RUT pendiente de constitución.
+> Esta versión describe la aplicación tal como funciona hoy. Está pendiente de revisión por un abogado.
 
 ---
 
-## 2. DEFINICIÓN DEL SERVICIO
+## 1. ACEPTACIÓN
 
-Ómicron es un marketplace que conecta profesionales y técnicos (en adelante, "Usuarios") para la prestación y contratación de servicios profesionales. La Plataforma ofrece:
+Al usar Ómicrom (en adelante, «la Plataforma»), aceptas estos Términos y Condiciones de Uso (en adelante, «los Términos») y la Política de Privacidad. Si no estás de acuerdo, no uses la Plataforma.
 
-- **Gemelo Digital:** perfil profesional verificable con credenciales y reputación validada por pares.
-- **Contratos con Escrow:** sistema de pago protegido donde los fondos se liberan al completar el trabajo.
-- **Academia:** cursos y certificaciones para desarrollo profesional.
-- **Bóveda de Conocimiento:** repositorio de soluciones técnicas verificadas y vendibles.
-- **Gobernanza:** tribunal de pares para resolver disputas mediante arbitraje.
-- **Sistema de Reputación:** métrica transparente basada en desempeño verificado.
+La Plataforma es operada por **[completar: nombre o razón social del responsable]**, con domicilio en Santiago, Chile (en adelante, «Ómicrom», «nosotros»).
 
 ---
 
-## 3. REGISTRO Y CUENTA DE USUARIO
+## 2. QUÉ ES ÓMICROM
+
+Ómicrom te ayuda a ver qué te separa de un profesional fuerte de tu ocupación y a demostrar lo que sabes hacer. La Plataforma ofrece:
+
+- **Análisis de tu CV:** subes tu CV (PDF o Word) y una inteligencia artificial lo compara con lo que suele mostrar alguien de tu ocupación y nivel. El resultado es un mapa de «brechas»: lo que tu CV no muestra o muestra de forma débil.
+- **Revisión de brechas:** tú decides cuáles brechas son reales para ti y cuáles no aplican.
+- **Exámenes:** para una brecha que reconociste puedes dar un examen corto. Lo califica una inteligencia artificial; con 70 de 100 o más queda aprobado.
+- **Pasaporte y credencial:** las habilidades que aprobaste con examen se muestran como «sellos». Puedes crear un enlace verificable y una imagen para compartirlas.
+- **Asistente:** te sugiere qué hacer, responde con tus propios datos y, si tienes cuenta, puede responder con inteligencia artificial. Puede leer sus respuestas en voz alta y escucharte.
+
+Puedes usar el análisis sin cuenta (modo invitado). Para dar exámenes, crear tu credencial y guardar tus análisis en la nube necesitas una cuenta.
+
+**La Plataforma es gratuita.** Si en el futuro cobramos por alguna función, te avisaremos antes y no se te cobrará nada sin que lo aceptes expresamente.
+
+---
+
+## 3. TU CUENTA
 
 ### 3.1 Requisitos
 
-Para utilizar la Plataforma, debe ser mayor de 18 años o contar con autorización de un tutor legal. Al registrarse, usted declara que:
+Para crear una cuenta debes ser mayor de 18 años o contar con autorización de tu tutor legal. Al registrarte declaras que la información que entregas es verdadera y que no usarás la Plataforma para actividades ilícitas o fraudulentas.
 
-- Toda la información proporcionada es verdadera, precisa y actualizada.
-- Tiene capacidad legal para celebrar contratos vinculantes.
-- No utilizará la Plataforma para actividades ilícitas o fraudulentas.
+### 3.2 Seguridad
 
-### 3.2 Seguridad de la Cuenta
+Eres responsable de mantener la confidencialidad de tu contraseña y de lo que ocurra en tu cuenta. Si detectas un uso no autorizado, avísanos de inmediato (sección 11).
 
-Usted es responsable de mantener la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta. Notifique inmediatamente a Ómicron sobre cualquier uso no autorizado de su cuenta.
+### 3.3 Suspensión
 
-### 3.3 Suspensión y Terminación
+Podemos suspender o cerrar tu cuenta si:
 
-Ómicron se reserva el derecho de suspender o terminar su cuenta si:
+- incumples estos Términos o la ley chilena;
+- entregas información falsa o te haces pasar por otra persona;
+- intentas alterar un examen, una credencial o el funcionamiento de la Plataforma.
 
-- Viola estos Términos o la legislación chilena aplicable.
-- Proporciona información falsa o engañosa.
-- Realiza actividades fraudulentas o perjudiciales para otros Usuarios.
-- Su reputación cae por debajo del umbral mínimo establecido (auditoría automática).
+### 3.4 Borrar tu cuenta
 
----
-
-## 4. CONTRATOS Y ESCROW
-
-### 4.1 Creación de Contratos
-
-Los contratos entre Usuarios son legalmente vinculantes. Al crear un contrato, el comprador deposita el monto acordado en escrow (cuenta de garantía). Los fondos permanecen bloqueados hasta que:
-
-- El comprador aprueba el trabajo entregado (liberación automática).
-- Transcurren 7 días sin disputa (ghost approval).
-- Un tribunal de árbitros resuelve una disputa.
-
-### 4.2 Responsabilidad
-
-Ómicron actúa como intermediario facilitador. **NO somos parte de los contratos** entre Usuarios. No garantizamos la calidad, legalidad o idoneidad de los servicios prestados. Cada Usuario es responsable de:
-
-- Cumplir con las obligaciones contractuales acordadas.
-- Verificar las credenciales y reputación de la contraparte.
-- Resolver conflictos de buena fe mediante el sistema de arbitraje.
-
-### 4.3 Comisión de Plataforma
-
-Ómicron cobra una comisión del **10%** sobre el monto del contrato al momento de liberar el pago al vendedor. Esta comisión cubre:
-
-- Servicio de escrow y procesamiento de pagos.
-- Acceso al sistema de arbitraje en caso de disputa.
-- Infraestructura y mantenimiento de la Plataforma.
+Puedes borrar tu cuenta cuando quieras desde «Mi perfil» → «Borrar mi cuenta». El borrado es inmediato. Lo que se borra y lo que no se puede borrar se explica en la Política de Privacidad.
 
 ---
 
-## 5. SISTEMA DE TOKENS
+## 4. QUÉ SIGNIFICAN LOS RESULTADOS
 
-### 5.1 Naturaleza de los Tokens
+Lee esto con atención: la Plataforma usa inteligencia artificial y **la inteligencia artificial puede equivocarse**.
 
-Los tokens de Ómicron son una **moneda interna de la Plataforma**, sin valor de cambio fuera de ella. NO son criptomonedas, valores mobiliarios ni instrumentos financieros regulados. Se utilizan exclusivamente para:
-
-- Pagar y recibir pagos por servicios dentro de la Plataforma.
-- Acceder a contenido premium en la Academia y la Bóveda.
-- Participar en staking de talento (inversión en reputación de otros Usuarios).
-
-### 5.2 Conversión a Dinero Real
-
-Cuando la Plataforma alcance el volumen necesario, se habilitará la conversión de tokens a pesos chilenos (CLP) mediante integración con procesadores de pago (Stripe u otros). La tasa de conversión será fijada por Ómicron y comunicada con 30 días de anticipación. Nos reservamos el derecho de:
-
-- Establecer límites de retiro diarios y mensuales.
-- Solicitar verificación de identidad (KYC) para retiros superiores a $100.000 CLP.
-- Retener pagos sospechosos de fraude o lavado de dinero.
-
-### 5.3 Depreciación
-
-Los tokens NO utilizados pierden valor gradualmente para fomentar la circulación económica del ecosistema (0.1% mensual). Los tokens en escrow, staking activo o ganados en los últimos 30 días están exentos de depreciación.
+- **El análisis de tu CV es una orientación, no una evaluación oficial.** Se basa solo en el texto de tu CV. Una brecha significa «tu CV no lo muestra», no «no sabes hacerlo». Por eso puedes marcar una brecha como «no aplica».
+- **Un examen aprobado significa que aprobaste un examen de Ómicrom**, calificado por una inteligencia artificial. No es un título, una certificación oficial ni una licencia profesional.
+- **El porcentaje «cuánto te falta»** se calcula sobre las brechas que detectó el análisis, no sobre una lista completa del conocimiento de tu ocupación.
+- **No garantizamos** que usar la Plataforma te consiga un empleo, un ascenso o un cliente.
 
 ---
 
-## 6. PROPIEDAD INTELECTUAL
+## 5. USO ACEPTABLE
 
-### 6.1 Contenido del Usuario
+Al usar la Plataforma te comprometes a:
 
-Usted conserva todos los derechos sobre el contenido que publica en la Plataforma (portafolios, credenciales, documentos de la Bóveda). Al publicar, nos otorga una **licencia mundial, no exclusiva, libre de regalías** para:
-
-- Mostrar su contenido en la Plataforma.
-- Compartirlo con otros Usuarios según las configuraciones de privacidad elegidas.
-- Utilizarlo en materiales de marketing (previa autorización explícita).
-
-### 6.2 Bóveda de Conocimiento
-
-Los documentos publicados en la Bóveda pueden derivar de trabajos previos (regalías encadenadas). Al publicar, usted declara que:
-
-- Es el autor original o tiene derechos para publicar el contenido.
-- No infringe derechos de propiedad intelectual de terceros.
-- Acepta que un 20% de las regalías vaya al autor del documento padre (si aplica).
-
-### 6.3 Marca Ómicron
-
-"Ómicron", el símbolo Ω, y todos los diseños asociados son marcas comerciales de Ómicron SpA. No puede utilizarlos sin autorización escrita previa.
+- subir solo tu propio CV, o el de otra persona con su autorización;
+- no intentar obtener las respuestas de un examen ni aprobarlo por medios distintos a responderlo tú;
+- no alterar, imitar ni falsificar una credencial de Ómicrom;
+- no usar la Plataforma de forma automatizada ni abusar de la inteligencia artificial (la Plataforma puede limitar el uso diario).
 
 ---
 
-## 7. GOBERNANZA Y ARBITRAJE
+## 6. TU CONTENIDO
 
-### 7.1 Disputas
+### 6.1 Tu CV y tus respuestas
 
-Si surge un conflicto sobre un contrato, cualquiera de las partes puede abrir una disputa. Se asignará automáticamente un tribunal de 3 árbitros aleatorios (Usuarios con alta reputación). Los árbitros revisarán la evidencia y votarán. La resolución se toma por **quórum de 2 de 3 votos**.
+Tu CV y tus respuestas a los exámenes son tuyos. Nos autorizas a procesarlos solo para darte el servicio: analizarlos, calificar tus exámenes y mostrarte los resultados. **No guardamos el archivo de tu CV**: se lee en tu navegador y solo su texto se envía al análisis (ver Política de Privacidad).
 
-### 7.2 Apelaciones
+### 6.2 Credenciales que compartes
 
-Las decisiones del tribunal de árbitros son FINALES dentro de la Plataforma. Si considera que hubo un error grave, puede apelar ante Ómicron dentro de 15 días. Nos reservamos el derecho de revisar casos excepcionales.
+Cuando creas un enlace de credencial, cualquiera que lo abra verá tu nombre, las habilidades que aprobaste, tu puntaje en cada una y la fecha. Tú decides con quién compartirlo. El enlace se puede verificar hasta su vencimiento, 12 meses después de crearlo, aunque borres tu cuenta.
 
-### 7.3 Jurisdicción Legal
+### 6.3 Marca Ómicrom
 
-Nada en estos Términos limita sus derechos legales bajo la ley chilena. Si una disputa no puede resolverse mediante arbitraje interno, usted puede acudir a los tribunales ordinarios de justicia de Santiago, Chile.
+«Ómicrom», su símbolo y sus diseños pertenecen a Ómicrom. No puedes usarlos sin autorización escrita.
+
+---
+
+## 7. DISPONIBILIDAD DEL SERVICIO
+
+La Plataforma está en desarrollo: sus funciones pueden cambiar, agregarse o retirarse. Funciona con servicios de terceros (alojamiento, base de datos e inteligencia artificial) que pueden fallar o cambiar sin aviso; cuando eso pasa, una función puede no estar disponible por un tiempo.
 
 ---
 
 ## 8. LIMITACIÓN DE RESPONSABILIDAD
 
-Ómicron proporciona la Plataforma "TAL CUAL" y "SEGÚN DISPONIBILIDAD". En la máxima medida permitida por la ley chilena, NO garantizamos:
+Ofrecemos la Plataforma «tal cual» y «según disponibilidad». En la máxima medida que permita la ley chilena, no garantizamos que funcione sin errores o interrupciones ni que sus resultados sean exactos, y no somos responsables por daños indirectos derivados de su uso, como la pérdida de una oportunidad laboral o decisiones tomadas a partir de un análisis.
 
-- Que la Plataforma estará libre de errores o interrupciones.
-- La calidad, veracidad o legalidad de los servicios ofrecidos por Usuarios.
-- La exactitud de las credenciales o reputación de otros Usuarios.
-
-Ómicron **NO será responsable** por daños indirectos, incidentales, especiales o consecuentes derivados del uso de la Plataforma, incluyendo:
-
-- Pérdida de ingresos o beneficios.
-- Pérdida de datos o contenido.
-- Incumplimiento de contratos entre Usuarios.
-
-Nuestra responsabilidad total, en caso de ser declarada, no excederá el monto de comisiones pagadas por usted en los últimos 6 meses.
+Nada en estos Términos limita los derechos que la ley chilena te reconoce y que no se pueden renunciar.
 
 ---
 
-## 9. MODIFICACIONES
+## 9. CAMBIOS A ESTOS TÉRMINOS
 
-Ómicron se reserva el derecho de modificar estos Términos en cualquier momento. Los cambios entrarán en vigor al ser publicados en la Plataforma. Si los cambios son significativos, se notificará por email con **30 días de anticipación**. El uso continuado de la Plataforma después de los cambios constituye aceptación de los Términos modificados.
+Podemos modificar estos Términos. Publicaremos la nueva versión en la Plataforma con su fecha. Si un cambio es importante, te avisaremos con **30 días de anticipación**. Si sigues usando la Plataforma después de esa fecha, aceptas los Términos modificados; si no estás de acuerdo, puedes borrar tu cuenta.
 
 ---
 
 ## 10. LEY APLICABLE
 
-Estos Términos se rigen por las leyes de la República de Chile. Cualquier controversia se someterá a la jurisdicción exclusiva de los tribunales ordinarios de justicia de Santiago.
+Estos Términos se rigen por las leyes de la República de Chile. Cualquier controversia se someterá a los tribunales ordinarios de justicia de Santiago, sin perjuicio de los derechos que te reconoce la ley de protección de los derechos de los consumidores.
 
 ---
 
 ## 11. CONTACTO
 
-Para preguntas sobre estos Términos, contáctenos en:
-
-- **Email:** legal@omicron.cl (pendiente)
+- **Correo:** legal@omicron.cl (pendiente: aún no habilitado)
 - **Dirección:** Santiago, Chile
-
----
-
-**Al usar la Plataforma, usted acepta estos Términos y Condiciones.**

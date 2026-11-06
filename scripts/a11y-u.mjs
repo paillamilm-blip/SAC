@@ -75,6 +75,13 @@ async function recorrido(browser, nombre, viewport) {
   await page.waitForTimeout(500);
   await auditar(page, `${nombre} · reporte · diagnóstico`);
 
+  // Documentos legales (texto largo, títulos, lista y tabla).
+  for (const [ruta, etiqueta] of [['/u/terminos', 'términos'], ['/u/privacidad', 'privacidad']]) {
+    await page.goto(`${BASE}${ruta}`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('.u-legal-doc h1', { timeout: 10_000 });
+    await auditar(page, `${nombre} · ${etiqueta}`);
+  }
+
   // Pasaporte con sellos (por ganar, porque en el recorrido se reconoce una brecha pero no se da el examen).
   await page.goto(`${BASE}/u/pasaporte`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.u-pasaporte', { timeout: 10_000 });
