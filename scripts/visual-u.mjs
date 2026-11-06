@@ -469,6 +469,45 @@ async function formatosDeCv(browser) {
 
   if (errores.length) falla(`${nombre}/formatos: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
   await ctx.close();
+
+  // C) El CDN falla UNA vez y la persona reintenta: el segundo intento debe leer el Word.
+  //    Antes la etiqueta <script> fallida quedaba en la página y cada reintento fallaba al instante, para siempre.
+  await reintentoTrasCaida(browser, lector, docx, TIPO_DOCX);
+}
+
+async function reintentoTrasCaida(browser, lector, docx, tipoDocx) {
+  const nombre = 'escritorio';
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, locale: 'es-CL' });
+  await aplicarCsp(ctx);
+  await ctx.addInitScript({ content: `${lector}\n;window.__cvExtract = __cvExtract;` });
+  let caidas = 1;
+  await ctx.route(
+    (url) => url.pathname.endsWith('/mammoth.browser.min.js'),
+    (r) => (caidas-- > 0 ? r.abort('failed') : r.continue()),
+  );
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
+  const leer = () =>
+    page.evaluate(
+      async ([datos, tipo]) => {
+        const bytes = Uint8Array.from(atob(datos), (c) => c.charCodeAt(0));
+        try {
+          return { ok: true, texto: await window.__cvExtract.extractCVText(new File([bytes], 'cv.docx', { type: tipo })) };
+        } catch (e) {
+          return { ok: false, error: String(e && e.message) };
+        }
+      },
+      [docx.toString('base64'), tipoDocx],
+    );
+
+  const primero = await leer();
+  if (!primero.ok && /No pudimos cargar el lector/.test(primero.error)) ok(`${nombre}/formatos: si el lector no carga, lo dice (no culpa al archivo)`);
+  else falla(`${nombre}/formatos: con el CDN caído se esperaba el aviso del lector, llegó: ${JSON.stringify(primero).slice(0, 160)}`);
+
+  const segundo = await leer();
+  if (segundo.ok && /Planificacion de clases de lenguaje/.test(segundo.texto)) ok(`${nombre}/formatos: tras la caída, reintentar SÍ lee el Word (no queda atascado)`);
+  else falla(`${nombre}/formatos: reintentar tras la caída no leyó el Word: ${JSON.stringify(segundo).slice(0, 160)}`);
+  await ctx.close();
 }
 async function foto2(page, nombre, etiqueta) {
   await page.screenshot({ path: `${SALIDA}/${nombre}-${etiqueta}.png` }).catch(() => {});
