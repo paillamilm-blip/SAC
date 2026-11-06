@@ -24,6 +24,10 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { calculateGemeloDigital } from '@/features/gemelo/services/reputation';
 import type { AuthStatus, Profile, GemeloDigital } from '../types';
 
+// Tope para UNA lectura del perfil. supabase-js reintenta solo las lecturas que fallan por red (3 veces, esperas de
+// 1 s + 2 s + 4 s ≈ 7 s), así que una caída real tarda ese tiempo en notarse; este tope cubre además una petición colgada.
+const LIMITE_LECTURA_PERFIL_MS = 15_000;
+
 const DEFAULT_PE_POINTS = 0;
 const DEFAULT_REPUTATION = 50;
 
@@ -65,17 +69,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchProfile = useCallback(async (userId: string): Promise<LecturaPerfil> => {
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+    const limite = new Promise<LecturaPerfil>((resolve) => {
+      temporizador = setTimeout(() => resolve({ estado: 'error' }), LIMITE_LECTURA_PERFIL_MS);
+    });
+    const lectura = (async (): Promise<LecturaPerfil> => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        if (error) return { estado: 'error' };
+        return data ? { estado: 'ok', perfil: data as Profile } : { estado: 'sin_perfil' };
+      } catch {
+        // fetch() lanza cuando no hay red: es un fallo de lectura, no un perfil inexistente.
+        return { estado: 'error' };
+      }
+    })();
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-      if (error) return { estado: 'error' };
-      return data ? { estado: 'ok', perfil: data as Profile } : { estado: 'sin_perfil' };
-    } catch {
-      // fetch() lanza cuando no hay red: es un fallo de lectura, no un perfil inexistente.
-      return { estado: 'error' };
+      return await Promise.race([lectura, limite]);
+    } finally {
+      clearTimeout(temporizador);
     }
   }, []);
 
@@ -167,13 +182,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       try {
         let lectura = await fetchProfile(session.user.id);
 
-        // Reintentos con backoff. Dos causas distintas, dos paciencias distintas:
-        //   · sin_perfil → el trigger de BD puede demorar en crear el perfil: hasta 5 intentos (≈3 s).
-        //   · error      → red o servidor: 2 intentos cortos; si siguen fallando se muestra un aviso recuperable.
+        // Solo se reintenta cuando el servidor RESPONDIÓ que el perfil aún no existe: el trigger de BD puede demorar en
+        // crearlo (hasta 5 intentos, ≈3 s). Un `error` de red NO se reintenta aquí: supabase-js ya reintentó la lectura
+        // por su cuenta, y repetirlo multiplicaba la espera (≈20 s) mientras la persona veía la interfaz de invitado.
         let attempts = 0;
-        while (lectura.estado !== 'ok' && effectMounted) {
-          const maximo = lectura.estado === 'error' ? 2 : 5;
-          if (attempts >= maximo) break;
+        while (lectura.estado === 'sin_perfil' && attempts < 5 && effectMounted) {
           await new Promise(r => setTimeout(r, 200 * (attempts + 1)));
           if (!effectMounted) return;
           lectura = await fetchProfile(session.user.id);

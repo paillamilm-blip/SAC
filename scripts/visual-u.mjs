@@ -348,7 +348,8 @@ async function errorDePerfil(browser, nombre, viewport) {
 
   await boton.click();
   try {
-    await page.getByText('Reintento 1: seguimos sin conexión con el servidor.').waitFor({ timeout: 15_000 });
+    // supabase-js reintenta la lectura 3 veces (≈7 s) antes de rendirse: se espera con holgura.
+    await page.getByText('Reintento 1: seguimos sin conexión con el servidor.').waitFor({ timeout: 30_000 });
     ok(`${nombre}/error-perfil: «Reintentar» vuelve a intentar y cuenta el reintento`);
   } catch {
     falla(`${nombre}/error-perfil: tras «Reintentar» no apareció el contador de reintentos`);

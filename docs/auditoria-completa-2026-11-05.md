@@ -71,8 +71,15 @@ Solo acepta PDF con texto, solo está en español, y la primera medición del an
   dice «No pudimos verificar tu usuario en este momento… ingresa con tu correo». Si el usuario no existe, mantiene el mensaje
   genérico a propósito (no revelar qué usuarios existen). También traduce «Failed to fetch» / «Load failed» (Safari) a «Error de
   conexión» en vez del genérico. (`AuthOverlay.tsx`; Spec 3.2.1.)
-- **Lo que NO cubre:** si la carga del perfil tarda más de 5 s, `UApp` muestra la interfaz de invitado aunque haya sesión, y luego
-  salta al perfil real. Es otro engaño del mismo tipo, **no corregido**: hay que decidir qué mostrar en esos segundos.
+- **Hallazgo de la librería (medido):** `supabase-js` 2.108.2 reintenta solo las lecturas que fallan por red (3 veces, esperas de
+  1 s + 2 s + 4 s ≈ 7 s, según el [anuncio de Supabase](https://supabase.com/changelog/45071-automatic-postgrest-retries-for-transient-errors)).
+  En el recorrido automático se vieron 22 peticiones para una sola pantalla de error: mis reintentos se multiplicaban con los suyos.
+  Con una caída real, la persona habría esperado ~20 s. Ahora no reintento en el caso de error (la librería ya lo hizo), pongo un tope
+  de 15 s a la lectura y una caída tarda ≈ 8 s en mostrar el aviso. **Esto afecta a toda lectura de la app, no solo al perfil**: con la
+  red mala, cualquier pantalla que lea datos puede quedarse ≈ 7 s en espera antes de fallar.
+- **Carga lenta ya no se disfraza de invitado:** a los 5 s `UApp` mostraba la interfaz de invitado (con «Iniciar sesión») aunque
+  hubiera sesión. Ahora la pantalla de carga avisa «Esto está tardando más de lo normal…»; solo si la autenticación no responde en
+  20 s se cae al modo invitado, que era el propósito original de ese respaldo.
 
 ### 1.5 El progreso del invitado se pierde en silencio — **CORRECCIÓN: no aplica a `/u`**
 - **Lo que escribí antes estaba mal planteado.** Señalé `migrateGuestProfile` (`AuthOverlay.tsx`), que traga errores. Pero esa función
