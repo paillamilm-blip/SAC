@@ -348,10 +348,15 @@ async function errorDePerfil(browser, nombre, viewport) {
 
   await boton.click();
   try {
-    await page.getByText('Reintento 1: seguimos sin conexión con el servidor.').waitFor({ timeout: 20_000 });
+    await page.getByText('Reintento 1: seguimos sin conexión con el servidor.').waitFor({ timeout: 15_000 });
     ok(`${nombre}/error-perfil: «Reintentar» vuelve a intentar y cuenta el reintento`);
   } catch {
     falla(`${nombre}/error-perfil: tras «Reintentar» no apareció el contador de reintentos`);
+    const texto = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').slice(0, 260)).catch(() => '?');
+    console.log(`  · diag ${nombre}: tras reintentar se ve="${texto}"`);
+    console.log(`  · diag ${nombre}: peticiones abortadas (${abortadas.length}): ${abortadas.slice(0, 8).join(' ; ')}`);
+    console.log(`  · diag ${nombre}: consola: ${consola.slice(0, 5).join(' || ') || 'vacía'}`);
+    await page.screenshot({ path: `${SALIDA}/${nombre}-11-error-perfil-tras-reintentar-FALLO.png` }).catch(() => {});
   }
   if (errores.length) falla(`${nombre}/error-perfil: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
   await ctx.close();

@@ -126,10 +126,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // loadProfile vive dentro del efecto de autenticación (usa su `effectMounted`); se guarda aquí para poder
   // llamarlo de nuevo desde «Reintentar» sin duplicar la lógica.
   const cargarPerfilRef = useRef<((session: Session) => Promise<void>) | null>(null);
+  // La última sesión con la que se intentó leer el perfil. Para reintentar la lectura no hace falta volver a
+  // preguntarle a la autenticación: solo se usa el id (y el correo si hay que crear el perfil), y la petición usa el
+  // token vigente del cliente. Si la sesión muriera de verdad, Supabase emite SIGNED_OUT y se maneja allí.
+  const sesionRef = useRef<Session | null>(null);
 
   const reintentarPerfil = useCallback(async () => {
+    if (sesionRef.current) {
+      await cargarPerfilRef.current?.(sesionRef.current);
+      return;
+    }
+    // Sin sesión guardada (no debería pasar estando en error): se lee de la autenticación.
     const { data, error } = await supabase.auth.getSession();
-    // Sin poder leer la sesión (p. ej. hay que renovarla y no hay red) NO se asume que cerró: sigue siendo un fallo recuperable.
+    // Sin poder leer la sesión NO se asume que cerró: sigue siendo un fallo recuperable.
     if (error) {
       if (isMounted.current) setAuthStatus('error_transitorio');
       return;
@@ -152,6 +161,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     async function loadProfile(session: Session) {
       if (!effectMounted) return;
+      sesionRef.current = session;
       setIsLoadingProfile(true);
 
       try {
@@ -265,6 +275,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           loadProfile(session);
         }
       } else if (event === 'SIGNED_OUT') {
+        sesionRef.current = null;
         setProfile(null);
         setGemelo(null);
         setAuthStatus('unauthenticated');
