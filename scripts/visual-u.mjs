@@ -513,12 +513,102 @@ async function foto2(page, nombre, etiqueta) {
   await page.screenshot({ path: `${SALIDA}/${nombre}-${etiqueta}.png` }).catch(() => {});
 }
 
+
+/**
+ * «Tus datos» como invitado, de punta a punta (sin servidor): hace un análisis, descarga sus datos y comprueba que el
+ * archivo trae ese análisis, y después borra los datos y comprueba el aviso y que la app queda vacía.
+ * La cuenta con sesión necesita la función `mi-cuenta` desplegada: no se prueba aquí.
+ */
+async function tusDatosInvitado(browser, nombre, viewport) {
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'es-CL', acceptDownloads: true });
+  await aplicarCsp(ctx);
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on('pageerror', (e) => errores.push(String(e)));
+  await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.u-app .dropzone', { timeout: 20_000 });
+  await page.setInputFiles('input[type=file]', { name: 'cv.pdf', mimeType: 'application/pdf', buffer: PDF });
+  await page.getByRole('button', { name: 'Analizar mi CV' }).click();
+  await page.waitForURL(/\/u\/reporte\//, { timeout: 30_000 });
+  await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
+  if ((await page.locator('[role=dialog][aria-label^="Asistente"]').count()) > 0) await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: /Abrir mi perfil/ }).click();
+  await page.locator('#u-perfil-datos-t').waitFor({ timeout: 5_000 });
+
+  // Descargar
+  const [descarga] = await Promise.all([
+    page.waitForEvent('download', { timeout: 10_000 }),
+    page.getByRole('button', { name: 'Descargar mis datos' }).click(),
+  ]);
+  const ruta = await descarga.path();
+  try {
+    const datos = JSON.parse(readFileSync(ruta, 'utf8'));
+    const analisis = datos?.en_este_dispositivo?.analisis?.analisis;
+    if (Array.isArray(analisis) && analisis.length === 1 && /mis-datos-\d{4}-\d{2}-\d{2}\.json$/.test(descarga.suggestedFilename())) {
+      ok(`${nombre}/tus-datos: «Descargar mis datos» entrega un JSON con el análisis hecho`);
+    } else {
+      falla(`${nombre}/tus-datos: el JSON descargado no trae el análisis (${descarga.suggestedFilename()})`);
+    }
+  } catch (e) {
+    falla(`${nombre}/tus-datos: el archivo descargado no es JSON válido: ${e instanceof Error ? e.message : e}`);
+  }
+
+  // Borrar: la confirmación exige escribir la palabra
+  await page.getByRole('button', { name: 'Borrar los datos de este dispositivo' }).click();
+  const confirmar = page.getByRole('button', { name: 'Borrar los datos' });
+  if (await confirmar.isDisabled()) ok(`${nombre}/tus-datos: borrar está bloqueado hasta escribir la palabra`);
+  else falla(`${nombre}/tus-datos: se podía borrar sin escribir la confirmación`);
+  await page.waitForTimeout(600); // el desplazamiento suave termina
+  await page.screenshot({ path: `${SALIDA}/${nombre}-13-borrar-confirmacion.png` });
+  const tapados = await page.evaluate(() =>
+    ['#u-perfil-confirmar', '.u-perfil-borrar .boton-peligro'].filter((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return true;
+      const r = el.getBoundingClientRect();
+      const arriba = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !arriba || !(el === arriba || el.contains(arriba));
+    }),
+  );
+  if (tapados.length) falla(`${nombre}/tus-datos: al abrir la confirmación quedan tapados o fuera de vista: ${tapados.join(', ')}`);
+  else ok(`${nombre}/tus-datos: al abrir la confirmación, el campo y el botón de borrar se ven`);
+  const sobra = await page.evaluate(() => {
+    const d = document.querySelector('.u-perfil');
+    return d ? d.scrollWidth - d.clientWidth : -1;
+  });
+  if (sobra > 2) falla(`${nombre}/tus-datos: la confirmación desborda el diálogo ${sobra}px`);
+  else ok(`${nombre}/tus-datos: la confirmación cabe sin desbordarse`);
+
+  await page.getByLabel(/para confirmar/).fill('borrar'); // en minúsculas también vale
+  await Promise.all([page.waitForURL(/\/u$/, { timeout: 10_000 }), confirmar.click()]);
+  await page.waitForLoadState('networkidle');
+  const banda = page.getByText('Se borraron los datos que este navegador guardaba de ti.');
+  try {
+    await banda.waitFor({ timeout: 10_000 });
+    ok(`${nombre}/tus-datos: tras borrar aparece el aviso`);
+  } catch {
+    falla(`${nombre}/tus-datos: tras borrar no apareció el aviso`);
+  }
+  if (await page.locator('.u-app .dropzone').count()) ok(`${nombre}/tus-datos: la app queda vacía (pide subir un CV)`);
+  else falla(`${nombre}/tus-datos: después de borrar todavía hay análisis`);
+  const quedan = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('omicron:brecha:db:v1:')));
+  if (quedan.length === 0 || (await page.evaluate(() => localStorage.getItem('omicron:brecha:db:v1:invitado')))?.includes('"analisis":[]')) {
+    ok(`${nombre}/tus-datos: no queda el análisis en el almacenamiento`);
+  } else {
+    falla(`${nombre}/tus-datos: quedó el análisis guardado: ${quedan.join(', ')}`);
+  }
+  await page.screenshot({ path: `${SALIDA}/${nombre}-14-datos-borrados.png` });
+  if (errores.length) falla(`${nombre}/tus-datos: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
+  await ctx.close();
+}
+
 const browser = await chromium.launch();
 try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
   await todoAbreElProducto(browser);
   await formatosDeCv(browser);
+  await tusDatosInvitado(browser, 'movil', { width: 390, height: 844 });
   await errorDePerfil(browser, 'movil', { width: 390, height: 844 });
   await errorDePerfil(browser, 'escritorio', { width: 1280, height: 800 });
   if (violacionesCsp.size) {

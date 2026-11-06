@@ -20,6 +20,7 @@ import { useRecuperarClave } from '../hooks/useRecuperarClave';
 import { obtenerAnalisis } from '../services/repositorio';
 import PerfilPanel from '../components/PerfilPanel';
 import { analizarPerfil } from '../services/analisisPerfil';
+import { AVISO_CUENTA_BORRADA } from '../services/cuenta';
 import { medirEstandar, resumenCv } from '../services/estandar';
 import { metricas as calcularMetricas } from '../services/repositorio';
 import { proveedorActivo } from '../services/proveedor';
@@ -47,6 +48,16 @@ export default function UApp() {
   const guiaMapaDada = useRef(false);
   const [pedirAuth, setPedirAuth] = useState(false);
   const [perfilAbierto, setPerfilAbierto] = useState(false);
+  // Tras borrar la cuenta (o los datos del invitado) la app se recarga: el aviso viaja en sessionStorage. La marca se quita
+  // recién cuando el aviso se ve (abajo): la app se remonta al resolverse la sesión, y leerla y borrarla de una lo perdía.
+  const [avisoBorrado] = useState<'cuenta' | 'invitado' | null>(() => {
+    try {
+      const v = sessionStorage.getItem(AVISO_CUENTA_BORRADA);
+      return v === 'invitado' ? 'invitado' : v ? 'cuenta' : null;
+    } catch {
+      return null;
+    }
+  });
   const botonPerfilRef = useRef<HTMLButtonElement>(null);
   const perfilSeAbrio = useRef(false);
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
@@ -98,6 +109,15 @@ export default function UApp() {
     if (perfilAbierto) perfilSeAbrio.current = true;
     else if (perfilSeAbrio.current) botonPerfilRef.current?.focus();
   }, [perfilAbierto]);
+
+  useEffect(() => {
+    if (!avisoBorrado || authStatus === 'loading') return;
+    try {
+      sessionStorage.removeItem(AVISO_CUENTA_BORRADA);
+    } catch {
+      /* nada que limpiar */
+    }
+  }, [avisoBorrado, authStatus]);
 
   // Una vez iniciada la sesión, el formulario ya no hace falta.
   useEffect(() => {
@@ -266,6 +286,13 @@ export default function UApp() {
       </header>
 
       <main id="u-contenido" tabIndex={-1}>
+        {avisoBorrado && (
+          <div className="u-banda aviso u-aviso-borrado" role="status">
+            {avisoBorrado === 'cuenta'
+              ? 'Tu cuenta y tus datos se borraron. Gracias por haber probado Ómicrom.'
+              : 'Se borraron los datos que este navegador guardaba de ti.'}
+          </div>
+        )}
         {proveedorActivo.simulado && (
           <div className="u-banda aviso aviso-sim" role="note">
             Modo demostración: el análisis es una muestra fija. Tu archivo no sale de tu equipo y el resultado no
@@ -377,6 +404,7 @@ export default function UApp() {
 
       {perfilAbierto && (
         <PerfilPanel
+          usuarioId={usuarioId}
           nombre={nombre}
           correo={profile?.email ?? null}
           esInvitado={esInvitado}

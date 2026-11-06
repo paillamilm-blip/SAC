@@ -51,7 +51,7 @@ Solo acepta PDF con texto, solo está en español, y la primera medición del an
 
 ### 1.3 Promesas legales que el producto no cumple
 - **Qué pasa:**
-  - **Borrar cuenta: no existe** (0 resultados). **Exportar datos: no existe** (el único hallazgo era la descarga del pasaporte).
+  - **Borrar cuenta y exportar datos: HECHOS en la rama `feat/cuenta-borrar-exportar`** (2026-11-06; falta desplegar `mi-cuenta` y aplicar `10016`). Antes no existían.
     `POLITICA_PRIVACIDAD.md` promete ambos.
   - Los correos de contacto figuran **«(pendiente)»**: `privacy@omicron.cl`, `legal@omicron.cl`.
   - **Los Términos de Servicio existen pero no están enlazados** en ninguna pantalla.
