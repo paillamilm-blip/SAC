@@ -16,7 +16,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { INSTRUCCIONES } from '../src/features/brecha/services/promptAnalisis.ts';
+import { INSTRUCCIONES, OPCIONES_ANALISIS } from '../src/features/brecha/services/promptAnalisis.ts';
 import { validarResultado, AnalisisInvalido } from '../src/features/brecha/domain/validar.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
@@ -24,7 +24,8 @@ const BASE = (process.env.BASE_URL ?? 'https://sac-omi.vercel.app').replace(/\/$
 const SALIDA = process.env.SALIDA ?? 'eval-analisis';
 const INTENTOS = Number(process.env.INTENTOS ?? 2);
 const SOLO = process.env.SOLO ?? '';
-const OPCIONES = { maxTokens: 3000, temperature: 0.3, jsonMode: true };
+// Mismas opciones que la app (promptAnalisis.ts). `timeout` es del cliente; el servidor no lo recibe.
+const { timeout: _t, ...OPCIONES } = OPCIONES_ANALISIS;
 
 /** La URL y la clave anon de Supabase son públicas (van en el JS del sitio); se leen de ahí si no se dieron. */
 async function credenciales() {

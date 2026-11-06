@@ -36,3 +36,13 @@ Reglas:
 
 Devuelve SOLO un JSON con esta forma, sin texto antes ni después:
 ${FORMA}`;
+
+/**
+ * Opciones de la llamada de análisis. UNA sola fuente: la app y scripts/eval-analisis.mjs miden lo mismo.
+ *
+ * maxTokens 4096 es el tope que acepta el servidor (proxy-ai: Math.min(maxTokens, 4096)). Subió de 3000 el 2026-11-05:
+ * `gemini-3.6-flash` entregaba el análisis CORTADO (~900 caracteres, sin una sola llave de cierre) cuando ganaba la
+ * carrera de modelos, y el usuario veía un error. Medido con la evaluación sobre el CV de docencia.
+ */
+export const OPCIONES_ANALISIS = { maxTokens: 4096, temperature: 0.3, jsonMode: true, timeout: 75_000 } as const;
+
