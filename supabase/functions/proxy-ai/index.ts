@@ -18,6 +18,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { checkRateLimit, tooManyRequests, clientIp } from '../_shared/rateLimit.ts';
 import { checkAndConsumeCredit } from '../_shared/iaCredits.ts';
+import { jsonCompleto } from '../_shared/jsonCompleto.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -74,7 +75,7 @@ const MIN_USEFUL_ATTEMPT_MS = 4000;
 // Huella de la versión desplegada. Un GET responde estos números en <1s y sin
 // gastar créditos: es la única forma de comprobar que el pegado del dashboard
 // realmente reemplazó la función (los timeouts viejos se cuelan igual).
-const BUILD = '6g-gemini-first-frees-vivos';
+const BUILD = '6h-json-completo';
 
 // Cache de modelos muertos (por instancia de la Edge Function — ~5min lifetime)
 const DEAD_MODELS: Map<string, number> = new Map();
@@ -165,6 +166,10 @@ async function orChat(
     const data = await resp.json();
     const text = data?.choices?.[0]?.message?.content ?? '';
     if (!text) throw new OrAttemptError(model, `200 sin contenido en ${Date.now() - t0}ms`);
+    // Una respuesta JSON cortada a la mitad NO es un éxito: se descarta para que gane otro modelo.
+    if (opts.jsonMode && !jsonCompleto(text)) {
+      throw new OrAttemptError(model, `JSON incompleto (${text.length} chars) en ${Date.now() - t0}ms`);
+    }
     return { text: text.trim(), model, ms: Date.now() - t0 };
   } catch (e) {
     if (e instanceof OrAttemptError) throw e;
@@ -216,6 +221,12 @@ async function geminiChat(
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
     if (!text) throw new Error(`${model} → 200 sin contenido en ${Date.now() - t0}ms`);
+    // Una respuesta JSON cortada a la mitad NO es un éxito: se pasa al siguiente modelo en vez de devolvérsela al cliente.
+    // finishReason (p. ej. MAX_TOKENS) queda en el debug: dice POR QUÉ se cortó.
+    if (opts.jsonMode && !jsonCompleto(text)) {
+      const motivo = data?.candidates?.[0]?.finishReason ?? '?';
+      throw new Error(`${model} → JSON incompleto (${text.length} chars, finishReason=${motivo}) en ${Date.now() - t0}ms`);
+    }
     return { text: text.trim(), model, ms: Date.now() - t0 };
   } catch (e) {
     const err = e as Error;
