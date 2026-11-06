@@ -129,9 +129,9 @@ Sin embargo, ningún sistema es 100% seguro. Usted es responsable de mantener su
 
 ## 6. RETENCIÓN DE DATOS
 
-Conservamos sus datos personales mientras su cuenta esté activa. Si elimina su cuenta:
+Conservamos sus datos personales mientras su cuenta esté activa. Si elimina su cuenta (desde «Mi perfil» → «Borrar mi cuenta»):
 
-- Datos de perfil público se anonimizarán o eliminarán en 30 días.
+- Su perfil y los datos asociados a su cuenta se borran de inmediato, salvo lo indicado en la sección 8.3.
 - Datos de transacciones se conservarán 7 años (obligación legal tributaria en Chile).
 - Datos de arbitraje y disputas se conservarán 5 años (obligación legal).
 
@@ -155,7 +155,7 @@ Bajo la Ley 19.628 de Protección de Datos Personales de Chile, usted tiene dere
 
 ### 8.1 Acceso
 
-Solicitar una copia de todos los datos personales que tenemos sobre usted.
+Solicitar una copia de todos los datos personales que tenemos sobre usted. Puede descargarla usted mismo, en cualquier momento, desde «Mi perfil» → «Descargar mis datos».
 
 ### 8.2 Rectificación
 
@@ -163,7 +163,7 @@ Corregir datos inexactos o incompletos.
 
 ### 8.3 Eliminación
 
-Solicitar la eliminación de sus datos (sujeto a obligaciones legales de retención). Al eliminar tu cuenta se borran también, en cascada, tu copia de los análisis en la nube, las constancias de tus exámenes y el registro de tus habilidades aprobadas. Los datos guardados en el navegador de tus dispositivos los controlas tú (puedes borrarlos desde la configuración del navegador). Los enlaces de credencial que ya compartiste siguen siendo válidos hasta su vencimiento (ver sección 4.2).
+Solicitar la eliminación de sus datos (sujeto a obligaciones legales de retención). Puede hacerlo usted mismo desde «Mi perfil» → «Borrar mi cuenta»; el borrado es inmediato y no se puede deshacer. Al eliminar tu cuenta se borran también, en cascada, tu copia de los análisis en la nube, las constancias de tus exámenes y el registro de tus habilidades aprobadas. Los datos guardados en el navegador de tus dispositivos los controlas tú (puedes borrarlos desde la configuración del navegador). Los enlaces de credencial que ya compartiste siguen siendo válidos hasta su vencimiento (ver sección 4.2). Los registros de uso de la Plataforma se conservan sin tu identificación.
 
 ### 8.4 Oposición
 
@@ -171,7 +171,7 @@ Oponerse al procesamiento de sus datos para fines de marketing.
 
 ### 8.5 Portabilidad
 
-Recibir sus datos en formato estructurado y legible por máquina (JSON, CSV).
+Recibir sus datos en formato estructurado y legible por máquina. «Descargar mis datos» los entrega en JSON.
 
 Para ejercer estos derechos, contáctenos en **privacy@omicron.cl** (pendiente).
 

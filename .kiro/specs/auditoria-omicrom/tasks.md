@@ -247,9 +247,9 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
       `frame-ancestors 'self'`, `upgrade-insecure-requests`, sin `'unsafe-inline'` en `style-src`.
 - [ ] 5.5 Si Tailwind obliga a conservar `'unsafe-inline'`, dejarlo anotado como deuda en
       `requirements.md` y no como éxito.
-- [ ] 5.6 Flujo real de **borrar cuenta** (endpoint autenticado; las cascadas ya existen:
+- [x] 5.6 Flujo real de **borrar cuenta** — Edge Function `mi-cuenta` (acción `borrar`) + «Mi perfil» → «Borrar mi cuenta»; `10016` quita las dos referencias sin regla de borrado. Falta desplegar y aplicar (2026-11-06). Texto original: (endpoint autenticado; las cascadas ya existen:
       `0001_core.sql:8`, `0036_examen_ia.sql:16`, `10001_pruebas_por_nombre.sql:69`).
-- [ ] 5.7 Flujo real de **exportar datos** (JSON con lo propio), como promete
+- [x] 5.7 Flujo real de **exportar datos** — `mi-cuenta` (acción `exportar`) + datos del navegador, en JSON; sin `exam_sessions.payload` (trae las respuestas correctas) ni las claves de push. Falta desplegar (2026-11-06). Texto original: (JSON con lo propio), como promete
       `POLITICA_PRIVACIDAD.md:132-166`.
 - [ ] 5.8 Poner los correos de contacto que hoy figuran "pendiente"
       (`POLITICA_PRIVACIDAD.md:176,202`, `TERMINOS_SERVICIO.md:179`).

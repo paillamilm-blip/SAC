@@ -7,6 +7,7 @@ import { COLOR_CAT } from '../domain/colores';
 import type { AnalisisPerfil } from '../services/analisisPerfil';
 import type { Estandar, ResumenCv } from '../services/estandar';
 import type { Metricas } from '../services/repositorio';
+import TusDatos from './TusDatos';
 
 const SelectorColor = lazy(() => import('./SelectorColor'));
 
@@ -14,6 +15,7 @@ const fecha = (iso: string) =>
   new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 
 export default function PerfilPanel({
+  usuarioId,
   nombre,
   correo,
   esInvitado,
@@ -25,6 +27,8 @@ export default function PerfilPanel({
   onVerPasaporte,
   onIniciarSesion,
 }: {
+  /** Id de la persona con sesión; null = invitado. */
+  usuarioId: string | null;
   nombre: string | null;
   correo: string | null;
   esInvitado: boolean;
@@ -233,6 +237,8 @@ export default function PerfilPanel({
             <SelectorColor />
           </Suspense>
         </div>
+
+        <TusDatos usuarioId={usuarioId} esInvitado={esInvitado} />
 
         <div className="u-perfil-acciones">
           {/* Una sola acción principal: invitado → iniciar sesión; con cuenta → ver el pasaporte. */}

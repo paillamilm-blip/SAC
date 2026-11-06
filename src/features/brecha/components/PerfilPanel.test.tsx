@@ -46,6 +46,7 @@ const METRICAS = { totalAnalisis: 2, brechas: 8, revisadas: 3, confirmadas: 2, r
 
 function pintar(extra: Partial<Parameters<typeof PerfilPanel>[0]> = {}) {
   const props = {
+    usuarioId: 'u1',
     nombre: 'Matías',
     correo: 'matias@example.com',
     esInvitado: false,

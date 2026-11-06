@@ -1301,3 +1301,94 @@
   color: var(--muted);
   text-align: center;
 }
+
+/* ── Mi perfil: tus datos (descargar / borrar) ──────────────────────────────────────────────── */
+.u-app .u-perfil-datos {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+.u-app .u-perfil-datos .boton {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+/* La acción destructiva no compite: borde y texto de alerta, sin relleno. */
+.u-app .boton-peligro-suave {
+  background: transparent;
+  border-color: rgba(248, 113, 113, 0.35);
+  color: var(--bad);
+}
+.u-app .boton-peligro-suave:hover:not(:disabled) {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+}
+.u-app .boton-peligro {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #1f0606;
+}
+.u-app .boton-peligro:hover:not(:disabled) {
+  background: #fb8f8f;
+  border-color: #fb8f8f;
+}
+.u-app .u-perfil-borrar {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--radius-sm);
+  background: var(--bad-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.u-app .u-perfil-borrar h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+.u-app .u-perfil-borrar p {
+  margin: 0;
+}
+.u-app .u-perfil-borrar ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+}
+.u-app .u-perfil-borrar label {
+  margin-top: 4px;
+  font-weight: 550;
+}
+.u-app .u-perfil-confirmar {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16 px evita el zoom automático de iOS al enfocar */
+  letter-spacing: 0.08em;
+}
+.u-app .u-perfil-confirmar:focus-visible {
+  outline: 2px solid var(--bad);
+  outline-offset: 1px;
+}
+.u-app .u-perfil-borrar-botones {
+  display: grid;
+  gap: 8px;
+}
+.u-app .u-perfil-estado {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 13px;
+  color: var(--muted);
+}
+.u-app .u-aviso-borrado {
+  border-color: rgba(61, 220, 151, 0.35);
+  background: var(--ok-soft);
+  color: var(--text);
+}
