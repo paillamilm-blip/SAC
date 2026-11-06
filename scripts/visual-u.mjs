@@ -619,10 +619,11 @@ async function documentosLegales(browser, nombre, viewport) {
   const enlaces = page.locator('.u-pie a');
   if ((await enlaces.count()) === 2) ok(`${nombre}/legal: el pie tiene los dos enlaces`);
   else falla(`${nombre}/legal: el pie tiene ${await enlaces.count()} enlaces (se esperaban 2)`);
-  await enlaces.first().scrollIntoViewIfNeeded();
+  // Cada enlace se centra en pantalla antes de mirarlo (en el teléfono van uno bajo otro).
   const tapadosPie = await page.evaluate(() =>
     [...document.querySelectorAll('.u-pie a')]
       .filter((a) => {
+        a.scrollIntoView({ block: 'center', behavior: 'instant' });
         const r = a.getBoundingClientRect();
         const arriba = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
         return !arriba || !(a === arriba || a.contains(arriba));
