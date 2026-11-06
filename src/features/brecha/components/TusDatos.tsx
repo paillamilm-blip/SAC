@@ -120,7 +120,7 @@ export default function TusDatos({ usuarioId, esInvitado }: { usuarioId: string 
                   los enlaces de credencial que ya compartiste: se siguen verificando hasta que vencen, 12 meses después de
                   crearlos (los creados con la versión anterior de Ómicrom no vencen);
                 </li>
-                <li>los registros de uso de la app: quedan, pero sin tu identificación;</li>
+                <li>los registros de uso de la app, que nunca estuvieron asociados a tu cuenta;</li>
                 <li>la copia que guarde el navegador de tus otros dispositivos.</li>
               </ul>
               <p className="u-perfil-nota">Si quieres conservar algo, descarga tus datos antes.</p>

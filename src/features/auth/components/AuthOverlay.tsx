@@ -531,6 +531,21 @@ export function AuthOverlay({ onClose }: { onClose?: () => void } = {}) {
               {submitLabel}
             </motion.button>
 
+            {mode === 'register' && (
+              // Se abren en otra pestaña: así no se pierde lo que ya se escribió en el formulario.
+              <p style={{ margin: '2px 0 0', fontFamily: FONT.body, fontSize: SIZE.sm, color: 'rgba(234,240,251,0.72)', lineHeight: 1.5, textAlign: 'center' }}>
+                Al crear tu cuenta aceptas los{' '}
+                <a href="/u/terminos" target="_blank" rel="noopener noreferrer" style={{ color: uc, textDecoration: 'underline' }}>
+                  Términos y Condiciones
+                </a>{' '}
+                y la{' '}
+                <a href="/u/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: uc, textDecoration: 'underline' }}>
+                  Política de Privacidad
+                </a>
+                .
+              </p>
+            )}
+
             {mode === 'login' && (
               <button type="button" className="auth-link" onClick={() => switchMode('forgot')} style={S.forgot}>
                 <Mail size={14} />

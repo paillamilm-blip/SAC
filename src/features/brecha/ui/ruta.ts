@@ -9,6 +9,7 @@ export const BASE = '/u';
 export type Ruta =
   | { nombre: 'inicio' }
   | { nombre: 'pasaporte' }
+  | { nombre: 'legal'; doc: 'terminos' | 'privacidad' }
   | { nombre: 'reporte'; analisisId: string; pestana: Pestana; brechaId: string | null };
 
 const PESTANAS: readonly Pestana[] = ['mapa', 'brechas', 'diagnostico'];
@@ -21,6 +22,8 @@ export function esRutaUnificada(pathname: string): boolean {
 export function parsearRuta(pathname: string, search: string): Ruta {
   const partes = pathname.replace(/\/+$/, '').split('/').filter(Boolean); // ['u', 'reporte', id]
   if (partes[0] === 'u' && partes[1] === 'pasaporte') return { nombre: 'pasaporte' };
+  if (partes[0] === 'u' && partes[1] === 'terminos') return { nombre: 'legal', doc: 'terminos' };
+  if (partes[0] === 'u' && partes[1] === 'privacidad') return { nombre: 'legal', doc: 'privacidad' };
   if (partes[0] === 'u' && partes[1] === 'reporte' && partes[2]) {
     const q = new URLSearchParams(search);
     const tab = q.get('tab');
@@ -35,6 +38,8 @@ export function parsearRuta(pathname: string, search: string): Ruta {
 }
 
 export const HREF_PASAPORTE = `${BASE}/pasaporte`;
+export const HREF_TERMINOS = `${BASE}/terminos`;
+export const HREF_PRIVACIDAD = `${BASE}/privacidad`;
 
 export function hrefReporte(analisisId: string, pestana?: Pestana, brechaId?: string): string {
   const q = new URLSearchParams();

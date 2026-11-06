@@ -2,7 +2,7 @@
 // Reutiliza de Ómicrom: sesión, color del usuario, voz y asistente.
 // Reutiliza de brecha: subida y escaneo del CV, mapa de capacidades y reporte.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
@@ -27,7 +27,10 @@ import { proveedorActivo } from '../services/proveedor';
 import Inicio from './Inicio';
 import PasaportePage from './PasaportePage';
 import ReportePage from './ReportePage';
-import { BASE, HREF_PASAPORTE, hrefReporte, useRuta } from './ruta';
+import { BASE, HREF_PASAPORTE, HREF_PRIVACIDAD, HREF_TERMINOS, hrefReporte, useRuta } from './ruta';
+
+// Los documentos legales se cargan aparte: su texto no pesa en el resto de la app.
+const DocumentoLegal = lazy(() => import('./DocumentoLegal'));
 import '../styles/brecha.css';
 import '../styles/u-app.css';
 
@@ -350,6 +353,10 @@ export default function UApp() {
               aperturaEscaneo={aperturaEscaneo}
               sesionIniciada={authStatus === 'authenticated'}
             />
+          ) : ruta.nombre === 'legal' ? (
+            <Suspense fallback={<div className="wrap"><p className="cargando">Cargando…</p></div>}>
+              <DocumentoLegal doc={ruta.doc} onIr={ir} />
+            </Suspense>
           ) : ruta.nombre === 'pasaporte' ? (
             <PasaportePage
               db={db}
@@ -375,6 +382,28 @@ export default function UApp() {
             />
           )}
         </ErrorBoundary>
+
+        <footer className="u-pie">
+          <a
+            href={HREF_TERMINOS}
+            onClick={(e) => {
+              e.preventDefault();
+              ir(HREF_TERMINOS);
+            }}
+          >
+            Términos y Condiciones
+          </a>
+          <span aria-hidden="true">·</span>
+          <a
+            href={HREF_PRIVACIDAD}
+            onClick={(e) => {
+              e.preventDefault();
+              ir(HREF_PRIVACIDAD);
+            }}
+          >
+            Política de Privacidad
+          </a>
+        </footer>
       </main>
 
       {!chatAbierto && (

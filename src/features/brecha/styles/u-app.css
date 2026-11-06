@@ -1397,3 +1397,152 @@
   background: var(--ok-soft);
   color: var(--text);
 }
+
+/* ── Documentos legales (modo Read: estructura para leer, sin adornos) ─────────────────────── */
+.u-app .u-legal {
+  max-width: 760px;
+}
+.u-app .u-legal-doc {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.u-app .u-legal-doc h1 {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 6vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.u-app .u-legal-doc h1:focus {
+  outline: none;
+}
+.u-app .u-legal-doc h2 {
+  margin: 34px 0 10px;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.u-app .u-legal-doc h3 {
+  margin: 22px 0 6px;
+  font-size: 16px;
+}
+.u-app .u-legal-doc p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.u-app .u-legal-doc strong {
+  color: var(--text);
+}
+.u-app .u-legal-doc ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
+}
+.u-app .u-legal-doc hr {
+  border: none;
+  border-top: 1px solid var(--line-soft);
+  margin: 26px 0 0;
+}
+.u-app .u-legal-doc code {
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+.u-app .u-legal-nota {
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+/* La tabla se desplaza dentro de su caja en pantallas angostas en vez de desbordar la página. */
+.u-app .u-legal-tabla {
+  overflow-x: auto;
+  margin: 4px 0 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.u-app .u-legal-tabla:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.u-app .u-legal-tabla table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.u-app .u-legal-tabla th,
+.u-app .u-legal-tabla td {
+  text-align: left;
+  vertical-align: top;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.u-app .u-legal-tabla th {
+  color: var(--text);
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.u-app .u-legal-tabla td {
+  color: var(--muted);
+}
+.u-app .u-legal-tabla tr:last-child td {
+  border-bottom: none;
+}
+.u-app .u-legal-otro {
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.u-app .u-legal-otro a,
+.u-app .u-pie a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Pie: enlaces legales. Deja sitio al botón flotante del asistente y a la barra de pestañas del reporte. */
+.u-app .u-pie {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 24px 96px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--dim);
+}
+.u-app .u-pie a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+}
+.u-app .u-pie span {
+  display: inline-flex;
+  align-items: center;
+}
+.u-app:has(.pestana-bar) .u-pie {
+  padding-bottom: 150px;
+}
+/* En el teléfono el botón flotante «Asistente» ocupa la esquina inferior derecha: los enlaces del pie van a la
+   izquierda, uno bajo otro, para que nunca queden debajo de él (en el Inicio vacío la página es corta y el pie
+   cae justo a esa altura). */
+@media (max-width: 560px) {
+  .u-app .u-pie {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding-right: 180px;
+  }
+  .u-app .u-pie span {
+    display: none;
+  }
+}
