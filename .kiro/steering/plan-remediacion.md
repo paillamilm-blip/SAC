@@ -28,3 +28,6 @@ de código medida con grafo de importaciones).
    R14 (`recog.start()` sin capturar).
 
 Si algo del plan contradice al código, **manda el código** y se corrige el plan.
+
+La misma auditoría, ordenada por prioridad y en lenguaje simple, con lo ya resuelto y lo verificado en producción:
+`docs/auditoria-completa-2026-11-05.md`. El registro de avance verificado está al final de `tasks.md`.

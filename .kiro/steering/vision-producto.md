@@ -44,5 +44,14 @@ inclusion: always
   existir como mecanismo de monetización interno, pero no es la identidad del producto).
 - Sí usar: "aprendizaje continuo en tiempo real", "oportunidades reales del mercado",
   "Industria 5.0", "instantáneo", "para todo el mundo".
-- Los documentos `DEFINICION_OMICROM.md` y `README.md` fueron
+- Los documentos `docs/legado/DEFINICION_OMICROM.md` y `README.md` fueron
   actualizados el 2026-08-06 para reflejar esto. Si se editan de nuevo, mantener este marco.
+
+## Nota de estado (6 de noviembre de 2026)
+
+Esta visión es una **decisión de la dueña** y se conserva tal cual. Lo que cambió es el producto que la implementa:
+el Gemelo Digital de 4 ejes (20/80) **ya no está en la app**. Hoy el mecanismo es el ciclo de `/u`:
+CV → mapa de brechas → la persona revisa cuáles son reales → examen calificado por el servidor → pasaporte con sellos
+y credencial verificable. Al describir lo que la app **hace hoy**, usar ese ciclo, no el Gemelo de 4 ejes.
+Los documentos legales se reescribieron para el producto actual el 6 de noviembre de 2026, a pedido de la dueña,
+manteniendo la jurisdicción chilena.

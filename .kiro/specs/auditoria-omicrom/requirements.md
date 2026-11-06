@@ -345,8 +345,8 @@ el error escapa hacia `alternarMicro()`, que tampoco tiene `try/catch`.
   el que invita a reintroducir dependencias y dominios retirados.
 - **Criterio de resuelto:** `README.md`, `PRODUCT.md` y `DESIGN.md` regenerados desde el grafo real de
   importaciones, con fecha y contraste contra `package.json`; cierre de Fase 5 en `CHANGELOG.md`; y una
-  cabecera "estado pre-Fase 5" en `DEFINICION_OMICROM.md` (que cita una función Edge `coach` inexistente),
-  `PLAN_PRODUCCION.md` (fechado el 06-ago, habla de 9 hubs y 63 migraciones) y `DEFINICION_OMICROM_v8_BACKEND.md`.
+  cabecera "estado pre-Fase 5" en `docs/legado/DEFINICION_OMICROM.md` (que cita una función Edge `coach` inexistente),
+  `docs/legado/PLAN_PRODUCCION.md` (fechado el 06-ago, habla de 9 hubs y 63 migraciones) y `docs/legado/DEFINICION_OMICROM_v8_BACKEND.md`.
 
 ### R23 — Hay una auditoría de seguridad de septiembre sin fusionar. **PRIORIDAD DE LECTURA**
 

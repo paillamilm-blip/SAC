@@ -48,7 +48,7 @@ export interface Profile {
   transcendence_score: number;     // Compartición conocimiento
   foundation_score: number;        // Fundamento teórico
 
-  // === PONDERACIÓN 80/20 (ver DEFINICION_REPUTACION_OMICROM.md) ===
+  // === PONDERACIÓN 80/20 (ver docs/legado/DEFINICION_REPUTACION_OMICROM.md) ===
   traditional_score: number;       // 20% — credenciales verificadas (títulos, portafolio)
   experience_score: number;        // 80% — DERIVADO: promedio de los 4 ejes (servidor)
 

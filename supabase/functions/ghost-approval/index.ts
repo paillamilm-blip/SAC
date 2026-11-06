@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // GHOST APPROVAL — Cron Edge Function para liberación automática.
 //
-// Flujo (DEFINICION_OMICROM_v8_BACKEND.md, sección 5):
+// Flujo (docs/legado/DEFINICION_OMICROM_v8_BACKEND.md, sección 5):
 //   1. Vendedor declara entrega → contrato pasa a status='DELIVERED',
 //      delivery_declared_at = now().
 //   2. Comprador tiene 15 minutos para OBJETAR (object_delivery() abre

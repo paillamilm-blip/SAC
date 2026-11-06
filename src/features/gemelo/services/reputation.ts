@@ -20,7 +20,7 @@ export function calculateGemeloDigital(profile: Profile): GemeloDigital {
 
 /**
  * Calcula la reputación total basado en la regla 80/20 (modelo canónico).
- * Ver DEFINICION_REPUTACION_OMICROM.md.
+ * Ver docs/legado/DEFINICION_REPUTACION_OMICROM.md.
  * 20% = historial tradicional (títulos, portafolio → traditional_score)
  * 80% = experiencia demostrada (experience_score = PROMEDIO de los 4 ejes)
  *
@@ -45,7 +45,7 @@ export function calculateGemeloAverage(gemelo: GemeloDigital): number {
  * MOMENTUM POR PE — "lo que puedes conseguir".
  * Bono de reputación por Puntos de Experiencia acumulados: acotado a +15,
  * con rendimientos decrecientes (sqrt). Premia el aprendizaje y el potencial
- * sin permitir inflar la reputación sin límite. Ver DEFINICION_REPUTACION_OMICROM.md.
+ * sin permitir inflar la reputación sin límite. Ver docs/legado/DEFINICION_REPUTACION_OMICROM.md.
  */
 export function calculatePEMomentum(pePoints: number): number {
   const pe = Math.max(pePoints ?? 0, 0);
@@ -147,7 +147,7 @@ export function shouldTriggerAudit(
  * Modelo canónico unificado: base (20/80) + momentum por PE + skill overlap.
  * experience_score = promedio de los 4 ejes. Si se pasan jobSkills, se bonifica
  * hasta +15 puntos por coincidencia de habilidades (skill overlap).
- * Ver DEFINICION_REPUTACION_OMICROM.md §7.
+ * Ver docs/legado/DEFINICION_REPUTACION_OMICROM.md §7.
  */
 export function calculateMatchScore(profile: Profile, jobSkills?: string[]): number {
   const base = calculateTotalReputation(

@@ -1,143 +1,81 @@
-<div align="center">
+# Ómicrom
 
-# Sistema Omicrom
+**Ve qué te separa de un profesional fuerte de tu ocupación, y demuestra lo que sabes hacer.**
 
-**Aprendizaje continuo en tiempo real, para todo el mundo — conectado a oportunidades reales del mercado, al instante.**
-
-`React + Vite` · `Supabase` · `Three.js` · `Realtime` · `PWA` · `Industria 5.0`
-
-</div>
+Producción: **https://sac-omi.vercel.app/u**
 
 ---
 
-## Que es
+## Qué hace hoy
 
-Omicron es una herramienta de aprendizaje continuo en tiempo real, pensada para cualquier
-persona en cualquier lugar. Construyes una reputacion verificable e imposible de falsear
-— tu **Gemelo Digital** — y esa reputacion se conecta, al instante, con oportunidades
-reales del mercado laboral.
+Una aplicación web, pensada primero para el teléfono, en un solo recorrido de cinco pasos:
 
-El corazon es un **Orbe Neuronal 3D** vivo, alimentado por datos reales de tu CV,
-rodeado por tu red en tiempo real. Un **Oraculo** te guia por voz hacia tu mejor
-proximo paso, y el trabajo te busca a ti.
+1. **Escanear tu CV.** Subes tu CV en PDF o Word (.docx). Se lee en tu navegador; a la inteligencia artificial solo viaja su texto. Funciona sin cuenta.
+2. **Ver tu mapa.** La IA compara tu CV con lo que suele mostrar alguien de tu ocupación y nivel, y dibuja un mapa de **brechas**. Cada brecha cita tu CV o dice qué no aparece en él. Lo que la IA no puede respaldar con tu texto se descarta.
+3. **Revisar tus brechas.** Tú decides cuáles son reales y cuáles no aplican.
+4. **Aprender y demostrar.** Para una brecha que reconociste das un examen corto. Lo califica el servidor, no el navegador; con 70 de 100 o más queda aprobado.
+5. **Compartir tu pasaporte.** Cada examen aprobado es un sello. Puedes descargar una imagen o crear un enlace firmado que cualquiera verifica, sin cuenta.
 
----
+Además: un **asistente** que te guía con tus propios datos, puede responder con IA (con cuenta), leer en voz alta y escucharte; **Mi perfil** con lo que se leyó de tu CV, cuánto te falta y el mapa en números; y **Tus datos**, para descargar todo lo que se guarda de ti o borrar tu cuenta.
 
-## El Gemelo Digital
+Las reglas del producto están en [`PRODUCT.md`](./PRODUCT.md); la más importante: **la interfaz no afirma más que el dato.**
 
-```
-REPUTACION = 20% credenciales + 80% promedio(Ejecucion, Calidad, Trascendencia, Fundamento)
-```
+## Qué no hace (todavía)
 
-- **Convalidar** CV / titulos / experiencia sube tu reputacion real.
-- Skills con nivel real (% del analisis IA) + sinergia entre nodos relacionados.
-- El Nodo evoluciona: Operativo -> Core -> Arquitecto.
+- Solo existe en **español**.
+- No lee **Word antiguo (.doc)** ni **escaneos o fotos** (haría falta reconocimiento de texto).
+- No cobra nada: no hay pagos, planes ni monedas internas.
+- El mercado, los contratos, los tokens y la red social del producto anterior **se retiraron** (ver [`docs/legado/`](./docs/legado/)).
 
 ---
 
 ## Stack
 
-| Capa | Tecnologia |
-|------|------------|
-| Frontend | React 18 + TypeScript + Vite 5 |
-| 3D | Three.js (OrbNeuronal) + Framer Motion |
-| Estilos | Design system propio (`src/theme.ts`) |
-| Backend | Supabase (Postgres + Auth + Realtime + Edge Functions) |
-| IA | OpenRouter (Gemma 4) + Edge Functions (Coach, Tutor, Examen) |
-| Deploy | Vercel (PWA instalable) |
+| Capa | Qué |
+|---|---|
+| Interfaz | React 18 + TypeScript 5.6, Vite 5. Estilos en CSS propio (`src/features/brecha/styles/`) con tokens de `src/theme/`. Modo oscuro únicamente. |
+| Datos y cuentas | Supabase: Postgres con seguridad por fila, autenticación y Edge Functions (Deno). |
+| IA | Edge Function `proxy-ai`: Google Gemini 3.x primero, modelos gratuitos de OpenRouter de respaldo. Voz por `proxy-tts`. |
+| Lectura del CV | PDF.js y Mammoth, en el navegador. |
+| Alojamiento | Vercel (despliega solo con cada cambio en `main`). |
 
----
-
-## Puesta en marcha (local)
-
-**1. Variables de entorno** — crea `.env.local` (ver `.env.example`):
-
-```bash
-VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
-VITE_SUPABASE_ANON_KEY=<tu-anon-key>
-VITE_OPENROUTER_KEY=<tu-key-openrouter>
-```
-
-**2. Instalar y correr:**
+## Cómo correrlo
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+cp .env.example .env.local   # completa VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
+npm run dev                  # http://localhost:5173/u
 ```
 
-**3. Scripts:**
+Sin un proyecto de Supabase propio, la app arranca con el de producción (la clave anónima es pública por diseño; la seguridad la dan las reglas de la base).
 
-| Comando | Que hace |
-|---------|----------|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de produccion |
-| `npm run preview` | Previsualiza el build |
-| `npm run typecheck` | Chequeo de tipos (tsc) |
+| Comando | Qué hace |
+|---|---|
+| `npm run test` | Pruebas (Vitest + Testing Library) |
+| `npm run typecheck` | Tipos (`tsc --noEmit`) |
 | `npm run lint` | ESLint |
-| `npm run test` | Tests (Vitest) |
+| `npm run build` | Build de producción |
 
----
+## Dónde está cada cosa
 
-## Base de datos (Supabase)
+| Ruta | Qué hay |
+|---|---|
+| `src/features/brecha/` | El producto: subida y análisis del CV, mapa, reporte, examen, pasaporte, perfil, cuenta |
+| `src/features/assistant/` | El asistente: recomendaciones, respuestas con datos propios, chat |
+| `src/features/auth/` | Acceso, registro, recuperar contraseña |
+| `supabase/functions/` | Edge Functions. En uso: `proxy-ai`, `proxy-tts`, `simulador-universal` (examen), `credential`, `mi-cuenta` |
+| `supabase/migrations/` | Migraciones SQL. **Se aplican a mano** (ver [`docs/operacion.md`](./docs/operacion.md)) |
+| `scripts/` | Recorrido visual, accesibilidad, prueba en vivo y evaluación del análisis |
+| `.kiro/specs/auditoria-omicrom/` | Plan de remediación de la auditoría (requisitos, diseño, tareas) |
 
-Migraciones en `supabase/migrations/` (63 archivos, idempotentes):
+## Documentos
 
-```bash
-supabase db push
-```
-
-Edge Functions en `supabase/functions/` (21 funciones):
-coach, tutor, examen-ia, carta-ia, chat-assist, arbiter-ai, vault-oracle,
-market-match, stripe-webhook, crear-checkout, verificar-pago, y mas.
-
----
-
-## Estructura
-
-```
-src/
-├── App.tsx                  Shell + providers
-├── components/
-│   ├── omicron/             OrbShell, OrbNeuronal (3D), OmicronAssistant, ConvalidaOmicron
-│   ├── perfil/              PerfilSkillVisual, ProfileCard, PasaporteGemelo, CartaCompetencias
-│   ├── shared/              BottomNav, ConnectionBanner, Toast, LivePresence
-│   └── tabs/                PerfilTab, AcademiaTab, EmpleosTab, MarketTab, WalletTab...
-├── hooks/                   useGemeloProfile, useGemeloActivation, useRealtimeNetwork
-├── store/                   AppContext, ProfileContext, NavigationContext, RealtimeContext
-├── lib/                     oraculo, voiceEngine, cvAnalyzer, geminiClient, omicronCoach
-└── services/                reputationService
-supabase/
-├── migrations/              63 migraciones SQL
-└── functions/               21 Edge Functions
-```
-
----
-
-## Deploy (PWA)
-
-- Cada push a `main` despliega automaticamente en Vercel.
-- PWA instalable: abre en el movil > "Anadir a pantalla de inicio".
-- Para produccion (Stripe, Sentry, SMTP): ver `GUIA_ACTIVACION_PRODUCCION.md`.
-
----
-
-## Documentos del proyecto
-
-| Documento | Contenido |
-|-----------|-----------|
-| `DEFINICION_OMICROM.md` | Vision, pilares, modelo economico, norte del producto |
-| `DEFINICION_OMICROM_v8_BACKEND.md` | Arquitectura tecnica backend (con estado de implementacion) |
-| `DEFINICION_REPUTACION_OMICROM.md` | Formula canonica del Gemelo Digital (fuente unica de verdad) |
-| `PLAN_PRODUCCION.md` | Roadmap + estado operativo + milestones + KPIs |
-| `GUIA_ACTIVACION_PRODUCCION.md` | Pasos para activar produccion (Stripe, Sentry, SMTP, claves) |
-| `CHANGELOG.md` | Historial de cambios |
-| `TERMINOS_SERVICIO.md` | Terminos legales de uso |
-| `POLITICA_PRIVACIDAD.md` | Politica de privacidad |
-
----
-
-<div align="center">
-
-Hecho con fuerza para la Industria 5.0 · Aprendizaje continuo en tiempo real · Sin fronteras
-
-</div>
+| Documento | Para qué |
+|---|---|
+| [`PRODUCT.md`](./PRODUCT.md) | Qué es el producto, para quién y sus reglas |
+| [`DESIGN.md`](./DESIGN.md) | Sistema visual |
+| [`docs/operacion.md`](./docs/operacion.md) | Cómo desplegar y operar hoy, y qué **no** hacer |
+| [`docs/auditoria-completa-2026-11-05.md`](./docs/auditoria-completa-2026-11-05.md) | Qué hay, qué falta y qué está roto, por prioridad |
+| [`TERMINOS_SERVICIO.md`](./TERMINOS_SERVICIO.md) · [`POLITICA_PRIVACIDAD.md`](./POLITICA_PRIVACIDAD.md) | Documentos legales (también en `/u/terminos` y `/u/privacidad`) |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Cambios |
+| [`docs/legado/`](./docs/legado/) | Documentos del producto anterior, como referencia histórica |

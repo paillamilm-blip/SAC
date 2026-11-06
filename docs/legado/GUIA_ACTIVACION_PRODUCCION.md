@@ -1,3 +1,5 @@
+> **Documento histórico (movido aquí el 6 de noviembre de 2026).** Describe el producto anterior a la unificación en `/u` (orbe, academia, mercado, contratos, tokens, red social o reputación de 4 ejes), que se retiró en noviembre de 2026. No describe la app actual: para eso, ver [`README.md`](../../README.md), [`PRODUCT.md`](../../PRODUCT.md) y [`docs/operacion.md`](../operacion.md).
+
 # Guia de Activacion en Produccion — Sistema Omicron
 
 > Guia clic por clic. No necesitas saber programar. Sigue el orden tal cual.

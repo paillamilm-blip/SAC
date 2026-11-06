@@ -165,7 +165,7 @@ La columna **Esc.** expresa la política **objetivo** (§3.4). La protección vi
 
 ### 3.2 Invariantes **[ACTUAL, obligatorios]**
 
-Fuente: `DEFINICION_REPUTACION_OMICROM.md` y `0050_reputacion_canonica.sql`.
+Fuente: `docs/legado/DEFINICION_REPUTACION_OMICROM.md` y `0050_reputacion_canonica.sql`.
 
 ```
 experience_score = round( (execution + quality + transcendence + foundation) / 4 , 2 )   ∈ [0,100]
