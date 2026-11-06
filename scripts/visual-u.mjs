@@ -392,7 +392,8 @@ async function formatosDeCv(browser) {
   } catch (e) {
     falla(`${nombre}/formatos: no se pudo empaquetar cvExtract con esbuild (${e instanceof Error ? e.message : e})`);
   }
-  if (lector) await ctx.addInitScript({ content: lector });
+  // Se asigna a `window` de forma explícita: según cómo envuelva Playwright el script, el `var` del paquete no llega a ser global.
+  if (lector) await ctx.addInitScript({ content: `${lector}\n;window.__cvExtract = __cvExtract;` });
 
   const page = await ctx.newPage();
   const errores = [];
