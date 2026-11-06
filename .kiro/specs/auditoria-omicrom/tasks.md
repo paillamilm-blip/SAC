@@ -16,9 +16,13 @@ Estados: `[ ]` pendiente · `[x]` hecha y verificada · `[!]` bloqueada (anotar 
 
 - [ ] 0.1 Correr en Supabase → SQL Editor (proyecto `cuwuyqpxaibbqjrvamjb`) las tres consultas de
       `design.md` (Decisión 1) y pegar las respuestas en este archivo, abajo de cada casilla.
-  - [ ] 0.1a `has_function_privilege('authenticated','public.register_exam_success(text,integer,text)','execute')` → `______`
+  - [x] 0.1a `has_function_privilege('authenticated','public.register_exam_success(text,integer,text)','execute')` → `false` (anon: `false`)
+      - Medido en producción por la dueña (2026-11-05): ni `authenticated` ni `anon` pueden ejecutar `register_exam_success`.
+        `10011` está aplicada. **R2 cerrado en producción.**
   - [ ] 0.1b `pg_policies` de `profiles`, `job_matches`, `follows`, `freelance_needs`, `analytics_events` → `______`
-  - [ ] 0.1c pruebas sospechosas en `omicron_skill_proofs` (por `last_proven_at`) → `______`
+  - [x] 0.1c pruebas sospechosas en `omicron_skill_proofs` (por `last_proven_at`) → 3 filas, todas de cuentas de prueba
+      - `1f6ac182…` (usuaria de prueba 2026-11-04, `best_score` 87) y `1d8122af…` / `3be95691…` (piloto «verificacion fase 6/6b»,
+        2026-10-24). Ninguna prueba ajena: **no hay señal de falsificación** por el hueco de R2.
 - [ ] 0.2 Confirmar desde el panel qué funciones están desplegadas hoy (el registro de la auditoría
       dice: `proxy-ai`, `proxy-tts`, `simulador-universal`, `credential` + una de verificación) y
       anotar divergencias.
@@ -67,7 +71,7 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
         sesión. **El riesgo R1 no es un lector del front, es la política `profiles_select_all` abierta en la
         base**: se cierra en 1.1.2 y se mide en 0.1b. Ninguna casilla que escriba SQL se toca sin la copia
         del proyecto (1.1.3).
-- [ ] 1.1.2 Escribir `10013_perfiles_sin_lectura_anonima.sql`: `drop policy if exists profiles_select_all`,
+- [x] 1.1.2 Escribir `10013_perfiles_sin_lectura_anonima.sql`: `drop policy if exists profiles_select_all`,
       crear `profiles_select_own` con `to authenticated using (id = auth.uid())`, y las consultas de
       verificación al final (patrón de `10011:46-50`).
 - [ ] 1.1.3 Aplicar en una **copia** del proyecto, no en producción.
@@ -80,7 +84,7 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 
 ### 1.2 Tablas sociales abiertas (R4)
 
-- [ ] 1.2.1 `10014_tablas_sociales_sin_lectura_anonima.sql`: restringir `job_matches`
+- [x] 1.2.1 `10014_tablas_sociales_sin_lectura_anonima.sql`: restringir `job_matches`
       (`0004_jobs_chat.sql:39`), `follows` (`0067_social_follows_ghosts.sql:18`) y `freelance_needs`
       (`0069_freelance_needs.sql:39`) con `to authenticated` + `auth.uid()`.
       - Verificado en código (2026-11-04): las tres son `FOR SELECT USING (true)` tal cual dice la auditoría
@@ -92,7 +96,8 @@ Tres ramas remotas detenidas, sin PR abierto, entre 120 y 212 commits por detrá
 
 ### 1.3 Cerrar la falsificación del pasaporte (R2)
 
-- [ ] 1.3.1 Condicionado a 0.1a. Si `true`:
+- [x] 1.3.1 Condicionado a 0.1a. Si `true`: **no aplica — 0.1a dio `false`** (ya cerrado en producción por `10011`). Pasa a 1.3.2.
+      Si `true`:
       - [ ] 1.3.1a Confirmar que `simulador-universal` está desplegada y aprueba exámenes de punta a
             punta en producción (la revocación deja de servir el examen si la vía buena no funciona).
       - [ ] 1.3.1b Escribir `10015_pruebas_solo_servidor_verificado.sql` con el `revoke` de
@@ -451,6 +456,25 @@ de escritura, no de eliminación.
 - Con R1 sin cerrar, esta usuaria es legible públicamente mientras exista.
 - Ruta de borrado: Supabase → Authentication → Users → eliminar (la cascada limpia el resto).
 - [ ] 0.6 Confirmar con la dueña si se elimina ya o después de cerrar R1.
+
+## Registro de avance en producción (2026-11-05)
+
+Verificado por la dueña en el SQL Editor de `cuwuyqpxaibbqjrvamjb`. Cada fila dice qué consulta lo respalda.
+
+| Hallazgo | Migración | Estado en producción | Evidencia |
+|---|---|---|---|
+| H-A · lectura anónima de `profiles` | `10013` | **Cerrado** | `pg_policies`: una sola política de SELECT, `profiles_select_own`, `{authenticated}`, `(id = auth.uid())` |
+| H-B · protección de `profiles` por lista negra | `10015` | **Aplicada** | `protect_profile_columns()` contiene `k_editables` (`true`); `trg_protect_profile` activo (`O`) |
+| R2 · falsificación del examen | `10011` | **Cerrado** | `has_function_privilege` de `register_exam_success`: `authenticated=false`, `anon=false` |
+| R4 · lectura anónima de tablas sociales | `10014` | **Sin objeto** | `pg_policies` y `pg_class` devuelven 0 filas para `job_postings`, `job_matches`, `follows`, `freelance_needs`: **las tablas no existen en producción** |
+
+**Sin verificar todavía:**
+- Prueba funcional de `10015` desde la app (que color y nombre siguen guardando con la lista blanca activa).
+- `0.1b` completa (políticas del resto de tablas), `0.3` (migraciones aplicadas) y `0.4` (decisiones D1 y D2).
+- 1.1.3–1.1.6 y 1.2.2–1.2.3 (copia del proyecto y curl anónimo): `10013`, `10014` y `10015` se aplicaron directo en
+  producción, sin pasar por una copia. Eso es una desviación del procedimiento del plan; queda anotada, no ocultada.
+
+**Siguiente riesgo abierto:** H-C (el límite de IA del servidor no cuenta nada). Bloqueado por D1.
 
 ## Registro de bloqueos
 
