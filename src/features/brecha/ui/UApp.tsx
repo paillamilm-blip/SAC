@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { NoAccess } from '@/features/auth/components/NoAccess';
 import { AuthOverlay } from '@/features/auth/components/AuthOverlay';
+import ErrorPerfil from '@/features/auth/components/ErrorPerfil';
 import { ResetPasswordOverlay } from '@/features/auth/components/ResetPasswordOverlay';
 import { InstallPWA } from '@/shared/components/InstallPWA';
 import ChatPanel, { type EventoApp } from '@/features/assistant/ChatPanel';
@@ -35,7 +36,7 @@ function primerNombre(perfil: { display_name?: string; full_name?: string; usern
 }
 
 export default function UApp() {
-  const { authStatus, profile } = useApp();
+  const { authStatus, profile, isLoadingProfile, reintentarPerfil } = useApp();
   const color = useUserColor();
   const { ruta, ir } = useRuta();
   const usuarioId = authStatus === 'authenticated' ? (profile?.id ?? null) : null;
@@ -51,6 +52,9 @@ export default function UApp() {
   const [aperturaEscaneo, setAperturaEscaneo] = useState(0);
   const botonAsistenteRef = useRef<HTMLButtonElement>(null);
   const chatSeAbrio = useRef(false);
+  // A los 5 s la pantalla de carga avisa que tarda; recién a los 20 s (la autenticación ni siquiera respondió) se cae
+  // al modo invitado. Antes eran 5 s: una persona CON sesión y red lenta veía «Invitado / Iniciar sesión».
+  const [cargaLenta, setCargaLenta] = useState(false);
   const [cargaTiempoExcedido, setCargaTiempoExcedido] = useState(false);
   const nombre = authStatus === 'authenticated' ? primerNombre(profile) : null;
 
@@ -59,14 +63,18 @@ export default function UApp() {
   // Regreso desde el correo de «olvidé mi contraseña»
   const { recuperando, terminar: terminarRecuperacion } = useRecuperarClave();
 
-  // Timeout para mostrar invitado si la carga tarda más de 5s (misma regla que forceGuest)
+  // Una carga larga no se disfraza de «invitado»: primero avisa, y solo si la autenticación nunca responde se cae a invitado.
   useEffect(() => {
     if (authStatus === 'loading') {
-      const timer = setTimeout(() => setCargaTiempoExcedido(true), 5000);
-      return () => clearTimeout(timer);
-    } else {
-      setCargaTiempoExcedido(false);
+      const lenta = setTimeout(() => setCargaLenta(true), 5000);
+      const excedida = setTimeout(() => setCargaTiempoExcedido(true), 20000);
+      return () => {
+        clearTimeout(lenta);
+        clearTimeout(excedida);
+      };
     }
+    setCargaLenta(false);
+    setCargaTiempoExcedido(false);
   }, [authStatus]);
 
   useEffect(() => {
@@ -160,7 +168,29 @@ export default function UApp() {
     );
   }
 
-  // Mostrar carga mientras se carga el perfil (hasta 5s, luego invitado)
+  // Sesión válida pero el perfil no se pudo leer (red o servidor): aviso recuperable, no «sin acceso» ni «invitado».
+  if (authStatus === 'error_transitorio') {
+    return (
+      <div className="u-app" style={estiloColor}>
+        <a className="u-saltar" href="#u-contenido">
+          Saltar al contenido
+        </a>
+        <header className="topbar">
+          <div className="topbar-in">
+            <a className="brand" href={BASE}>
+              <span className="brand-dot" aria-hidden="true" />
+              Ómicrom
+            </a>
+          </div>
+        </header>
+        <main id="u-contenido" tabIndex={-1}>
+          <ErrorPerfil reintentando={isLoadingProfile} onReintentar={reintentarPerfil} />
+        </main>
+      </div>
+    );
+  }
+
+  // Mostrar carga mientras se carga el perfil (avisa a los 5 s; a los 20 s sin respuesta de la autenticación, invitado)
   if (authStatus === 'loading' && !cargaTiempoExcedido) {
     return (
       <div className="u-app" style={estiloColor}>
@@ -181,8 +211,10 @@ export default function UApp() {
           </div>
         </header>
         <main id="u-contenido" tabIndex={-1}>
-          <div className="u-banda aviso aviso-sim" role="note">
-            Cargando tu perfil...
+          <div className="u-banda aviso aviso-sim" role="status">
+            {cargaLenta
+              ? 'Esto está tardando más de lo normal. Seguimos intentando conectar con el servidor…'
+              : 'Cargando tu perfil...'}
           </div>
         </main>
       </div>

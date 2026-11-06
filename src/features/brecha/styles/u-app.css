@@ -1262,3 +1262,42 @@
   display: grid;
   gap: 6px;
 }
+
+/* ── Perfil que no se pudo leer (recuperable) ─────────────────────────────────────────────── */
+.u-app .u-error-perfil {
+  max-width: 560px;
+  display: grid;
+  gap: 16px;
+  justify-items: stretch;
+}
+.u-app .u-error-perfil .vacio h1 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+}
+.u-app .u-error-perfil .vacio h1:focus {
+  outline: none;
+}
+.u-app .u-error-perfil .vacio p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.u-app .u-error-perfil .vacio .u-error-perfil-ayuda {
+  color: var(--dim);
+  font-size: 13.5px;
+}
+.u-app .u-error-perfil .boton {
+  min-height: 44px;
+  justify-content: center;
+  width: 100%;
+}
+.u-app .u-error-perfil-cuenta {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 13.5px;
+  color: var(--muted);
+  text-align: center;
+}

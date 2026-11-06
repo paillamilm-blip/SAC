@@ -255,11 +255,121 @@ async function todoAbreElProducto(browser) {
   await ctx.close();
 }
 
+
+/**
+ * Sesión válida + servidor inalcanzable: la pantalla NO debe decir «sin acceso» ni mostrar al usuario como invitado;
+ * debe ofrecer «Reintentar» (con contador) y no ofrecer «Cerrar sesión».
+ *
+ * La sesión se siembra en localStorage con la clave que usa supabase-js (`sb-<proyecto>-auth-token`) y todo el tráfico a
+ * *.supabase.co se aborta: así el fallo es de red, determinista y sin depender de DNS.
+ */
+async function errorDePerfil(browser, nombre, viewport) {
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'es-CL' });
+  const proyecto = new URL(process.env.VITE_SUPABASE_URL ?? 'https://ci-placeholder.supabase.co').hostname.split('.')[0];
+  const sesion = {
+    access_token: 'ci.fake.token',
+    refresh_token: 'ci-fake-refresh',
+    token_type: 'bearer',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    user: {
+      id: '00000000-0000-4000-8000-0000000000aa',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email: 'prueba@example.com',
+      app_metadata: {},
+      user_metadata: {},
+      created_at: '2026-01-01T00:00:00.000Z',
+    },
+  };
+  await ctx.addInitScript(
+    ([clave, valor]) => localStorage.setItem(clave, valor),
+    [`sb-${proyecto}-auth-token`, JSON.stringify(sesion)],
+  );
+  // Por nombre de host (no por patrón de ruta): cualquier petición a un *.supabase.co falla al instante.
+  const abortadas = [];
+  await ctx.route(
+    (url) => url.hostname.endsWith('.supabase.co'),
+    (r) => {
+      abortadas.push(`${r.request().method()} ${new URL(r.request().url()).pathname}`);
+      return r.abort('failed');
+    },
+  );
+
+  const page = await ctx.newPage();
+  const errores = [];
+  const consola = [];
+  page.on('pageerror', (e) => errores.push(String(e)));
+  page.on('console', (m) => {
+    if (['error', 'warning'].includes(m.type())) consola.push(`${m.type()}: ${m.text().slice(0, 160)}`);
+  });
+  await page.goto(`${BASE}/u`, { waitUntil: 'load' });
+
+  const titulo = page.getByRole('heading', { name: 'No pudimos cargar tu perfil' });
+  try {
+    await titulo.waitFor({ timeout: 30_000 });
+  } catch {
+    falla(`${nombre}/error-perfil: no apareció «No pudimos cargar tu perfil» (¿se tragó la sesión o quedó como invitado?)`);
+    // Diagnóstico: qué había en el almacenamiento, qué se veía y qué peticiones se abortaron.
+    const diag = await page
+      .evaluate(() => ({ claves: Object.keys(localStorage), texto: document.body.innerText.replace(/\s+/g, ' ').slice(0, 200) }))
+      .catch(() => ({ claves: ['?'], texto: '?' }));
+    console.log(`  · diag ${nombre}: clave sembrada=sb-${proyecto}-auth-token | localStorage=${JSON.stringify(diag.claves)}`);
+    console.log(`  · diag ${nombre}: texto visible="${diag.texto}"`);
+    console.log(`  · diag ${nombre}: peticiones a supabase abortadas (${abortadas.length}): ${abortadas.slice(0, 6).join(' ; ') || 'ninguna'}`);
+    console.log(`  · diag ${nombre}: consola: ${consola.slice(0, 5).join(' || ') || 'vacía'}`);
+    await page.screenshot({ path: `${SALIDA}/${nombre}-11-error-perfil-FALLO.png` }).catch(() => {});
+    await ctx.close();
+    return;
+  }
+  ok(`${nombre}/error-perfil: la red caída muestra un aviso recuperable`);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${SALIDA}/${nombre}-11-error-perfil.png` });
+
+  const cuerpo = (await page.locator('body').textContent()) ?? '';
+  if (/sin acceso|no tienes acceso/i.test(cuerpo)) falla(`${nombre}/error-perfil: dice «sin acceso» aunque fue la red`);
+  else ok(`${nombre}/error-perfil: no dice «sin acceso»`);
+  if (/Iniciar sesión|Invitado/.test(cuerpo)) falla(`${nombre}/error-perfil: trata a una persona con sesión como invitada`);
+  else ok(`${nombre}/error-perfil: no la trata como invitada`);
+  if (await page.getByRole('button', { name: /cerrar sesión/i }).count()) falla(`${nombre}/error-perfil: ofrece «Cerrar sesión» (parece una expulsión)`);
+  else ok(`${nombre}/error-perfil: no ofrece «Cerrar sesión»`);
+
+  const boton = page.getByRole('button', { name: 'Reintentar' });
+  const alto = await boton.evaluate((el) => el.getBoundingClientRect().height);
+  if (alto < 43.5) falla(`${nombre}/error-perfil: «Reintentar» mide ${alto}px (< 44px)`);
+  else ok(`${nombre}/error-perfil: «Reintentar» mide ${Math.round(alto)}px`);
+
+  const sobra = await page.evaluate(() => {
+    const el = document.querySelector('.u-app');
+    return el ? el.scrollWidth - el.clientWidth : -1;
+  });
+  if (sobra > 0) falla(`${nombre}/error-perfil: desborde horizontal de ${sobra}px`);
+  else ok(`${nombre}/error-perfil: sin desborde horizontal`);
+
+  await boton.click();
+  try {
+    // supabase-js reintenta la lectura 3 veces (≈7 s) antes de rendirse: se espera con holgura.
+    await page.getByText('Reintento 1: seguimos sin conexión con el servidor.').waitFor({ timeout: 30_000 });
+    ok(`${nombre}/error-perfil: «Reintentar» vuelve a intentar y cuenta el reintento`);
+  } catch {
+    falla(`${nombre}/error-perfil: tras «Reintentar» no apareció el contador de reintentos`);
+    const texto = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').slice(0, 260)).catch(() => '?');
+    console.log(`  · diag ${nombre}: tras reintentar se ve="${texto}"`);
+    console.log(`  · diag ${nombre}: peticiones abortadas (${abortadas.length}): ${abortadas.slice(0, 8).join(' ; ')}`);
+    console.log(`  · diag ${nombre}: consola: ${consola.slice(0, 5).join(' || ') || 'vacía'}`);
+    await page.screenshot({ path: `${SALIDA}/${nombre}-11-error-perfil-tras-reintentar-FALLO.png` }).catch(() => {});
+  }
+  if (errores.length) falla(`${nombre}/error-perfil: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
+  await ctx.close();
+}
+
 const browser = await chromium.launch();
 try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
   await todoAbreElProducto(browser);
+  await errorDePerfil(browser, 'movil', { width: 390, height: 844 });
+  await errorDePerfil(browser, 'escritorio', { width: 1280, height: 800 });
   if (violacionesCsp.size) {
     for (const v of violacionesCsp) falla(`CSP: ${v}`);
   } else {

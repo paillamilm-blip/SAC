@@ -24,6 +24,10 @@ import { supabase } from '@/infrastructure/supabase/client';
 import { calculateGemeloDigital } from '@/features/gemelo/services/reputation';
 import type { AuthStatus, Profile, GemeloDigital } from '../types';
 
+// Tope para UNA lectura del perfil. supabase-js reintenta solo las lecturas que fallan por red (3 veces, esperas de
+// 1 s + 2 s + 4 s ≈ 7 s), así que una caída real tarda ese tiempo en notarse; este tope cubre además una petición colgada.
+const LIMITE_LECTURA_PERFIL_MS = 15_000;
+
 const DEFAULT_PE_POINTS = 0;
 const DEFAULT_REPUTATION = 50;
 
@@ -33,7 +37,19 @@ export interface ProfileContextState {
   profile: Profile | null;
   gemelo: GemeloDigital | null;
   refreshProfile: () => Promise<void>;
+  reintentarPerfil: () => Promise<void>;
 }
+
+/**
+ * Resultado de LEER el perfil. Tres casos que antes se confundían en un solo `null`:
+ *   · ok         → hay perfil.
+ *   · sin_perfil → el servidor respondió y no existe (el trigger de BD puede tardar en crearlo).
+ *   · error      → no se pudo leer (red caída, servidor con problemas). NO significa que no haya perfil.
+ */
+type LecturaPerfil =
+  | { estado: 'ok'; perfil: Profile }
+  | { estado: 'sin_perfil' }
+  | { estado: 'error' };
 
 const ProfileContext = createContext<ProfileContextState | null>(null);
 
@@ -52,13 +68,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-    return error || !data ? null : (data as Profile);
+  const fetchProfile = useCallback(async (userId: string): Promise<LecturaPerfil> => {
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+    const limite = new Promise<LecturaPerfil>((resolve) => {
+      temporizador = setTimeout(() => resolve({ estado: 'error' }), LIMITE_LECTURA_PERFIL_MS);
+    });
+    const lectura = (async (): Promise<LecturaPerfil> => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        if (error) return { estado: 'error' };
+        return data ? { estado: 'ok', perfil: data as Profile } : { estado: 'sin_perfil' };
+      } catch {
+        // fetch() lanza cuando no hay red: es un fallo de lectura, no un perfil inexistente.
+        return { estado: 'error' };
+      }
+    })();
+    try {
+      return await Promise.race([lectura, limite]);
+    } finally {
+      clearTimeout(temporizador);
+    }
   }, []);
 
   // Recalcular Gemelo Digital cada vez que cambia el perfil
@@ -101,9 +134,39 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // actualiza el estado. No existe escritura de scores desde el cliente.
   const refreshProfile = useCallback(async () => {
     if (!profile?.id) return;
-    const p = await fetchProfile(profile.id);
-    if (p && isMounted.current) setProfile(p);
+    const lectura = await fetchProfile(profile.id);
+    if (lectura.estado === 'ok' && isMounted.current) setProfile(lectura.perfil);
   }, [profile?.id, fetchProfile]);
+
+  // loadProfile vive dentro del efecto de autenticación (usa su `effectMounted`); se guarda aquí para poder
+  // llamarlo de nuevo desde «Reintentar» sin duplicar la lógica.
+  const cargarPerfilRef = useRef<((session: Session) => Promise<void>) | null>(null);
+  // La última sesión con la que se intentó leer el perfil. Para reintentar la lectura no hace falta volver a
+  // preguntarle a la autenticación: solo se usa el id (y el correo si hay que crear el perfil), y la petición usa el
+  // token vigente del cliente. Si la sesión muriera de verdad, Supabase emite SIGNED_OUT y se maneja allí.
+  const sesionRef = useRef<Session | null>(null);
+
+  const reintentarPerfil = useCallback(async () => {
+    if (sesionRef.current) {
+      await cargarPerfilRef.current?.(sesionRef.current);
+      return;
+    }
+    // Sin sesión guardada (no debería pasar estando en error): se lee de la autenticación.
+    const { data, error } = await supabase.auth.getSession();
+    // Sin poder leer la sesión NO se asume que cerró: sigue siendo un fallo recuperable.
+    if (error) {
+      if (isMounted.current) setAuthStatus('error_transitorio');
+      return;
+    }
+    if (!data.session) {
+      if (isMounted.current) {
+        setProfile(null);
+        setAuthStatus('unauthenticated');
+      }
+      return;
+    }
+    await cargarPerfilRef.current?.(data.session);
+  }, []);
 
   // Flujo de autenticación usando onAuthStateChange como fuente única.
   // getSession() no dispara loadProfile directamente; INITIAL_SESSION lo cubre
@@ -113,21 +176,34 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     async function loadProfile(session: Session) {
       if (!effectMounted) return;
+      sesionRef.current = session;
       setIsLoadingProfile(true);
 
       try {
-        let data = await fetchProfile(session.user.id);
+        let lectura = await fetchProfile(session.user.id);
 
-        // Reintentos con backoff (el trigger de BD puede demorar en crear el perfil)
+        // Solo se reintenta cuando el servidor RESPONDIÓ que el perfil aún no existe: el trigger de BD puede demorar en
+        // crearlo (hasta 5 intentos, ≈3 s). Un `error` de red NO se reintenta aquí: supabase-js ya reintentó la lectura
+        // por su cuenta, y repetirlo multiplicaba la espera (≈20 s) mientras la persona veía la interfaz de invitado.
         let attempts = 0;
-        while (!data && attempts < 5 && effectMounted) {
+        while (lectura.estado === 'sin_perfil' && attempts < 5 && effectMounted) {
           await new Promise(r => setTimeout(r, 200 * (attempts + 1)));
           if (!effectMounted) return;
-          data = await fetchProfile(session.user.id);
+          lectura = await fetchProfile(session.user.id);
           attempts++;
         }
 
         if (!effectMounted) return;
+
+        // No se pudo LEER: la sesión sigue siendo válida, así que no se la trata como «sin acceso» ni se intenta
+        // crear un perfil encima de uno que quizá ya existe (el upsert pisaría username y full_name).
+        if (lectura.estado === 'error') {
+          setAuthStatus('error_transitorio');
+          setProfile(null);
+          return;
+        }
+
+        let data: Profile | null = lectura.estado === 'ok' ? lectura.perfil : null;
 
         if (!data) {
           if (import.meta.env.DEV) {
@@ -163,7 +239,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
           if (error) {
             if (import.meta.env.DEV) console.error('Profile creation error:', error);
-            throw error;
+            if (!effectMounted) return;
+            // Un error de Postgres trae `code` (permiso denegado, violación de restricción...): el servidor SÍ
+            // respondió y dijo que no → sin acceso. Sin `code` es un fallo de transporte → recuperable.
+            setAuthStatus(error.code ? 'no_access' : 'error_transitorio');
+            setProfile(null);
+            return;
           }
           data = created as Profile | null;
         }
@@ -180,13 +261,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         if (import.meta.env.DEV) console.error('loadProfile error:', err);
         if (effectMounted) {
-          setAuthStatus('no_access');
+          // Una excepción inesperada no prueba que la persona no tenga acceso: se ofrece reintentar.
+          setAuthStatus('error_transitorio');
           setProfile(null);
         }
       } finally {
         if (effectMounted) setIsLoadingProfile(false);
       }
     }
+
+    cargarPerfilRef.current = loadProfile;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!effectMounted) return;
@@ -204,6 +288,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           loadProfile(session);
         }
       } else if (event === 'SIGNED_OUT') {
+        sesionRef.current = null;
         setProfile(null);
         setGemelo(null);
         setAuthStatus('unauthenticated');
@@ -263,6 +348,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     profile,
     gemelo,
     refreshProfile,
+    reintentarPerfil,
   };
 
   return (

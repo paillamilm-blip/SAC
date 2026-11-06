@@ -20,9 +20,10 @@ das un examen → ganas «sellos» en un pasaporte con enlace verificable. Hay c
 contraseña, un asistente que te guía, «Mi perfil», y funciona en el teléfono. Los datos de las personas ya están
 protegidos en producción (verificado).
 
-**Qué te impide hoy invitar gente** (sección 1, 5 puntos)
+**Qué te impide hoy invitar gente** (sección 1, 4 puntos reales)
 El gasto de IA no tiene tope real, no verás las fallas, las promesas legales (borrar/exportar cuenta) no existen,
-y dos mensajes de error mienten.
+y dos mensajes de error mienten (corregidos en una rama, falta fusionar). El «progreso del invitado» que listé como quinto
+punto **no aplica** (ver 1.5).
 
 **Qué te impide decir "sirve para cualquier profesional"** (sección 2, 5 puntos)
 Solo acepta PDF con texto, solo está en español, y la primera medición del análisis en 5 profesiones dio
@@ -60,17 +61,35 @@ Solo acepta PDF con texto, solo está en español, y la primera medición del an
 - **Arreglo:** borrar y exportar cuenta (Spec 5.6, 5.7), crear los correos, enlazar términos y privacidad (3.4, 5.8, 5.10).
   La constitución de la empresa es una decisión y trámite tuyo; yo no puedo resolverlo.
 
-### 1.4 Dos mensajes de error que mienten
-- **Red caída → dice «sin acceso».** Si se cae la conexión al cargar el perfil, la persona ve la pantalla de «no tienes acceso»
-  y cree que la expulsaron. (`ProfileContext.tsx`, Spec 3.1.)
-- **Falla la verificación del usuario → dice «contraseña incorrecta».** (`AuthOverlay.tsx`, Spec 3.2.)
-- **Por qué importa:** son los dos momentos donde más gente abandona, y la causa es nuestra.
-- **Arreglo:** estados distintos con un botón «Reintentar»; mensajes propios.
+### 1.4 Dos mensajes de error que mienten — CORREGIDO en la rama `fix/mensajes-que-mienten` (falta fusionar)
+- **Red caída → decía «sin acceso».** `fetchProfile` devolvía `null` tanto si el perfil no existía como si falló la lectura, y
+  cualquier error caía en `no_access`. Peor: ante un fallo transitorio intentaba crear el perfil con un `upsert` que, si el perfil
+  ya existía, **pisaba `username` y `full_name`** (los dos campos editables). Ahora hay tres resultados (`ok`, `sin_perfil`, `error`);
+  el `error` muestra una pantalla recuperable («No pudimos cargar tu perfil») con «Reintentar» y contador, sin «Cerrar sesión» y sin
+  tocar el perfil. (`ProfileContext.tsx`, `ErrorPerfil.tsx`; Spec 3.1.)
+- **Falla la consulta del usuario → decía «contraseña incorrecta».** Ahora distingue: si falla la consulta (`get_email_for_login`),
+  dice «No pudimos verificar tu usuario en este momento… ingresa con tu correo». Si el usuario no existe, mantiene el mensaje
+  genérico a propósito (no revelar qué usuarios existen). También traduce «Failed to fetch» / «Load failed» (Safari) a «Error de
+  conexión» en vez del genérico. (`AuthOverlay.tsx`; Spec 3.2.1.)
+- **Hallazgo de la librería (medido):** `supabase-js` 2.108.2 reintenta solo las lecturas que fallan por red (3 veces, esperas de
+  1 s + 2 s + 4 s ≈ 7 s, según el [anuncio de Supabase](https://supabase.com/changelog/45071-automatic-postgrest-retries-for-transient-errors)).
+  En el recorrido automático se vieron 22 peticiones para una sola pantalla de error: mis reintentos se multiplicaban con los suyos.
+  Con una caída real, la persona habría esperado ~20 s. Ahora no reintento en el caso de error (la librería ya lo hizo), pongo un tope
+  de 15 s a la lectura y una caída tarda ≈ 8 s en mostrar el aviso. **Esto afecta a toda lectura de la app, no solo al perfil**: con la
+  red mala, cualquier pantalla que lea datos puede quedarse ≈ 7 s en espera antes de fallar.
+- **Carga lenta ya no se disfraza de invitado:** a los 5 s `UApp` mostraba la interfaz de invitado (con «Iniciar sesión») aunque
+  hubiera sesión. Ahora la pantalla de carga avisa «Esto está tardando más de lo normal…»; solo si la autenticación no responde en
+  20 s se cae al modo invitado, que era el propósito original de ese respaldo.
 
-### 1.5 El progreso del invitado puede perderse en silencio
-- **Qué pasa:** al registrarse, si falla el traspaso del progreso de invitado a cuenta, el error se traga sin avisar
-  (`AuthOverlay.tsx:114-123`, Spec 3.2.2). El invitado es justo quien más probablemente se registre después de ver su mapa.
-- **Arreglo:** avisar y no cerrar la sesión de invitado hasta que el traspaso haya salido bien.
+### 1.5 El progreso del invitado se pierde en silencio — **CORRECCIÓN: no aplica a `/u`**
+- **Lo que escribí antes estaba mal planteado.** Señalé `migrateGuestProfile` (`AuthOverlay.tsx`), que traga errores. Pero esa función
+  migra el perfil de **onboarding de la app anterior**, y hoy **nada lo escribe** (`saveGuestProfile` solo se llama desde la sincronización
+  de lectura). En el producto actual no hay nada que migrar por ahí.
+- **El traspaso real de `/u` es `traerInvitado`** (`useBrecha.ts`): avisa («Hiciste N análisis como invitado… ¿quieres traerlos a tu
+  cuenta?»), la persona elige traer o descartar, y nada se mueve solo. No es silencioso.
+- **Riesgo residual, bajo:** `traerInvitado` borra la copia de invitado inmediatamente después de fusionarla, sin confirmar que se pudo
+  guardar. Solo perdería datos si el almacenamiento del navegador estuviera lleno o bloqueado (en ese caso la app ya muestra el aviso
+  «tu navegador no deja guardar datos»). No lo toqué.
 
 ---
 
