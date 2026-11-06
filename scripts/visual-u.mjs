@@ -286,18 +286,38 @@ async function errorDePerfil(browser, nombre, viewport) {
     ([clave, valor]) => localStorage.setItem(clave, valor),
     [`sb-${proyecto}-auth-token`, JSON.stringify(sesion)],
   );
-  await ctx.route('**/*.supabase.co/**', (r) => r.abort('failed'));
+  // Por nombre de host (no por patrón de ruta): cualquier petición a un *.supabase.co falla al instante.
+  const abortadas = [];
+  await ctx.route(
+    (url) => url.hostname.endsWith('.supabase.co'),
+    (r) => {
+      abortadas.push(`${r.request().method()} ${new URL(r.request().url()).pathname}`);
+      return r.abort('failed');
+    },
+  );
 
   const page = await ctx.newPage();
   const errores = [];
+  const consola = [];
   page.on('pageerror', (e) => errores.push(String(e)));
+  page.on('console', (m) => {
+    if (['error', 'warning'].includes(m.type())) consola.push(`${m.type()}: ${m.text().slice(0, 160)}`);
+  });
   await page.goto(`${BASE}/u`, { waitUntil: 'load' });
 
   const titulo = page.getByRole('heading', { name: 'No pudimos cargar tu perfil' });
   try {
-    await titulo.waitFor({ timeout: 20_000 });
+    await titulo.waitFor({ timeout: 30_000 });
   } catch {
     falla(`${nombre}/error-perfil: no apareció «No pudimos cargar tu perfil» (¿se tragó la sesión o quedó como invitado?)`);
+    // Diagnóstico: qué había en el almacenamiento, qué se veía y qué peticiones se abortaron.
+    const diag = await page
+      .evaluate(() => ({ claves: Object.keys(localStorage), texto: document.body.innerText.replace(/\s+/g, ' ').slice(0, 200) }))
+      .catch(() => ({ claves: ['?'], texto: '?' }));
+    console.log(`  · diag ${nombre}: clave sembrada=sb-${proyecto}-auth-token | localStorage=${JSON.stringify(diag.claves)}`);
+    console.log(`  · diag ${nombre}: texto visible="${diag.texto}"`);
+    console.log(`  · diag ${nombre}: peticiones a supabase abortadas (${abortadas.length}): ${abortadas.slice(0, 6).join(' ; ') || 'ninguna'}`);
+    console.log(`  · diag ${nombre}: consola: ${consola.slice(0, 5).join(' || ') || 'vacía'}`);
     await page.screenshot({ path: `${SALIDA}/${nombre}-11-error-perfil-FALLO.png` }).catch(() => {});
     await ctx.close();
     return;
