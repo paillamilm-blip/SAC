@@ -105,8 +105,8 @@ export default function SubirCv({
           {archivo
             ? `${peso(archivo.size)} · listo para analizar`
             : proveedor.simulado
-              ? 'Solo PDF, hasta 15 MB. En esta demostración el archivo no sale de tu equipo.'
-              : 'Solo PDF con texto, hasta 15 MB. Tu PDF se lee en tu equipo; a la IA solo viaja su texto.'}
+              ? 'PDF o Word (.docx), hasta 15 MB. En esta demostración el archivo no sale de tu equipo.'
+              : 'PDF o Word (.docx) con texto, hasta 15 MB. Tu archivo se lee en tu equipo; a la IA solo viaja su texto.'}
         </span>
       </div>
       {/* Fuera del botón: un control interactivo dentro de otro no es accesible. Oculto del todo (no entra al orden
@@ -115,8 +115,8 @@ export default function SubirCv({
         ref={inputRef}
         hidden
         type="file"
-        accept="application/pdf"
-        aria-label="Archivo PDF de tu CV"
+        accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        aria-label="Archivo de tu CV (PDF o Word)"
         onChange={(e) => elegir(e.target.files?.[0])}
       />
 

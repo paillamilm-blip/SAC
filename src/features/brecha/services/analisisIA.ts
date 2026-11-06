@@ -1,5 +1,5 @@
 // Proveedor de análisis REAL. Reutiliza lo que Ómicrom ya tenía para analizar CVs:
-//   · cvExtract: lee el PDF EN EL NAVEGADOR. El archivo no sale del equipo; solo viaja su texto.
+//   · cvExtract: lee el PDF o Word EN EL NAVEGADOR. El archivo no sale del equipo; solo viaja su texto.
 //   · callAI → Edge Function proxy-ai (ya desplegada): rate limit, créditos y claves en el servidor.
 // El resultado se valida contra el texto del CV (domain/validar.ts) antes de mostrarse.
 //
@@ -66,7 +66,7 @@ export function crearProveedorIA(deps: Partial<DependenciasIA> = {}): ProveedorA
       const textoCv = (await extraer(archivo)).slice(0, MAX_CARACTERES_CV).trim();
       if (textoCv.length < MIN_CARACTERES_CV) {
         throw new Error(
-          'No pude leer texto en ese PDF. Si es un escaneo o una foto, expórtalo desde Word o Google Docs como PDF con texto seleccionable.',
+          'No pude leer texto en ese archivo. Si es un escaneo o una foto, no se puede leer: expórtalo desde Word o Google Docs como PDF con texto seleccionable, o súbelo como Word (.docx).',
         );
       }
 

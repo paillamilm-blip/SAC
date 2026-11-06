@@ -363,11 +363,122 @@ async function errorDePerfil(browser, nombre, viewport) {
   await ctx.close();
 }
 
+
+/**
+ * Formatos de CV: PDF y Word (.docx).
+ *   A) La pantalla de subida acepta .docx, y rechaza con un mensaje útil el Word antiguo (.doc) y otros formatos.
+ *   B) La LECTURA real: se empaqueta el mismo `extractCVText` de la app (esbuild) y se le da un .docx y un PDF reales. Las
+ *      librerías (Mammoth y PDF.js) se descargan de su CDN BAJO LA POLÍTICA DE SEGURIDAD REAL del sitio, así que también se
+ *      comprueba que esa política las deja cargar. No incluye la llamada a la IA: eso necesita el servidor.
+ */
+async function formatosDeCv(browser) {
+  const nombre = 'escritorio';
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, locale: 'es-CL' });
+  await aplicarCsp(ctx);
+
+  // El lector de la app, empaquetado para el navegador y expuesto como window.__cvExtract (sin pasar por la CSP: es un init script).
+  let lector = null;
+  try {
+    const { buildSync } = await import('esbuild');
+    lector = buildSync({
+      entryPoints: ['src/features/gemelo/services/cvExtract.ts'],
+      bundle: true,
+      format: 'iife',
+      globalName: '__cvExtract',
+      platform: 'browser',
+      target: 'es2020',
+      write: false,
+    }).outputFiles[0].text;
+  } catch (e) {
+    falla(`${nombre}/formatos: no se pudo empaquetar cvExtract con esbuild (${e instanceof Error ? e.message : e})`);
+  }
+  if (lector) await ctx.addInitScript({ content: lector });
+
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on('pageerror', (e) => errores.push(String(e)));
+  await page.goto(`${BASE}/u`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.u-app .dropzone', { timeout: 20_000 });
+
+  const docx = readFileSync(new URL('./fixtures/cv-ejemplo.docx', import.meta.url));
+  const pdf = readFileSync(new URL('./fixtures/cv-ejemplo.pdf', import.meta.url));
+  const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  // A) La pantalla de subida
+  await page.setInputFiles('input[type=file]', { name: 'mi-cv.docx', mimeType: TIPO_DOCX, buffer: docx });
+  if (await page.getByText('listo para analizar').count()) ok(`${nombre}/formatos: acepta un Word (.docx)`);
+  else falla(`${nombre}/formatos: no aceptó un .docx`);
+  // Sin tipo MIME (pasa en algunos sistemas): debe bastar la extensión.
+  await page.setInputFiles('input[type=file]', { name: 'sin-tipo.docx', mimeType: '', buffer: docx });
+  if (await page.getByText('listo para analizar').count()) ok(`${nombre}/formatos: acepta un .docx aunque el sistema no informe su tipo`);
+  else falla(`${nombre}/formatos: rechazó un .docx sin tipo MIME`);
+
+  await page.setInputFiles('input[type=file]', { name: 'antiguo.doc', mimeType: 'application/msword', buffer: Buffer.from('doc') });
+  const errDoc = (await page.getByRole('alert').first().textContent().catch(() => '')) ?? '';
+  if (/Word antiguo \(\.doc\)/.test(errDoc) && /\.docx/.test(errDoc)) ok(`${nombre}/formatos: explica qué hacer con un .doc antiguo`);
+  else falla(`${nombre}/formatos: mensaje para .doc inesperado: «${errDoc.slice(0, 120)}»`);
+
+  await page.setInputFiles('input[type=file]', { name: 'foto.png', mimeType: 'image/png', buffer: Buffer.from('png') });
+  const errPng = (await page.getByRole('alert').first().textContent().catch(() => '')) ?? '';
+  if (/no es un PDF ni un Word/.test(errPng)) ok(`${nombre}/formatos: rechaza otros formatos diciendo cuáles sirven`);
+  else falla(`${nombre}/formatos: mensaje para otro formato inesperado: «${errPng.slice(0, 120)}»`);
+  await foto2(page, nombre, '12-formatos-cv');
+
+  // B) La lectura real, con el lector de la app y las librerías desde su CDN bajo la CSP real
+  if (!lector) {
+    await ctx.close();
+    return;
+  }
+  const leer = (b64, nombreArchivo, tipo) =>
+    page.evaluate(
+      async ([datos, n, t]) => {
+        const bytes = Uint8Array.from(atob(datos), (c) => c.charCodeAt(0));
+        return await window.__cvExtract.extractCVText(new File([bytes], n, { type: t }));
+      },
+      [b64, nombreArchivo, tipo],
+    );
+
+  try {
+    const t = await leer(docx.toString('base64'), 'cv.docx', TIPO_DOCX);
+    if (/Planificacion de clases de lenguaje/.test(t) && /EDUCACIÓN/.test(t) && /enseñanza básica/.test(t)) {
+      ok(`${nombre}/formatos: lee un .docx real (${t.length} caracteres, con tildes y eñes intactas)`);
+    } else {
+      falla(`${nombre}/formatos: el .docx se leyó mal: «${t.slice(0, 160)}»`);
+    }
+  } catch (e) {
+    falla(`${nombre}/formatos: no se pudo leer el .docx: ${e instanceof Error ? e.message : e}`);
+  }
+
+  try {
+    const t = await leer(pdf.toString('base64'), 'cv.pdf', 'application/pdf');
+    if (/Mantencion/.test(t)) ok(`${nombre}/formatos: lee un PDF real (${t.length} caracteres) con PDF.js bajo la CSP`);
+    else falla(`${nombre}/formatos: el PDF se leyó mal: «${t.slice(0, 160)}»`);
+  } catch (e) {
+    falla(`${nombre}/formatos: no se pudo leer el PDF: ${e instanceof Error ? e.message : e}`);
+  }
+
+  // Un .docx dañado no debe colgar ni dar basura: devuelve vacío (la pantalla lo explica).
+  try {
+    const t = await leer(Buffer.from('esto no es un zip de Word').toString('base64'), 'roto.docx', TIPO_DOCX);
+    if (t.trim().length < 30) ok(`${nombre}/formatos: un .docx dañado no produce texto basura`);
+    else falla(`${nombre}/formatos: un .docx dañado devolvió texto: «${t.slice(0, 80)}»`);
+  } catch (e) {
+    falla(`${nombre}/formatos: un .docx dañado lanzó un error en vez de quedar vacío: ${e instanceof Error ? e.message : e}`);
+  }
+
+  if (errores.length) falla(`${nombre}/formatos: errores de JavaScript: ${errores.slice(0, 2).join(' | ')}`);
+  await ctx.close();
+}
+async function foto2(page, nombre, etiqueta) {
+  await page.screenshot({ path: `${SALIDA}/${nombre}-${etiqueta}.png` }).catch(() => {});
+}
+
 const browser = await chromium.launch();
 try {
   await recorrido(browser, 'movil', { width: 390, height: 844 });
   await recorrido(browser, 'escritorio', { width: 1280, height: 800 });
   await todoAbreElProducto(browser);
+  await formatosDeCv(browser);
   await errorDePerfil(browser, 'movil', { width: 390, height: 844 });
   await errorDePerfil(browser, 'escritorio', { width: 1280, height: 800 });
   if (violacionesCsp.size) {

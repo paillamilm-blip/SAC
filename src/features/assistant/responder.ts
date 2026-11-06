@@ -173,7 +173,7 @@ export function responder(texto: string, estado: Estado): Respuesta | null {
 
     case 'escanear':
       return {
-        texto: 'Claro. Sube tu CV en PDF y lo comparo con un profesional fuerte de tu misma ocupación.',
+        texto: 'Claro. Sube tu CV en PDF o Word (.docx) y lo comparo con un profesional fuerte de tu misma ocupación.',
         origen: 'estimacion',
         accion: { accion: { tipo: 'escanear' }, etiqueta: 'Escanear mi CV', porQue: 'Escanear tu CV' },
       };

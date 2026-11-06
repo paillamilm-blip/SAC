@@ -62,23 +62,37 @@ async function docxText(buffer: ArrayBuffer): Promise<string> {
   return (res.value || '').replace(/\s+/g, ' ').trim();
 }
 
+const TIPO_PDF = 'application/pdf';
+const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+/** Mensaje cuando no se pudo CARGAR el lector (red o servidor del lector caído): no es culpa del archivo. */
+export const ERROR_LECTOR_NO_DISPONIBLE =
+  'No pudimos cargar el lector de documentos. Revisa tu conexión e inténtalo de nuevo.';
+
 /** Extrae el texto de un CV (PDF / Word / TXT). Robusto y con fallback. */
 export async function extractCVText(file: File): Promise<string> {
   const name = file.name.toLowerCase();
+  // Extensión o tipo MIME: según el sistema, uno de los dos puede venir vacío.
+  const esPdf = name.endsWith('.pdf') || file.type === TIPO_PDF;
+  const esDocx = name.endsWith('.docx') || file.type === TIPO_DOCX;
   const buffer = await file.arrayBuffer();
 
   // Attempt specialized extraction (PDF.js for PDF, Mammoth for DOCX)
   try {
-    if (name.endsWith('.pdf')) {
+    if (esPdf) {
       const t = await pdfText(buffer.slice(0));
       if (t.length > 15) return t.slice(0, 15000);
-    } else if (name.endsWith('.docx')) {
+    } else if (esDocx) {
       const t = await docxText(buffer.slice(0));
       if (t.length > 15) return t.slice(0, 15000);
     }
   } catch (err) {
-    // CDN failed or library error — log and fall through to text fallback
-    console.warn('[cvExtract] Specialized extraction failed (CDN may be down):', (err as Error).message);
+    const msg = (err as Error).message;
+    // Si el lector ni siquiera se pudo CARGAR, decirlo: seguir al texto plano devolvía '' y la persona leía «no pude leer
+    // texto en tu archivo», culpando a un CV que quizá está perfecto.
+    if (/^CDN |no disponible/.test(msg)) throw new Error(ERROR_LECTOR_NO_DISPONIBLE);
+    // Error al interpretar este archivo (dañado, protegido): se intenta el texto plano.
+    console.warn('[cvExtract] Specialized extraction failed:', msg);
   }
 
   // Fallback 1: Try reading as plain text (works for .txt, .doc with text, and some PDFs)

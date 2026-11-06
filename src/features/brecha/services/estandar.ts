@@ -52,7 +52,7 @@ export interface ResumenCv {
   esMuestra: boolean;
 }
 
-/** Lo que Ómicrom entendió de tu CV (no se guarda el PDF: solo este resultado). */
+/** Lo que Ómicrom entendió de tu CV (no se guarda el archivo: solo este resultado). */
 export function resumenCv(db: Db): ResumenCv | null {
   const a = listarAnalisis(db)[0];
   if (!a) return null;

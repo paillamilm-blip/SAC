@@ -1,5 +1,5 @@
 // Contrato de los proveedores de análisis de CV y el proveedor de DEMOSTRACIÓN (muestra fija).
-// El proveedor real (lee el PDF en el navegador y usa la IA de Ómicrom) está en analisisIA.ts;
+// El proveedor real (lee el PDF o Word en el navegador y usa la IA de Ómicrom) está en analisisIA.ts;
 // proveedor.ts decide cuál se usa.
 //
 // El avance se informa con EVENTOS que el proveedor emite cuando ocurren, nunca con
@@ -15,21 +15,41 @@ export const ORDEN_EVENTOS: readonly EventoAnalisis[] = ['recibido', 'enviado', 
 
 export interface ProveedorAnalisis {
   nombre: string;
-  /** true = el resultado es una muestra fija, no sale del PDF. */
+  /** true = el resultado es una muestra fija, no sale del archivo. */
   simulado: boolean;
   analizar(archivo: File, alEvento: (e: EventoAnalisis) => void): Promise<ResultadoAnalisis>;
 }
 
 export const TAMANIO_MAXIMO = 15 * 1024 * 1024;
 
+export const TIPO_PDF = 'application/pdf';
+export const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+export type FormatoCv = 'pdf' | 'docx';
+
+/**
+ * Qué formato de CV es el archivo, o null si no se puede leer. Se mira la extensión Y el tipo MIME: según el sistema y el
+ * navegador, uno de los dos puede venir vacío (p. ej. un .docx sin tipo en Linux).
+ */
+export function formatoDeCv(archivo: { name: string; type: string }): FormatoCv | null {
+  const nombre = archivo.name.toLowerCase();
+  if (archivo.type === TIPO_PDF || nombre.endsWith('.pdf')) return 'pdf';
+  if (archivo.type === TIPO_DOCX || nombre.endsWith('.docx')) return 'docx';
+  return null;
+}
+
 /** Devuelve el motivo por el que no se puede analizar el archivo, o null si es válido. */
 export function validarArchivo(archivo: { name: string; type: string; size: number }): string | null {
   if (archivo.size === 0) return `«${archivo.name}» está vacío.`;
-  if (archivo.type !== 'application/pdf') {
-    return `«${archivo.name}» no es un PDF. Si tu CV está en Word, expórtalo a PDF y súbelo de nuevo.`;
+  if (!formatoDeCv(archivo)) {
+    // El Word anterior a 2007 (.doc) es un formato binario distinto: la librería que lee Word solo entiende .docx.
+    if (archivo.name.toLowerCase().endsWith('.doc') || archivo.type === 'application/msword') {
+      return `«${archivo.name}» es un Word antiguo (.doc) y no se puede leer. Ábrelo en Word, guárdalo como .docx (o expórtalo a PDF) y súbelo de nuevo.`;
+    }
+    return `«${archivo.name}» no es un PDF ni un Word (.docx). Sube tu CV en uno de esos dos formatos.`;
   }
   if (archivo.size > TAMANIO_MAXIMO) {
-    return 'El PDF pesa más de 15 MB. Exporta una versión más liviana.';
+    return 'El archivo pesa más de 15 MB. Exporta una versión más liviana.';
   }
   return null;
 }
@@ -68,7 +88,7 @@ export function crearProveedorDemostracion(opciones: { esperar?: Esperar; pausaM
 export function textoHito(evento: EventoAnalisis, datos: { kb: string; totalBrechas: number | null; simulado: boolean }): string {
   switch (evento) {
     case 'recibido':
-      return `PDF recibido (${datos.kb})`;
+      return `Archivo recibido (${datos.kb})`;
     case 'enviado':
       return datos.simulado ? 'Preparado · nada sale de tu equipo' : 'Texto de tu CV enviado al análisis con IA';
     case 'leyendo':

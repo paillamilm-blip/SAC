@@ -67,7 +67,7 @@ export function pasosDelCiclo(estado: Estado): PasoCiclo[] {
   const ultimo = listarAnalisis(estado.db)[0];
   if (!ultimo) {
     return [
-      { id: 'escanear', nombre: 'Escanear tu CV', detalle: 'Sube un PDF', estado: 'ahora' },
+      { id: 'escanear', nombre: 'Escanear tu CV', detalle: 'Sube un PDF o Word', estado: 'ahora' },
       { id: 'mapa', nombre: 'Ver tu mapa', detalle: 'Aparece al escanear', estado: 'pendiente' },
       { id: 'revisar', nombre: 'Revisar tus brechas', detalle: 'Dices cuáles son reales', estado: 'pendiente' },
       { id: 'demostrar', nombre: 'Aprender y demostrar', detalle: 'Cierras una brecha', estado: 'pendiente' },

@@ -20,7 +20,7 @@ Cuando se registra y utiliza la Plataforma, recopilamos:
 
 - **Información de cuenta:** nombre, apellido, username, email, contraseña (encriptada).
 - **Perfil profesional:** biografía, foto de perfil, credenciales (CV, títulos, certificados).
-- **Texto de tu CV:** al pedir un análisis, el archivo PDF no sale de tu dispositivo; en el navegador se extrae su texto y solo ese texto se envía al servicio de análisis con IA (ver sección 4.2).
+- **Texto de tu CV:** al pedir un análisis, el archivo (PDF o Word) no sale de tu dispositivo; en el navegador se extrae su texto y solo ese texto se envía al servicio de análisis con IA (ver sección 4.2).
 - **Datos de verificación:** documentos de identidad (para KYC cuando active retiros reales).
 - **Información financiera:** historial de transacciones de tokens, contratos, pagos.
 - **Contenido generado:** publicaciones en la Bóveda, mensajes en chat, calificaciones.
@@ -81,7 +81,7 @@ Compartimos datos con terceros que nos ayudan a operar la Plataforma:
 
 - **Supabase (PostgreSQL + Auth):** almacenamiento de datos y autenticación.
 - **Vercel:** alojamiento del frontend.
-- **Google (Gemini) y OpenRouter:** el texto de tu CV y tus mensajes al asistente los procesan modelos de lenguaje (Google Gemini primero; si no está disponible, modelos del catálogo de OpenRouter). Reciben solo el texto necesario para responder, nunca el archivo PDF.
+- **Google (Gemini) y OpenRouter:** el texto de tu CV y tus mensajes al asistente los procesan modelos de lenguaje (Google Gemini primero; si no está disponible, modelos del catálogo de OpenRouter). Reciben solo el texto necesario para responder, nunca el archivo (PDF o Word).
 - **Stripe (futuro):** procesamiento de pagos cuando active retiros reales.
 - **Google Cloud (futuro):** análisis de datos y machine learning.
 
@@ -92,7 +92,7 @@ Todos estos proveedores están obligados por acuerdos de confidencialidad y solo
 - **En tu dispositivo, siempre:** cada análisis se guarda en el almacenamiento local de tu navegador (localStorage). Si no has iniciado sesión (modo invitado), vive **solo ahí**: si borras los datos del navegador o cambias de equipo, pierdes ese historial.
 - **En tu cuenta, si inicias sesión:** además se guarda una copia en nuestra base de datos (Supabase), para que la encuentres desde otro navegador o equipo. Las reglas de seguridad de la base de datos (seguridad por fila) hacen que, a través de la aplicación, **solo tú puedas leer, modificar o borrar tu copia**. Quienes administran la base de datos tienen acceso técnico a ella.
 - **Qué contiene un análisis:** tu ocupación y nivel, un resumen, tus fortalezas y brechas (que incluyen **frases citadas de tu CV** como evidencia), el nombre y el tamaño del archivo, lo que decidiste sobre cada brecha y los exámenes que aprobaste. **No** contiene el texto completo de tu CV.
-- **Qué NO se guarda:** el archivo PDF de tu CV. Se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba; ese texto no se almacena en nuestros servidores.
+- **Qué NO se guarda:** el archivo (PDF o Word) de tu CV. Se lee dentro de tu navegador y únicamente viaja su texto al servicio de análisis con IA descrito arriba; ese texto no se almacena en nuestros servidores.
 - Si inicias sesión después de haber usado el modo invitado, **te preguntamos** si quieres traer esos análisis a tu cuenta o descartarlos; nunca los movemos sin preguntarte.
 - Si usas la aplicación desde dos dispositivos a la vez y modificas el mismo análisis en ambos, se conserva la versión guardada más recientemente.
 
